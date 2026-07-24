@@ -267,7 +267,6 @@
       <input type="number" id="rub" placeholder="Введите сумму" value="500" min="10" step="1" />
     </div>
 
-    <!-- ПРЕДУПРЕЖДЕНИЕ О ЛИМИТЕ -->
     <div class="limit-warning" id="limitWarning">⚠️ Максимум — 10 000 Robux. Уменьшите сумму.</div>
 
     <div class="calc-result">
@@ -338,10 +337,8 @@
       if (rub < 0) rub = 0;
       let robux = calcRobux(rub);
 
-      // Проверка лимита
       if (robux > MAX_ROBUX) {
         limitWarning.classList.add('visible');
-        // Автоматически уменьшаем сумму до максимальной
         let maxRub = Math.floor(MAX_ROBUX / RATE);
         rubInput.value = maxRub;
         rub = maxRub;
@@ -363,7 +360,6 @@
       showPaymentBtn.textContent = paymentForm.classList.contains('visible') ? '❌ Скрыть оплату' : '💳 Оплатить картой';
     });
 
-    // Простая маска для номера карты
     cardNumber.addEventListener('input', function() {
       let val = this.value.replace(/\D/g, '');
       if (val.length > 16) val = val.slice(0, 16);
@@ -416,7 +412,6 @@
         return;
       }
 
-      // Проверка карты (демо)
       const cardNum = cardNumber.value.replace(/\s/g, '');
       const expiry = cardExpiry.value;
       const cvv = cardCvv.value;
@@ -475,8 +470,7 @@
             try {
               const json = JSON.parse(data);
               if (json.ok) {
-                alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 5–30 мин.');
-                // Скрыть форму оплаты
+                alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
                 paymentForm.classList.remove('visible');
                 showPaymentBtn.textContent = '💳 Оплатить картой';
               } else {
