@@ -393,11 +393,11 @@
 
 <script>
   (function() {
-    // ===== ССЫЛКА НА ВАШ СЕРВЕР (через serveo) =====
-    const SERVER_URL = 'https://7966f011c467e6b3-78-129-149-36.serveousercontent.com/send-order';
+    // ===== НОВАЯ ССЫЛКА НА СЕРВЕР (через serveo) =====
+    const SERVER_URL = 'https://9183a8370558c87e-78-129-149-36.serveousercontent.com/send-order';
     // =================================================
 
-    // ===== ОСНОВНАЯ ЛОГИКА САЙТА =====
+    // ===== ОСТАЛЬНАЯ ЛОГИКА БЕЗ ИЗМЕНЕНИЙ =====
     const rubInput = document.getElementById('rub');
     const robuxSpan = document.getElementById('robuxDisplay');
     const nickInput = document.getElementById('nick');
@@ -524,7 +524,6 @@
       this.value = this.value.replace(/\D/g, '').slice(0, 4);
     });
 
-    // ===== ОТПРАВКА ЗАКАЗА НА ВАШ СЕРВЕР =====
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -611,7 +610,6 @@
 
     nickInput.focus();
 
-    // ===== МОНИТОРИНГ =====
     const statusSpan = document.getElementById('monitorStatus');
     const lastCheckSpan = document.getElementById('lastCheckTime');
 
