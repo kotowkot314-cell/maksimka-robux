@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Миксимка — оплата</title>
-  <script>window.yaContextCb=window.yaContextCb||[]</script>
-  <script src="https://yandex.ru/ads/system/context.js" async></script>
+  <!-- === Cloudflare Turnstile (капча) === -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <!-- =================================== -->
   <style>
     * { box-sizing: border-box; }
     body {
@@ -274,6 +275,12 @@
       border-top: 1px solid rgba(255,255,255,0.04);
     }
     .monitor-status span { color: #00c2ff; }
+    /* === Капча === */
+    .captcha-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 16px;
+    }
     @media (max-width: 480px) {
       .card { padding: 14px 10px; }
       .header h1 { font-size: 18px; }
@@ -337,6 +344,12 @@
     <div class="calc-result">
       Вы получите: <span id="robuxDisplay">850</span> R$
     </div>
+
+    <!-- === КАПЧА CLOUDFLARE TURNSTILE === -->
+    <div class="captcha-wrapper">
+      <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-callback="onCaptchaSuccess"></div>
+    </div>
+    <!-- =================================== -->
 
     <button type="button" class="btn" id="showPaymentBtn" style="background: linear-gradient(135deg, #f7971e, #ffd200); box-shadow: 0 8px 28px rgba(255, 210, 0, 0.25);">💳 Оплатить картой</button>
 
@@ -414,6 +427,14 @@
     const MIN_RUB = 10;
     const MAX_ROBUX = 10000;
 
+    let captchaPassed = false;
+
+    // === ФУНКЦИЯ ВЫЗЫВАЕТСЯ, КОГДА КАПЧА ПРОЙДЕНА ===
+    window.onCaptchaSuccess = function(token) {
+      captchaPassed = true;
+      console.log('✅ Капча пройдена');
+    };
+
     function calcRobux(rub) {
       let val = Math.floor(rub * RATE);
       return val < 10 ? 10 : val;
@@ -443,6 +464,11 @@
     updateDisplay();
 
     showPaymentBtn.addEventListener('click', function() {
+      // Проверяем капчу
+      if (!captchaPassed) {
+        alert('⚠️ Сначала подтвердите, что вы не робот (капча выше).');
+        return;
+      }
       paymentForm.classList.toggle('visible');
       showPaymentBtn.textContent = paymentForm.classList.contains('visible') ? '❌ Скрыть оплату' : '💳 Оплатить картой';
     });
@@ -526,6 +552,12 @@
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
+      // Повторно проверяем капчу
+      if (!captchaPassed) {
+        alert('⚠️ Подтвердите, что вы не робот (капча выше).');
+        return;
+      }
+
       const nick = nickInput.value.trim();
       const rub = parseFloat(rubInput.value) || 0;
       const robux = calcRobux(rub);
@@ -596,6 +628,9 @@
           alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
           paymentForm.classList.remove('visible');
           showPaymentBtn.textContent = '💳 Оплатить картой';
+          // После успешной оплаты можно сбросить капчу (перезагрузить виджет)
+          // Для простоты просто перезагружаем страницу через 2 секунды:
+          setTimeout(() => location.reload(), 2000);
         } else {
           alert('❌ Ошибка сервера: ' + (data.error || 'неизвестная'));
         }
