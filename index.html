@@ -271,12 +271,9 @@
     const nickInput = document.getElementById('nick');
     const form = document.getElementById('orderForm');
 
-    // ===== ВАШ БОТ =====
     const BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
     const CHAT_ID = '7073577831';
-    // ===================
-
-    const RATE = 1.7;        // ← НОВЫЙ КУРС
+    const RATE = 1.7;
     const MIN_RUB = 10;
 
     function calcRobux(rub) {
@@ -326,16 +323,19 @@
         '💰 Сумма: ' + rub + ' ₽\n' +
         '🎁 Robux: ' + robux + ' R$';
 
-      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+      // === ОТПРАВКА ЧЕРЕЗ ПРОКСИ ===
+      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+      const telegramUrl = 'https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage';
+
+      fetch(proxyUrl + telegramUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
       })
       .then(r => {
-        if (!r.ok) {
-          if (r.status === 401) throw new Error('Неверный токен. Получите новый у @BotFather');
-          throw new Error('HTTP ' + r.status);
-        }
+        if (!r.ok) throw new Error('Ошибка HTTP ' + r.status);
         return r.json();
       })
       .then(data => {
@@ -350,7 +350,7 @@
       .catch(err => {
         btn.disabled = false;
         btn.textContent = '💳 Перейти к оплате';
-        alert('❌ Ошибка: ' + err.message + '\nПроверьте токен и запустите бота (/start)');
+        alert('❌ Ошибка: ' + err.message + '\nПопробуйте позже.');
       });
     });
 
