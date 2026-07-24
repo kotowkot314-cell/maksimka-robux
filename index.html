@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Миксимка — заказ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b0b12;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      color: #ededed;
+    }
+    .card {
+      max-width: 680px;
+      width: 100%;
+      background: #13131e;
+      border-radius: 36px;
+      padding: 32px 28px;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.9);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00c2ff, #7b2ffc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header .sub {
+      color: #8888bb;
+      font-size: 15px;
+      margin-top: 10px;
+      padding-top: 14px;
+      border-top: 1px solid #28283e;
+    }
+    .header .sub span {
+      background: #1e1e32;
+      padding: 4px 16px;
+      border-radius: 40px;
+      color: #00c2ff;
+      font-weight: 600;
+    }
+    .rate {
+      background: #1a1a2c;
+      border-radius: 20px;
+      padding: 18px;
+      text-align: center;
+      border: 1px solid #2d2d48;
+      margin-bottom: 24px;
+    }
+    .rate .big { font-size: 26px; font-weight: 700; }
+    .rate .big em { font-style: normal; color: #00c2ff; }
+    .rate .small { color: #9999bb; font-size: 14px; margin-top: 6px; }
+    .video-wrap {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      background: #1a1a2c;
+      border: 1px solid #2d2d48;
+    }
+    .video-wrap iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 18px 0 24px;
+      list-style: none;
+    }
+    .features li {
+      background: #18182a;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      border-left: 4px solid #7b2ffc;
+      color: #d0d0ee;
+    }
+    .steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin: 18px 0 24px;
+    }
+    .steps .step {
+      background: #18182a;
+      padding: 12px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      border: 1px solid #2d2d48;
+      flex: 1 0 auto;
+      text-align: center;
+      color: #ccc;
+    }
+    .steps .step b { color: #00c2ff; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #bbbbdd;
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 16px;
+      border: none;
+      background: #1a1a2c;
+      color: #fff;
+      font-size: 16px;
+      outline: 2px solid transparent;
+      transition: 0.2s;
+    }
+    .field input:focus { outline: 2px solid #7b2ffc; background: #22223a; }
+    .field input::placeholder { color: #555577; }
+    .calc-result {
+      background: #0e0e1a;
+      border-radius: 16px;
+      padding: 14px;
+      margin: 10px 0 24px;
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      border: 1px dashed #2d2d48;
+    }
+    .calc-result span { color: #00c2ff; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 60px;
+      background: linear-gradient(135deg, #7b2ffc, #00c2ff);
+      color: #fff;
+      font-size: 19px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      text-align: center;
+      box-shadow: 0 8px 28px rgba(0,194,255,0.25);
+    }
+    .btn:hover { transform: scale(1.02); box-shadow: 0 12px 40px rgba(123,47,252,0.4); }
+    .btn:active { transform: scale(0.97); }
+    .payment-icons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 16px 0 6px;
+      font-size: 13px;
+      color: #7777aa;
+    }
+    .payment-icons span {
+      background: #18182a;
+      padding: 6px 14px;
+      border-radius: 40px;
+      border: 1px solid #2d2d48;
+    }
+    .footer {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #1e1e34;
+      text-align: center;
+      font-size: 13px;
+      color: #666688;
+    }
+    .footer a { color: #00c2ff; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    .support-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 6px 16px;
+      background: #1a1a2c;
+      border: 1px solid #2d2d48;
+      border-radius: 40px;
+      font-size: 13px;
+      color: #00c2ff;
+    }
+    @media (max-width: 550px) {
+      .card { padding: 20px 16px; }
+      .header h1 { font-size: 22px; }
+      .features { grid-template-columns: 1fr; }
+      .steps { flex-direction: column; }
+      .rate .big { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="header">
+    <h1>Купи Робуксы и геймпассы<br>по выгодному курсу</h1>
+    <div class="sub"><span>1.7 R$ за 1 ₽</span> · работаем 24/7 · 10 000+ заказов</div>
+  </div>
+
+  <div class="rate">
+    <div class="big">Курс <em>1.7 R$</em> за 1 ₽</div>
+    <div class="small">Готовый Gamepass из каталога — выбрал и оплатил</div>
+  </div>
+
+  <div class="video-wrap">
+    <iframe src="https://www.youtube.com/embed/FiX_b9AfZos" title="Инструкция" allowfullscreen></iframe>
+  </div>
+
+  <ul class="features">
+    <li>Принимаем заказы 24/7 без выходных</li>
+    <li>Не запрашиваем пароль от аккаунта</li>
+    <li>Калькулятор с актуальным курсом</li>
+    <li>Оплата Visa, MasterCard, МИР</li>
+    <li>Поддержка в Telegram 24/7</li>
+    <li>1000+ довольных клиентов</li>
+  </ul>
+
+  <div class="steps">
+    <div class="step"><b>1.</b> Укажите никнейм</div>
+    <div class="step"><b>2.</b> Выберите способ</div>
+    <div class="step"><b>3.</b> Оплатите картой</div>
+    <div class="step"><b>4.</b> Получите Robux</div>
+  </div>
+
+  <form id="orderForm">
+    <div class="field">
+      <label>👤 Ваш никнейм в Roblox</label>
+      <input type="text" id="nick" placeholder="Например: CoolPlayer228" />
+    </div>
+    <div class="field">
+      <label>💰 Сумма в рублях (₽)</label>
+      <input type="number" id="rub" placeholder="Введите сумму" value="500" min="10" step="1" />
+    </div>
+    <div class="calc-result">
+      Вы получите: <span id="robuxDisplay">850</span> R$
+    </div>
+    <button type="submit" class="btn" id="payBtn">💳 Перейти к оплате</button>
+  </form>
+
+  <div class="payment-icons">
+    <span>Visa</span><span>MasterCard</span><span>МИР</span><span>Apple Pay</span><span>Google Pay</span>
+  </div>
+
+  <div class="footer">
+    🔒 Безопасный шлюз · Пароль не запрашиваем<br />
+    Вопросы: <a href="https://t.me/maxxi1mka" target="_blank">@maxxi1mka (Telegram)</a>
+    <div class="support-badge">✉️ Поддержка: @maxxi1mka</div>
+  </div>
+
+</div>
+
+<script>
+  (function() {
+    const rubInput = document.getElementById('rub');
+    const robuxSpan = document.getElementById('robuxDisplay');
+    const nickInput = document.getElementById('nick');
+    const form = document.getElementById('orderForm');
+
+    // ===== ВАШ БОТ =====
+    const BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
+    const CHAT_ID = '7073577831';
+    // ===================
+
+    const RATE = 1.7;        // ← НОВЫЙ КУРС
+    const MIN_RUB = 10;
+
+    function calcRobux(rub) {
+      let val = Math.floor(rub * RATE);
+      return val < 10 ? 10 : val;
+    }
+
+    function updateDisplay() {
+      let rub = parseFloat(rubInput.value) || 0;
+      if (rub < 0) rub = 0;
+      robuxSpan.textContent = calcRobux(rub);
+    }
+
+    rubInput.addEventListener('input', updateDisplay);
+    updateDisplay();
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nick = nickInput.value.trim();
+      const rub = parseFloat(rubInput.value) || 0;
+      const robux = calcRobux(rub);
+
+      if (!nick) {
+        alert('⚠️ Введите никнейм в Roblox');
+        nickInput.focus();
+        return;
+      }
+      if (nick.length < 3) {
+        alert('⚠️ Никнейм должен быть длиннее 2 символов');
+        nickInput.focus();
+        return;
+      }
+      if (rub < MIN_RUB) {
+        alert('⚠️ Минимальная сумма 10 ₽');
+        rubInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById('payBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Отправка...';
+
+      const msg =
+        '🟢 НОВЫЙ ЗАКАЗ\n' +
+        '👤 Ник: ' + nick + '\n' +
+        '💰 Сумма: ' + rub + ' ₽\n' +
+        '🎁 Robux: ' + robux + ' R$';
+
+      fetch('https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+      })
+      .then(r => {
+        if (!r.ok) {
+          if (r.status === 401) throw new Error('Неверный токен. Получите новый у @BotFather');
+          throw new Error('HTTP ' + r.status);
+        }
+        return r.json();
+      })
+      .then(data => {
+        btn.disabled = false;
+        btn.textContent = '💳 Перейти к оплате';
+        if (data.ok) {
+          alert('✅ Заказ принят! Ожидайте Robux 5–30 мин.');
+        } else {
+          alert('❌ Ошибка Telegram: ' + (data.description || 'неизвестная'));
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.textContent = '💳 Перейти к оплате';
+        alert('❌ Ошибка: ' + err.message + '\nПроверьте токен и запустите бота (/start)');
+      });
+    });
+
+    nickInput.focus();
+  })();
+</script>
+
+</body>
+</html>
