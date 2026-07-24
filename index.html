@@ -323,34 +323,54 @@
         '💰 Сумма: ' + rub + ' ₽\n' +
         '🎁 Robux: ' + robux + ' R$';
 
-      // === НОВЫЙ РАБОЧИЙ ПРОКСИ ===
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
       const telegramUrl = 'https://api.telegram.org/bot' + BOT_TOKEN + '/sendMessage?chat_id=' + CHAT_ID + '&text=' + encodeURIComponent(msg);
 
-      fetch(proxyUrl + encodeURIComponent(telegramUrl))
-      .then(r => {
-        if (!r.ok) throw new Error('Ошибка HTTP ' + r.status);
-        return r.text();
-      })
-      .then(data => {
-        btn.disabled = false;
-        btn.textContent = '💳 Перейти к оплате';
-        try {
-          const json = JSON.parse(data);
-          if (json.ok) {
-            alert('✅ Заказ принят! Ожидайте Robux 5–30 мин.');
-          } else {
-            alert('❌ Ошибка Telegram: ' + (json.description || 'неизвестная'));
-          }
-        } catch {
-          alert('❌ Не удалось обработать ответ. Попробуйте позже.');
+      // === СПИСОК ПРОКСИ (работает хотя бы один) ===
+      const proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+
+      let currentProxyIndex = 0;
+
+      function trySend() {
+        if (currentProxyIndex >= proxies.length) {
+          btn.disabled = false;
+          btn.textContent = '💳 Перейти к оплате';
+          alert('❌ Все прокси недоступны. Попробуйте позже.');
+          return;
         }
-      })
-      .catch(err => {
-        btn.disabled = false;
-        btn.textContent = '💳 Перейти к оплате';
-        alert('❌ Ошибка: ' + err.message + '\nПопробуйте позже.');
-      });
+
+        const proxy = proxies[currentProxyIndex];
+        const url = proxy + encodeURIComponent(telegramUrl);
+
+        fetch(url)
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(data => {
+            btn.disabled = false;
+            btn.textContent = '💳 Перейти к оплате';
+            try {
+              const json = JSON.parse(data);
+              if (json.ok) {
+                alert('✅ Заказ принят! Ожидайте Robux 5–30 мин.');
+              } else {
+                alert('❌ Ошибка Telegram: ' + (json.description || 'неизвестная'));
+              }
+            } catch {
+              alert('❌ Не удалось обработать ответ. Попробуйте позже.');
+            }
+          })
+          .catch(() => {
+            currentProxyIndex++;
+            trySend();
+          });
+      }
+
+      trySend();
     });
 
     nickInput.focus();
