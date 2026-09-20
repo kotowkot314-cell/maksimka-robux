@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local MAX_AIR = 5
+local MAX_AIR = 7
 local RAY_LEN = 12
 
 local air = {}
