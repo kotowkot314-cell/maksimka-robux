@@ -1,47 +1,24 @@
 --[[
-    KotowAC v4.2.2 — серверный античит для Roblox.
-    
+    KotowAC v4.2.9 — серверный античит для Roblox.
+
+    KotowAC v4.2.9
+    Author: kotowkot314-cell
+    Repo:   github.com/kotowkot314-cell/maksimka-robux
+    I'm tired, but it works XD
+
     Установка:
       ServerScriptService/KotowAC (Script)
       StarterPlayerScripts/ACReport (LocalScript)
-    
-    Возраст аккаунта:
-      MinAccountAge = 30. Новые аккаунты получают susp +3.
-    
-    Таблица наказаний (PunishRules):
-      body, cframe → ban
-      speed, tp, ws, jump_power, hip_height, pos_jump, jumpmove, up, airmove, noclip_honeypot, macro → kick
-      freefall, report, token, jump → log
-      rule_ban: → мгновенный бан
-    
-    Анализ макросов:
-      MacroWindow = 3. MacroTolerance = 0.05. MacroSamples = 10.
-    
-    Honeypots:
-      8 зон. X/Z от -500 до 500, Y = -100. Обновление каждые 5 сек.
-    
-    Точечная whitelist:
-      K.SetWhitelist(pl, "lift") — отключает tp/speed/freefall/airmove.
-      K.SetWhitelist(pl, "trampoline") — отключает up/pos_jump/freefall.
-      K.SetWhitelist(pl, "admin") — отключает всё, включая noclip_honeypot.
-    
-    DsDown:
-      При 5+ ошибках GetAsync — DsDown = true на 60 сек. Игроки кикаются.
-    
-    Suspicion Score:
-      susp >= 8 → кик (по правилам), susp >= 15 → бан.
-      susp затухает -1 в минуту.
-    
-    cframe:
-      Первые 2 события игнорируются. С 3-го — susp +2.
-      Окно 60 сек. Только если h < 15.
-    
-    legitSpeed:
-      nil в State, ставится при Bind. Не сбрасывается при респавне.
-    
-    Токен:
-      Генерируется один раз при заходе, не меняется при Bind.
-      GenToken через Random:NextInteger.
+
+    Патчи v4.2.9:
+      10. StartHeartbeat: не мутируем K.S внутри pairs.
+      11. Suspicion в DescendantAdded через task.defer.
+      12. Клиент: backoff для fetchToken (5/10/20/40/60).
+      13. Клиент: проверка pl.Parent перед FireServer.
+
+    Автор: kotowkot314-cell
+    Репа:  github.com/kotowkot314-cell/maksimka-robux
+    Лицензия: MIT
 ]]
 
 local plrs = game:GetService("Players")
@@ -54,7 +31,7 @@ if rs:IsStudio() then return end
 
 local K = {}
 
-K.Version = "4.2.2"
+K.Version = "4.2.9"
 K.Name = "KotowAC"
 K.Running = false
 
@@ -147,6 +124,7 @@ K.DsDownCount = 0
 K.DsErrCount = 0
 K.DsErrAt = 0
 K.Acc = 0
+K.StatsGen = 0
 K.Bans = nil
 K.Logs = nil
 K.Alert = nil
@@ -187,8 +165,13 @@ function K.Init()
 		if now - (s.lastTokenFetch or 0) < 1 then
 			s.tokenSpam = (s.tokenSpam or 0) + 1
 			if s.tokenSpam >= 5 then
-				K.Suspicion(pl, 2, "token:spam")
+				local spam = s.tokenSpam
 				s.tokenSpam = 0
+				task.defer(function()
+					if pl.Parent then
+						K.Suspicion(pl, 2, "token:spam:" .. spam)
+					end
+				end)
 			end
 			return s.token
 		end
@@ -270,7 +253,7 @@ function K.State(uid)
 			upCount = 0, upLastY = 0, upStart = 0,
 			lastPos = nil, lastCFrame = nil, tpCount = 0,
 			grace = 0, freeTime = 0, freeMove = 0,
-			lastPunish = 0, wrn = 0, err = {},
+			lastPunish = 0, wrn = 0,
 			jsp = {n = 0, t = 0},
 			ch = nil, hum = nil, hrp = nil, pl = nil,
 			detectCooldown = {},
@@ -285,7 +268,7 @@ function K.State(uid)
 			wlTag = nil,
 			wlChecks = nil,
 			legitSpeed = nil,
-			lastTokenFetch = 0,
+			lastTokenFetch = -10,
 			tokenSpam = 0,
 			cframeCount = 0,
 			cframeAt = 0,
@@ -375,10 +358,6 @@ function K.Suspicion(pl, weight, reason)
 	s.susp = s.susp + weight
 	s.suspAt = os.clock()
 	K.StatsInc(reason or "?")
-
-	if #s.err > 50 then
-		s.err = {}
-	end
 
 	if K.Logs and weight >= 3 and not K.DsDead then
 		local now = os.clock()
@@ -637,7 +616,12 @@ function K.Bind(pl, ch)
 	local c1 = ch.DescendantAdded:Connect(function(d)
 		if K.Dead then return end
 		if K.IsBodyMover(d) and not K.IsWhitelisted(pl, "body") then
-			K.Suspicion(pl, 5, "body:" .. d.ClassName)
+			local className = d.ClassName
+			task.defer(function()
+				if pl.Parent then
+					K.Suspicion(pl, 5, "body:" .. className)
+				end
+			end)
 			task.defer(function()
 				d:Destroy()
 			end)
@@ -679,8 +663,12 @@ function K.Bind(pl, ch)
 				end
 				local dev = variance / count
 				if dev < K.Cfg.MacroTolerance then
-					K.Suspicion(pl, 4, "macro:jump")
 					s.jumpTimes = {}
+					task.defer(function()
+						if pl.Parent then
+							K.Suspicion(pl, 4, "macro:jump")
+						end
+					end)
 				end
 			end
 		end
@@ -691,8 +679,12 @@ function K.Bind(pl, ch)
 		else
 			s.jsp.n = s.jsp.n + 1
 			if s.jsp.n >= K.Cfg.SpamLimit then
-				K.Kick(pl, "hvatit spamit XD")
 				s.jsp = {n = 0, t = nw}
+				task.defer(function()
+					if pl.Parent then
+						K.Kick(pl, "hvatit spamit XD")
+					end
+				end)
 			end
 		end
 
@@ -703,7 +695,11 @@ function K.Bind(pl, ch)
 		s.jmp = s.jmp + 1
 
 		if s.jmp >= K.Cfg.MaxJumps then
-			K.Suspicion(pl, 3, "jump")
+			task.defer(function()
+				if pl.Parent then
+					K.Suspicion(pl, 3, "jump")
+				end
+			end)
 		end
 	end)
 	table.insert(s.conns, c2)
@@ -898,10 +894,12 @@ function K.StartHeartbeat()
 
 		K.DsCheck()
 
+		local dead = nil
 		for uid, s in pairs(K.S) do
 			local ch = s.ch
 			if not ch or not ch.Parent then
-				K.S[uid] = nil
+				dead = dead or {}
+				table.insert(dead, uid)
 			else
 				local hrp = s.hrp
 				if hrp and hrp.Parent then
@@ -928,6 +926,12 @@ function K.StartHeartbeat()
 						end
 					end
 				end
+			end
+		end
+
+		if dead then
+			for _, uid in ipairs(dead) do
+				K.S[uid] = nil
 			end
 		end
 
@@ -997,14 +1001,15 @@ function K.StartHoneypot()
 				)
 
 				for _, part in ipairs(parts) do
-					local ch = part:FindFirstAncestorOfClass("Model")
-					if ch then
-						local pl = plrs:GetPlayerFromCharacter(ch)
-						if pl and pl.Character == ch then
-							local hrp = ch:FindFirstChild("HumanoidRootPart")
-							if hrp and hrp.AssemblyLinearVelocity.Y >= -50 then
-								if not K.IsWhitelisted(pl, "noclip_honeypot") then
-									K.Suspicion(pl, 5, "noclip_honeypot")
+					if part:IsA("BasePart") and part.Name == "HumanoidRootPart" then
+						local ch = part.Parent
+						if ch and ch:IsA("Model") then
+							local pl = plrs:GetPlayerFromCharacter(ch)
+							if pl and pl.Character == ch then
+								if part.AssemblyLinearVelocity.Y >= -50 then
+									if not K.IsWhitelisted(pl, "noclip_honeypot") then
+										K.Suspicion(pl, 5, "noclip_honeypot")
+									end
 								end
 							end
 						end
@@ -1037,12 +1042,6 @@ function K.OnPlayerAdded(pl)
 	task.spawn(function()
 		if K.Dead then return end
 
-		if K.DsDown then
-			K.Log(2, "ds down, kick: " .. pl.Name)
-			K.Kick(pl, "ac: ds unavailable")
-			return
-		end
-
 		local ok, bu
 		for attempt = 1, 3 do
 			ok, bu = pcall(K.Bans.GetAsync, K.Bans, "ban_" .. pl.UserId)
@@ -1058,6 +1057,11 @@ function K.OnPlayerAdded(pl)
 		end
 
 		K.DsDownCount = 0
+		if K.DsDown then
+			K.DsDown = false
+			K.DsDownAt = 0
+			K.Log(1, "ds down reset (recovered)")
+		end
 
 		if type(bu) == "number" and bu > os.time() then
 			local left = math.floor((bu - os.time()) / 60)
@@ -1079,6 +1083,12 @@ function K.OnPlayerAdded(pl)
 			return
 		end
 
+		if K.DsDown then
+			K.DsDown = false
+			K.DsDownAt = 0
+			K.Log(1, "ds down reset (recovered, warn)")
+		end
+
 		if type(wd) == "table"
 			and type(wd.n) == "number"
 			and type(wd.t) == "number"
@@ -1097,10 +1107,6 @@ function K.OnPlayerAdded(pl)
 			end
 		else
 			s.wrn = 0
-		end
-
-		if #s.err > 50 then
-			s.err = {}
 		end
 	end)
 end
@@ -1153,10 +1159,14 @@ function K.Run()
 	K.StartHoneypot()
 	K.StartReportListener()
 
+	K.StatsGen = K.StatsGen + 1
+	local myGen = K.StatsGen
 	task.spawn(function()
-		while K.Running do
+		while K.Running and K.StatsGen == myGen do
 			task.wait(3600)
-			K.Stats = {}
+			if K.StatsGen == myGen then
+				K.Stats = {}
+			end
 		end
 	end)
 
@@ -1167,6 +1177,7 @@ function K.Stop()
 	if not K.Running then return end
 	K.Running = false
 	K.Dead = true
+	K.StatsGen = K.StatsGen + 1
 
 	for _, conn in ipairs(K.Connections) do
 		pcall(function() conn:Disconnect() end)
@@ -1188,4 +1199,4 @@ end
 K.Run()
 
 -- idi na hyi ya ne II;)
--- автор заебался
+-- автор за####ся XD
