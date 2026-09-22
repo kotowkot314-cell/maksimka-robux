@@ -1,31 +1,35 @@
 --[[
-    KotowAC v3.9.0 — серверный античит для Roblox.
+    KotowAC v4.2.2 — серверный античит для Roblox.
     
     Установка:
       ServerScriptService/KotowAC (Script)
       StarterPlayerScripts/ACReport (LocalScript)
     
-    Honeypots:
-      HoneypotCount = 8 зон. Каждая обновляется каждые 5 сек.
-      X/Z от -500 до 500, Y = -100.
+    Возраст аккаунта:
+      MinAccountAge = 30. Новые аккаунты получают susp +3.
     
-    InstaBanReasons:
-      cframe: и body: → мгновенный бан через Punish.
+    Таблица наказаний (PunishRules):
+      body, cframe → ban
+      speed, tp, ws, jump_power, hip_height, pos_jump, jumpmove, up, airmove, noclip_honeypot, macro → kick
+      freefall, report, token, jump → log
+      rule_ban: → мгновенный бан
+    
+    Анализ макросов:
+      MacroWindow = 3. MacroTolerance = 0.05. MacroSamples = 10.
+    
+    Honeypots:
+      8 зон. X/Z от -500 до 500, Y = -100. Обновление каждые 5 сек.
     
     Точечная whitelist:
       K.SetWhitelist(pl, "lift") — отключает tp/speed/freefall/airmove.
       K.SetWhitelist(pl, "trampoline") — отключает up/pos_jump/freefall.
-      K.SetWhitelist(pl, "admin") — отключает всё.
+      K.SetWhitelist(pl, "admin") — отключает всё, включая noclip_honeypot.
     
     DsDown:
-      При 5+ ошибках GetAsync — DsDown = true на 60 сек.
-      Игроки кикаются, не пропускаются.
-    
-    ACGetToken rate-limit:
-      Cooldown 1 сек. 5 спамов → susp +2. Сброс при респавне.
+      При 5+ ошибках GetAsync — DsDown = true на 60 сек. Игроки кикаются.
     
     Suspicion Score:
-      susp >= 8 → кик, susp >= 15 → бан.
+      susp >= 8 → кик (по правилам), susp >= 15 → бан.
       susp затухает -1 в минуту.
     
     cframe:
@@ -37,6 +41,7 @@
     
     Токен:
       Генерируется один раз при заходе, не меняется при Bind.
+      GenToken через Random:NextInteger.
 ]]
 
 local plrs = game:GetService("Players")
@@ -49,7 +54,7 @@ if rs:IsStudio() then return end
 
 local K = {}
 
-K.Version = "3.9.0"
+K.Version = "4.2.2"
 K.Name = "KotowAC"
 K.Running = false
 
@@ -83,19 +88,39 @@ K.Cfg = {
 	LogCooldown = 5,
 	LogLevel = 1,
 	WebhookURL = "",
-	InstaBanReasons = {
-		["cframe:"] = true,
-		["body:"] = true,
+	PunishRules = {
+		body = "ban",
+		cframe = "ban",
+		speed = "kick",
+		tp = "kick",
+		freefall = "log",
+		report = "log",
+		token = "log",
+		jump = "log",
+		ws = "kick",
+		jump_power = "kick",
+		hip_height = "kick",
+		pos_jump = "kick",
+		jumpmove = "kick",
+		up = "kick",
+		airmove = "kick",
+		noclip_honeypot = "kick",
+		macro = "kick",
 	},
 	CFrameWindow = 60,
 	HoneypotCount = 8,
 	HoneypotSize = 8,
 	HoneypotRange = 500,
 	HoneypotY = -100,
+	MinAccountAge = 30,
+	NewAccountSusp = 3,
+	MacroWindow = 3,
+	MacroTolerance = 0.05,
+	MacroSamples = 10,
 	WhitelistTags = {
 		lift = {"tp", "speed", "freefall", "airmove"},
 		trampoline = {"up", "pos_jump", "freefall"},
-		admin = {"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump", "jumpmove", "body", "cframe", "hip_height", "jump_power"},
+		admin = {"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump", "jumpmove", "body", "cframe", "hip_height", "jump_power", "noclip_honeypot"},
 	},
 }
 
@@ -264,6 +289,7 @@ function K.State(uid)
 			tokenSpam = 0,
 			cframeCount = 0,
 			cframeAt = 0,
+			jumpTimes = {},
 		}
 		K.S[uid] = s
 	end
@@ -396,21 +422,29 @@ function K.Suspicion(pl, weight, reason)
 		end
 	end
 
-	local insta = false
-	for key in pairs(K.Cfg.InstaBanReasons) do
-		if reason and string.find(reason, key, 1, true) == 1 then
-			insta = true
-			break
+	local rule = nil
+	if reason then
+		for key, action in pairs(K.Cfg.PunishRules) do
+			if string.find(reason, key, 1, true) == 1 then
+				rule = action
+				break
+			end
 		end
 	end
 
-	if insta then
-		K.Punish(pl, "insta:" .. (reason or "?"))
+	if rule == "ban" then
+		K.Punish(pl, "rule_ban:" .. (reason or "?"))
 		s.susp = 0
-		return
-	end
-
-	if s.susp >= K.Cfg.SuspBan then
+		s.cframeCount = 0
+		s.cframeAt = 0
+	elseif rule == "kick" and s.susp >= K.Cfg.SuspKick then
+		K.Punish(pl, "rule_kick:" .. (reason or "?"))
+		s.susp = 0
+		s.cframeCount = 0
+		s.cframeAt = 0
+	elseif rule == "log" then
+		-- только susp
+	elseif s.susp >= K.Cfg.SuspBan then
 		K.Punish(pl, "susp_ban:" .. (reason or "?"))
 		s.susp = 0
 		s.cframeCount = 0
@@ -475,7 +509,9 @@ function K.Punish(pl, reason)
 		end
 	end
 
-	if s.wrn >= 4 then
+	local isBan = s.wrn >= 4 or (reason and string.find(reason, "rule_ban:", 1, true) == 1)
+
+	if isBan then
 		local msg = K.Msgs.ban[math.random(#K.Msgs.ban)]
 		task.spawn(function()
 			local ok = pcall(K.Bans.SetAsync, K.Bans, "ban_" .. uid, banUntil)
@@ -539,7 +575,7 @@ end
 
 function K.GenToken(uid)
 	local a = K.Random:NextNumber(100000, 999999)
-	local b = math.floor(os.clock() * 1000000) % 0x7FFFFFFF
+	local b = K.Random:NextInteger(0, 0x7FFFFFFF)
 	local c = uid or 0
 	return string.format("%x%x%x", math.floor(a), b, c)
 end
@@ -591,6 +627,7 @@ function K.Bind(pl, ch)
 	s.cframeCount = 0
 	s.cframeAt = 0
 	s.tokenSpam = 0
+	s.jumpTimes = {}
 
 	if not s.legitSpeed or s.legitSpeed <= 0 then
 		s.legitSpeed = s.hum.WalkSpeed
@@ -612,9 +649,41 @@ function K.Bind(pl, ch)
 		if K.Dead then return end
 		if new ~= Enum.HumanoidStateType.Jumping then return end
 
+		local now = os.clock()
 		s.jumped = true
-		s.jumpedAt = os.clock()
+		s.jumpedAt = now
 		s.lastJumpY = s.hrp and s.hrp.Position.Y or 0
+
+		table.insert(s.jumpTimes, now)
+		if #s.jumpTimes > K.Cfg.MacroSamples then
+			table.remove(s.jumpTimes, 1)
+		end
+
+		if #s.jumpTimes >= K.Cfg.MacroSamples then
+			local sum, count = 0, 0
+			for i = 2, #s.jumpTimes do
+				local diff = s.jumpTimes[i] - s.jumpTimes[i-1]
+				if diff < K.Cfg.MacroWindow then
+					sum = sum + diff
+					count = count + 1
+				end
+			end
+			if count >= K.Cfg.MacroSamples - 2 then
+				local avg = sum / count
+				local variance = 0
+				for i = 2, #s.jumpTimes do
+					local diff = s.jumpTimes[i] - s.jumpTimes[i-1]
+					if diff < K.Cfg.MacroWindow then
+						variance = variance + math.abs(diff - avg)
+					end
+				end
+				local dev = variance / count
+				if dev < K.Cfg.MacroTolerance then
+					K.Suspicion(pl, 4, "macro:jump")
+					s.jumpTimes = {}
+				end
+			end
+		end
 
 		local nw = os.clock()
 		if nw - s.jsp.t > K.Cfg.SpamWindow then
@@ -932,10 +1001,9 @@ function K.StartHoneypot()
 					if ch then
 						local pl = plrs:GetPlayerFromCharacter(ch)
 						if pl and pl.Character == ch then
-							local s = K.State(pl.UserId)
-							if not s.wlTag then
-								local hrp = ch:FindFirstChild("HumanoidRootPart")
-								if hrp and hrp.AssemblyLinearVelocity.Y >= -50 then
+							local hrp = ch:FindFirstChild("HumanoidRootPart")
+							if hrp and hrp.AssemblyLinearVelocity.Y >= -50 then
+								if not K.IsWhitelisted(pl, "noclip_honeypot") then
 									K.Suspicion(pl, 5, "noclip_honeypot")
 								end
 							end
@@ -951,6 +1019,11 @@ function K.OnPlayerAdded(pl)
 	if K.Dead then return end
 	local s = K.State(pl.UserId)
 	s.pl = pl
+
+	if pl.AccountAge < K.Cfg.MinAccountAge then
+		s.susp = s.susp + K.Cfg.NewAccountSusp
+		K.Log(2, "new account: " .. pl.Name .. " (age " .. pl.AccountAge .. ")")
+	end
 
 	local c1 = pl.CharacterAdded:Connect(function(ch)
 		K.Bind(pl, ch)
