@@ -1,44 +1,42 @@
 --[[
-    KotowAC v1.1.3 — серверный античит для Roblox.
+    KotowAC v3.9.0 — серверный античит для Roblox.
     
     Установка:
       ServerScriptService/KotowAC (Script)
       StarterPlayerScripts/ACReport (LocalScript)
     
-    В Studio не работает (IsStudio), тестировать только на опубликованной игре.
+    Honeypots:
+      HoneypotCount = 8 зон. Каждая обновляется каждые 5 сек.
+      X/Z от -500 до 500, Y = -100.
     
-    API:
-      K.Run()                          — запустить ядро.
-      K.Stop()                         — остановить ядро.
-      K.AddDetect(name, fn, prio, cd)  — добавить детект.
-      K.AddPunish(name, fn)            — добавить наказание.
-      K.RegisterPlugin(name, mod)      — зарегистрировать плагин.
-      K.AddWhitelist(name)             — добавить исключение.
-      K.Suspicion(pl, weight, reason)  — накопить подозрение.
-      K.Punish(pl, reason)             — выдать варн.
-      K.Kick(pl, txt)                  — кикнуть.
-      K.IsBodyMover(d)                 — BodyMover ли объект.
-      K.State(uid)                     — состояние игрока.
-      K.Cfg                            — настройки.
-      K.Msgs                           — сообщения.
+    InstaBanReasons:
+      cframe: и body: → мгновенный бан через Punish.
+    
+    Точечная whitelist:
+      K.SetWhitelist(pl, "lift") — отключает tp/speed/freefall/airmove.
+      K.SetWhitelist(pl, "trampoline") — отключает up/pos_jump/freefall.
+      K.SetWhitelist(pl, "admin") — отключает всё.
+    
+    DsDown:
+      При 5+ ошибках GetAsync — DsDown = true на 60 сек.
+      Игроки кикаются, не пропускаются.
+    
+    ACGetToken rate-limit:
+      Cooldown 1 сек. 5 спамов → susp +2. Сброс при респавне.
     
     Suspicion Score:
-      Каждое нарушение даёт вес (1-5). При накоплении >= 15 → бан.
-      Susp сбрасывается через 5 минут без нарушений.
+      susp >= 8 → кик, susp >= 15 → бан.
+      susp затухает -1 в минуту.
     
-    Логи в DataStore (опционально):
-      susp_USERID    — история последних 20 накоплений (UpdateAsync).
-      punish_USERID  — последнее наказание.
-      last_USERID    — финальный susp и варн при выходе.
-      Все записи через task.spawn, rate-limit 5 сек.
+    cframe:
+      Первые 2 события игнорируются. С 3-го — susp +2.
+      Окно 60 сек. Только если h < 15.
     
-    Whitelist:
-      K.AddWhitelist("lift") — игрок в лифте не проверяется.
-      Разработчик ставит pl:SetAttribute("wl", "lift").
+    legitSpeed:
+      nil в State, ставится при Bind. Не сбрасывается при респавне.
     
-    Ping-фильтр:
-      Если ping > 200ms — tp, speed, jumpmove пропускаются.
-      report:mismatch tolerance = 2 + ping/100.
+    Токен:
+      Генерируется один раз при заходе, не меняется при Bind.
 ]]
 
 local plrs = game:GetService("Players")
@@ -51,45 +49,57 @@ if rs:IsStudio() then return end
 
 local K = {}
 
-K.Version = "1.1.3"
+K.Version = "3.9.0"
 K.Name = "KotowAC"
 K.Running = false
 
 K.Cfg = {
-	L = 4,
-	MS = 80,
-	JR = 2,
-	BT = 3600,
-	WR = 1800,
-	EL = 2,
-	RT = 3600,
-	SL = 30,
-	SW = 5,
-	MJ = 7,
-	UC = 5,
-	UW = 3,
-	TP = 50,
-	TPC = 2,
-	GRACE = 5,
-	PCD = 2,
-	FREE_MOVE_LIM = 2,
-	HP_SAFE = 30,
-	SUSP_KICK = 8,
-	SUSP_BAN = 15,
-	PING_MAX = 200,
-	SUSP_RESET = 300,
-	REPORT_TIMEOUT = 5,
-	LOG_CD = 5,
+	FreefallLimit = 4,
+	MaxSpeed = 80,
+	SpeedClampMult = 1.5,
+	JumpReset = 2,
+	BanTime = 3600,
+	WarnReset = 1800,
+	ErrLimit = 10,
+	ErrWindow = 60,
+	DsDownLimit = 5,
+	DsDownTime = 60,
+	SpamLimit = 30,
+	SpamWindow = 5,
+	MaxJumps = 10,
+	UpCount = 5,
+	UpWindow = 3,
+	TeleportDist = 50,
+	TeleportCount = 2,
+	GraceTime = 5,
+	PunishCooldown = 2,
+	FreeMoveLimit = 2,
+	SuspKick = 8,
+	SuspBan = 15,
+	PingMax = 150,
+	SuspDecay = 1,
+	SuspDecayTime = 60,
+	ReportTimeout = 30,
+	LogCooldown = 5,
+	LogLevel = 1,
+	WebhookURL = "",
+	InstaBanReasons = {
+		["cframe:"] = true,
+		["body:"] = true,
+	},
+	CFrameWindow = 60,
+	HoneypotCount = 8,
+	HoneypotSize = 8,
+	HoneypotRange = 500,
+	HoneypotY = -100,
+	WhitelistTags = {
+		lift = {"tp", "speed", "freefall", "airmove"},
+		trampoline = {"up", "pos_jump", "freefall"},
+		admin = {"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump", "jumpmove", "body", "cframe", "hip_height", "jump_power"},
+	},
 }
 
 K.Msgs = {
-	fly = {
-		"kuda letish XD",
-		"ne letay :P",
-		"zemlya zhdet",
-		"ty prizrak? :P",
-		"chiter detected XD",
-	},
 	ban = {
 		"poluchay ban, chiter XD",
 		"otdohny chasok :P",
@@ -104,16 +114,21 @@ K.DetectsDirty = false
 K.Punishes = {}
 K.Plugins = {}
 K.Connections = {}
-K.Whitelist = {}
 K.Dead = false
 K.DsDead = false
-K.Dt = nil
-K.HP = nil
+K.DsDown = false
+K.DsDownAt = 0
+K.DsDownCount = 0
+K.DsErrCount = 0
+K.DsErrAt = 0
 K.Acc = 0
 K.Bans = nil
 K.Logs = nil
 K.Alert = nil
 K.Report = nil
+K.GetToken = nil
+K.Stats = {}
+K.Random = Random.new()
 
 function K.Init()
 	K.Bans = dss:GetDataStore("KotowAC_Bans_v1")
@@ -133,7 +148,92 @@ function K.Init()
 		K.Report.Parent = rs2
 	end
 
-	print("[KotowAC] v" .. K.Version .. " init")
+	K.GetToken = rs2:FindFirstChild("ACGetToken")
+	if not K.GetToken then
+		K.GetToken = Instance.new("RemoteFunction")
+		K.GetToken.Name = "ACGetToken"
+		K.GetToken.Parent = rs2
+	end
+
+	K.GetToken.OnServerInvoke = function(pl)
+		local s = K.S[pl.UserId]
+		if not s then return nil end
+		local now = os.clock()
+		if now - (s.lastTokenFetch or 0) < 1 then
+			s.tokenSpam = (s.tokenSpam or 0) + 1
+			if s.tokenSpam >= 5 then
+				K.Suspicion(pl, 2, "token:spam")
+				s.tokenSpam = 0
+			end
+			return s.token
+		end
+		s.lastTokenFetch = now
+		s.tokenSpam = 0
+		if not s.token then
+			s.token = K.GenToken(pl.UserId)
+		end
+		return s.token
+	end
+
+	K.Log(1, "init v" .. K.Version)
+end
+
+function K.Log(level, msg)
+	if level < K.Cfg.LogLevel then return end
+	local prefix = "[KotowAC]"
+	if level == 1 then prefix = prefix .. " [INFO]" end
+	if level == 2 then prefix = prefix .. " [WARN]" end
+	if level == 3 then prefix = prefix .. " [ERR]" end
+	print(prefix .. " " .. msg)
+end
+
+function K.Webhook(msg)
+	if K.Cfg.WebhookURL == "" then return end
+	if not string.find(K.Cfg.WebhookURL, "discord%.com/api/webhooks/") then return end
+	pcall(function()
+		http:PostAsync(K.Cfg.WebhookURL, http:JSONEncode({content = msg}))
+	end)
+end
+
+function K.StatsInc(key)
+	K.Stats[key] = (K.Stats[key] or 0) + 1
+end
+
+function K.DsErr(reason)
+	local now = os.clock()
+	if now - K.DsErrAt > K.Cfg.ErrWindow then
+		K.DsErrCount = 0
+	end
+	K.DsErrAt = now
+	K.DsErrCount = K.DsErrCount + 1
+
+	if K.DsErrCount >= K.Cfg.ErrLimit then
+		if not K.DsDead then
+			K.DsDead = true
+			K.Log(3, "ds dead: " .. (reason or "?") .. " (" .. K.DsErrCount .. " errors)")
+		end
+	end
+end
+
+function K.DsCheck()
+	if K.DsDown then
+		if os.clock() - K.DsDownAt > K.Cfg.DsDownTime then
+			K.DsDown = false
+			K.DsDownCount = 0
+			K.Log(1, "ds down reset")
+		end
+	end
+end
+
+function K.DsDownInc()
+	K.DsDownCount = K.DsDownCount + 1
+	if K.DsDownCount >= K.Cfg.DsDownLimit then
+		if not K.DsDown then
+			K.DsDown = true
+			K.DsDownAt = os.clock()
+			K.Log(3, "ds down: " .. K.DsDownCount .. " fails")
+		end
+	end
 end
 
 function K.State(uid)
@@ -143,18 +243,27 @@ function K.State(uid)
 			fly = 0, spd = 0, jmp = 0, lj = 0,
 			jumped = false, jumpedAt = 0, lastJumpY = nil,
 			upCount = 0, upLastY = 0, upStart = 0,
-			lastPos = nil, tpCount = 0,
+			lastPos = nil, lastCFrame = nil, tpCount = 0,
 			grace = 0, freeTime = 0, freeMove = 0,
 			lastPunish = 0, wrn = 0, err = {},
-			js = {n = 0, t = 0}, jsp = {n = 0, t = 0},
+			jsp = {n = 0, t = 0},
 			ch = nil, hum = nil, hrp = nil, pl = nil,
 			detectCooldown = {},
 			conns = {},
 			susp = 0,
 			suspAt = 0,
+			lastDecay = 0,
 			lastReport = 0,
-			reportOk = false,
+			token = nil,
 			lastLog = 0,
+			inCar = false,
+			wlTag = nil,
+			wlChecks = nil,
+			legitSpeed = nil,
+			lastTokenFetch = 0,
+			tokenSpam = 0,
+			cframeCount = 0,
+			cframeAt = 0,
 		}
 		K.S[uid] = s
 	end
@@ -181,26 +290,36 @@ function K.Kick(pl, txt)
 	end
 end
 
-function K.Log(pl, reason, w)
-	local entry = "[KotowAC] " .. pl.Name .. " (" .. pl.UserId .. ") | " .. (reason or "?") .. " | warn " .. w
-	print(entry .. " | " .. os.date("%H:%M:%S"))
+function K.SetInCar(pl, state)
+	local s = K.State(pl.UserId)
+	s.inCar = state and true or false
+end
 
-	if K.Alert then
-		K.Alert:FireAllClients(pl.Name, reason, w)
-	end
+function K.SetWhitelist(pl, tag)
+	local s = K.State(pl.UserId)
+	s.wlTag = tag
+	s.wlChecks = K.Cfg.WhitelistTags[tag]
+end
 
-	if K.Plugins.Webhook then
-		K.Plugins.Webhook.Send(entry)
+function K.SetLegitSpeed(pl, value)
+	if type(value) ~= "number" then return end
+	if value < 0 or value > 200 then return end
+	local s = K.State(pl.UserId)
+	s.legitSpeed = value
+	if s.hum then
+		s.hum:SetAttribute("legitSpeed", value)
 	end
 end
 
-function K.AddWhitelist(name)
-	K.Whitelist[name] = true
-end
-
-function K.IsWhitelisted(pl)
-	local wl = pl:GetAttribute("wl")
-	if wl and K.Whitelist[wl] then return true end
+function K.IsWhitelisted(pl, check)
+	local s = K.State(pl.UserId)
+	if not s.wlTag or s.wlTag == "" then return false end
+	if not check then return true end
+	local list = s.wlChecks
+	if not list then return false end
+	for _, name in ipairs(list) do
+		if name == check then return true end
+	end
 	return false
 end
 
@@ -212,20 +331,37 @@ function K.GetPing(pl)
 	return 0
 end
 
+function K.LogPunish(pl, reason, w)
+	local entry = "[KotowAC] " .. pl.Name .. " (" .. pl.UserId .. ") | " .. (reason or "?") .. " | warn " .. w
+	K.Log(2, entry .. " | " .. os.date("%H:%M:%S"))
+
+	if K.Alert then
+		K.Alert:FireAllClients(pl.Name, reason, w)
+	end
+
+	K.Webhook(entry)
+end
+
 function K.Suspicion(pl, weight, reason)
-	if K.Dead or K.DsDead then return end
+	if K.Dead then return end
+	if not pl.Parent then return end
 	local s = K.State(pl.UserId)
 	s.susp = s.susp + weight
 	s.suspAt = os.clock()
+	K.StatsInc(reason or "?")
 
-	if K.Logs and weight >= 3 then
+	if #s.err > 50 then
+		s.err = {}
+	end
+
+	if K.Logs and weight >= 3 and not K.DsDead then
 		local now = os.clock()
-		if now - s.lastLog >= K.Cfg.LOG_CD then
+		if now - s.lastLog >= K.Cfg.LogCooldown then
 			s.lastLog = now
 			local uid = pl.UserId
 			local suspNow = s.susp
 			task.spawn(function()
-				pcall(K.Logs.UpdateAsync, K.Logs, "susp_" .. uid, function(data)
+				local ok = pcall(K.Logs.UpdateAsync, K.Logs, "susp_" .. uid, function(data)
 					if type(data) ~= "table" then
 						data = {history = {}}
 					end
@@ -253,53 +389,84 @@ function K.Suspicion(pl, weight, reason)
 
 					return data
 				end)
+				if not ok then
+					K.DsErr("log:susp")
+				end
 			end)
 		end
 	end
 
-	if s.susp >= K.Cfg.SUSP_BAN then
+	local insta = false
+	for key in pairs(K.Cfg.InstaBanReasons) do
+		if reason and string.find(reason, key, 1, true) == 1 then
+			insta = true
+			break
+		end
+	end
+
+	if insta then
+		K.Punish(pl, "insta:" .. (reason or "?"))
+		s.susp = 0
+		return
+	end
+
+	if s.susp >= K.Cfg.SuspBan then
 		K.Punish(pl, "susp_ban:" .. (reason or "?"))
 		s.susp = 0
-	elseif s.susp >= K.Cfg.SUSP_KICK then
+		s.cframeCount = 0
+		s.cframeAt = 0
+	elseif s.susp >= K.Cfg.SuspKick then
 		K.Punish(pl, "susp_kick:" .. (reason or "?"))
+		s.susp = 0
+		s.cframeCount = 0
+		s.cframeAt = 0
 	end
 end
 
 function K.Punish(pl, reason)
-	if K.Dead or K.DsDead then return end
+	if K.Dead then return end
+	if not pl.Parent then return end
 
 	local s = K.State(pl.UserId)
 	local now = os.clock()
-	if s.lastPunish > 0 and now - s.lastPunish < K.Cfg.PCD then return end
+	if s.lastPunish > 0 and now - s.lastPunish < K.Cfg.PunishCooldown then return end
 	s.lastPunish = now
 
 	s.wrn = s.wrn + 1
 
-	local ok = pcall(K.Bans.SetAsync, K.Bans, "warn_" .. pl.UserId, {n = s.wrn, t = os.time()})
-	if not ok then
-		s.err.setW = (s.err.setW or 0) + 1
-		if s.err.setW >= K.Cfg.EL then
-			K.DsDead = true
-			warn("[KotowAC] ds off: setW")
+	local uid = pl.UserId
+	local wrnNow = s.wrn
+	local suspNow = s.susp
+	local banUntil = os.time() + K.Cfg.BanTime
+	local lastLog = s.lastLog
+
+	task.spawn(function()
+		if not K.DsDead then
+			local ok = pcall(K.Bans.SetAsync, K.Bans, "warn_" .. uid, {n = wrnNow, t = os.time()})
+			if not ok then
+				K.DsErr("set:warn")
+			end
 		end
-	end
 
-	if K.Logs and now - s.lastLog >= K.Cfg.LOG_CD then
-		s.lastLog = now
-		local uid = pl.UserId
-		local wrnNow = s.wrn
-		local suspNow = s.susp
-		task.spawn(function()
-			pcall(K.Logs.SetAsync, K.Logs, "punish_" .. uid, {
-				n = wrnNow,
-				s = suspNow,
-				r = reason,
-				t = os.time(),
-			})
-		end)
-	end
+		if K.Logs and not K.DsDead then
+			local now2 = os.clock()
+			if now2 - lastLog >= K.Cfg.LogCooldown then
+				local s2 = K.S[uid]
+				if s2 then s2.lastLog = now2 end
+				local ok = pcall(K.Logs.SetAsync, K.Logs, "punish_" .. uid, {
+					n = wrnNow,
+					s = suspNow,
+					r = reason,
+					t = os.time(),
+				})
+				if not ok then
+					K.DsErr("log:punish")
+				end
+			end
+		end
+	end)
 
-	K.Log(pl, reason, s.wrn)
+	K.LogPunish(pl, reason, s.wrn)
 
 	for _, punishFn in pairs(K.Punishes) do
 		local ok2, result = pcall(punishFn, pl, s, reason)
@@ -309,8 +476,14 @@ function K.Punish(pl, reason)
 	end
 
 	if s.wrn >= 4 then
-		pcall(K.Bans.SetAsync, K.Bans, "ban_" .. pl.UserId, os.time() + K.Cfg.BT)
-		K.Kick(pl, K.Msgs.ban[math.random(#K.Msgs.ban)])
+		local msg = K.Msgs.ban[math.random(#K.Msgs.ban)]
+		task.spawn(function()
+			local ok = pcall(K.Bans.SetAsync, K.Bans, "ban_" .. uid, banUntil)
+			if not ok then
+				K.DsErr("set:ban")
+			end
+			K.Kick(pl, msg)
+		end)
 	end
 end
 
@@ -345,20 +518,30 @@ function K.RunDetects(pl, s)
 	end
 
 	for _, d in ipairs(K.DetectsSorted) do
+		local skip = false
 		if d.cooldown > 0 then
 			local last = s.detectCooldown[d.name] or 0
 			if os.clock() - last < d.cooldown then
-				continue
+				skip = true
 			end
 		end
 
-		local ok, result = pcall(d.fn, pl, s)
-		if ok and result then
+		if not skip then
+			local ok, result = pcall(d.fn, pl, s)
 			s.detectCooldown[d.name] = os.clock()
-			return d.name
+			if ok and result then
+				return d.name
+			end
 		end
 	end
 	return nil
+end
+
+function K.GenToken(uid)
+	local a = K.Random:NextNumber(100000, 999999)
+	local b = math.floor(os.clock() * 1000000) % 0x7FFFFFFF
+	local c = uid or 0
+	return string.format("%x%x%x", math.floor(a), b, c)
 end
 
 function K.Bind(pl, ch)
@@ -377,6 +560,12 @@ function K.Bind(pl, ch)
 
 	s.pl = pl
 	s.ch = ch
+
+	if not s.token then
+		s.token = K.GenToken(pl.UserId)
+	end
+	s.lastReport = os.clock()
+
 	s.hum = ch:WaitForChild("Humanoid", 5)
 	s.hrp = ch:WaitForChild("HumanoidRootPart", 5)
 
@@ -393,20 +582,24 @@ function K.Bind(pl, ch)
 	s.upLastY = 0
 	s.upStart = os.clock()
 	s.lastPos = s.hrp.Position
+	s.lastCFrame = s.hrp.CFrame
 	s.tpCount = 0
-	s.grace = os.clock() + K.Cfg.GRACE
+	s.grace = os.clock() + K.Cfg.GraceTime
 	s.freeTime = 0
 	s.freeMove = 0
 	s.detectCooldown = {}
-	s.susp = 0
-	s.suspAt = 0
-	s.reportOk = false
+	s.cframeCount = 0
+	s.cframeAt = 0
+	s.tokenSpam = 0
 
-	s.hum:SetAttribute("legitSpeed", 16)
+	if not s.legitSpeed or s.legitSpeed <= 0 then
+		s.legitSpeed = s.hum.WalkSpeed
+	end
+	s.hum:SetAttribute("legitSpeed", s.legitSpeed)
 
 	local c1 = ch.DescendantAdded:Connect(function(d)
 		if K.Dead then return end
-		if K.IsBodyMover(d) then
+		if K.IsBodyMover(d) and not K.IsWhitelisted(pl, "body") then
 			K.Suspicion(pl, 5, "body:" .. d.ClassName)
 			task.defer(function()
 				d:Destroy()
@@ -424,23 +617,23 @@ function K.Bind(pl, ch)
 		s.lastJumpY = s.hrp and s.hrp.Position.Y or 0
 
 		local nw = os.clock()
-		if nw - s.jsp.t > K.Cfg.SW then
+		if nw - s.jsp.t > K.Cfg.SpamWindow then
 			s.jsp = {n = 1, t = nw}
 		else
 			s.jsp.n = s.jsp.n + 1
-			if s.jsp.n >= K.Cfg.SL then
+			if s.jsp.n >= K.Cfg.SpamLimit then
 				K.Kick(pl, "hvatit spamit XD")
 				s.jsp = {n = 0, t = nw}
 			end
 		end
 
-		if nw - s.lj > K.Cfg.JR then
+		if nw - s.lj > K.Cfg.JumpReset then
 			s.jmp = 0
 		end
 		s.lj = nw
 		s.jmp = s.jmp + 1
 
-		if s.jmp >= K.Cfg.MJ then
+		if s.jmp >= K.Cfg.MaxJumps then
 			K.Suspicion(pl, 3, "jump")
 		end
 	end)
@@ -448,7 +641,7 @@ function K.Bind(pl, ch)
 end
 
 function K.TickOne(uid)
-	if K.Dead or K.DsDead then return end
+	if K.Dead then return end
 	local s = K.S[uid]
 	if not s or not s.ch or not s.hrp or not s.hum then return end
 	if not s.ch.Parent or s.hum.Health <= 0 then return end
@@ -461,16 +654,20 @@ function K.TickOne(uid)
 	local state = s.hum:GetState()
 	local pos = s.hrp.Position
 	local y = pos.Y
+	local cf = s.hrp.CFrame
 	local onGround = s.hum.FloorMaterial ~= Enum.Material.Air
 	local inGrace = os.clock() < s.grace
 	local move = s.hum.MoveDirection.Magnitude
-	local inCar = pl:GetAttribute("inCar")
+	local inCar = s.inCar
 	local wl = K.IsWhitelisted(pl)
 	local ping = K.GetPing(pl)
-	local laggy = ping > K.Cfg.PING_MAX
+	local mult = 1 + math.min(ping, K.Cfg.PingMax) / 500
 
 	local dist = s.lastPos and (pos - s.lastPos).Magnitude or 0
 	s.lastPos = pos
+
+	local cfDist = s.lastCFrame and (cf.Position - s.lastCFrame.Position).Magnitude or 0
+	s.lastCFrame = cf
 
 	if onGround then
 		s.freeTime = 0
@@ -484,16 +681,37 @@ function K.TickOne(uid)
 		s.upLastY = y
 	end
 
-	if s.susp > 0 and os.clock() - s.suspAt > K.Cfg.SUSP_RESET then
-		s.susp = 0
+	if s.susp > 0 and os.clock() - s.lastDecay > K.Cfg.SuspDecayTime then
+		s.susp = math.max(0, s.susp - K.Cfg.SuspDecay)
+		s.lastDecay = os.clock()
 	end
 
-	if not s.reportOk and os.clock() - s.grace > K.Cfg.REPORT_TIMEOUT and not wl then
-		K.Suspicion(pl, 3, "report:timeout")
-		s.reportOk = true
+	if os.clock() - s.lastReport > K.Cfg.ReportTimeout and not wl then
+		K.Suspicion(pl, 2, "report:timeout")
+		s.lastReport = os.clock()
 	end
 
-	if inGrace or wl then return end
+	if inGrace then return end
+
+	local walkSpeed = s.hum.WalkSpeed
+	local ls = s.legitSpeed or 16
+
+	if walkSpeed > ls + 9 and not inCar and not K.IsWhitelisted(pl, "ws") then
+		K.Suspicion(pl, 4, "ws:" .. tostring(walkSpeed))
+		return
+	end
+
+	local jumpPower = s.hum.JumpPower
+	if jumpPower > 100 and not K.IsWhitelisted(pl, "jump_power") then
+		K.Suspicion(pl, 4, "jump_power")
+		return
+	end
+
+	local hipHeight = s.hum.HipHeight
+	if (hipHeight > 10 or hipHeight < -10) and not inCar and not K.IsWhitelisted(pl, "hip_height") then
+		K.Suspicion(pl, 4, "hip_height")
+		return
+	end
 
 	local name = K.RunDetects(pl, s)
 	if name then
@@ -501,25 +719,32 @@ function K.TickOne(uid)
 		return
 	end
 
-	local walkSpeed = s.hum.WalkSpeed
-	local ls = s.hum:GetAttribute("legitSpeed") or 16
-	if walkSpeed > ls + 9 and not inCar then
-		K.Suspicion(pl, 4, "ws:" .. tostring(walkSpeed))
+	if cfDist > 5 and h < 15 and not inCar and not K.IsWhitelisted(pl, "cframe") then
+		local now = os.clock()
+		if now - s.cframeAt > K.Cfg.CFrameWindow then
+			s.cframeCount = 0
+		end
+		s.cframeAt = now
+		s.cframeCount = s.cframeCount + 1
+
+		if s.cframeCount > 2 then
+			K.Suspicion(pl, 2, "cframe:" .. math.floor(cfDist))
+		end
 		return
 	end
 
-	if dist > K.Cfg.TP and not s.jumped and onGround and not inCar and not laggy then
+	if dist > K.Cfg.TeleportDist * mult and not s.jumped and onGround and not inCar and not K.IsWhitelisted(pl, "tp") then
 		s.tpCount = s.tpCount + 1
-		if s.tpCount >= K.Cfg.TPC then
+		if s.tpCount >= K.Cfg.TeleportCount then
 			K.Suspicion(pl, 4, "tp")
 			s.tpCount = 0
 			return
 		end
-	elseif dist <= K.Cfg.TP then
+	elseif dist <= K.Cfg.TeleportDist then
 		s.tpCount = 0
 	end
 
-	if h > K.Cfg.MS and not inCar and not laggy then
+	if h > K.Cfg.MaxSpeed and not inCar and not K.IsWhitelisted(pl, "speed") then
 		s.spd = s.spd + 1
 		if s.spd >= 4 then
 			K.Suspicion(pl, 3, "speed:" .. math.floor(h))
@@ -534,9 +759,10 @@ function K.TickOne(uid)
 		and state == Enum.HumanoidStateType.Freefall
 		and s.lastJumpY
 		and y > s.lastJumpY + 15
-		and v.Y < 0
+		and dist > 20
+		and v.Y > -5
 		and not inCar
-		and not laggy then
+		and not K.IsWhitelisted(pl, "pos_jump") then
 		K.Suspicion(pl, 4, "pos_jump")
 		return
 	end
@@ -545,21 +771,24 @@ function K.TickOne(uid)
 		and state == Enum.HumanoidStateType.Freefall
 		and os.clock() - s.jumpedAt > 2
 		and dist > 10
-		and v.Y > -30
+		and v.Y < -30
 		and not inCar
-		and not laggy then
+		and not K.IsWhitelisted(pl, "jumpmove") then
 		K.Suspicion(pl, 3, "jumpmove")
 		return
 	end
 
-	if state == Enum.HumanoidStateType.Freefall and v.Y > -50 then
+	if s.jumped
+		and state == Enum.HumanoidStateType.Freefall
+		and v.Y > -10
+		and not K.IsWhitelisted(pl, "up") then
 		if y > s.upLastY + 2 then
 			s.upCount = s.upCount + 1
 		end
 		s.upLastY = y
 
 		local elapsed = os.clock() - s.upStart
-		if s.upCount >= K.Cfg.UC and elapsed <= K.Cfg.UW then
+		if s.upCount >= K.Cfg.UpCount and elapsed <= K.Cfg.UpWindow then
 			K.Suspicion(pl, 5, "up")
 			s.upCount = 0
 			s.upStart = os.clock()
@@ -569,9 +798,11 @@ function K.TickOne(uid)
 
 	if state == Enum.HumanoidStateType.Freefall
 		and not s.jumped
-		and move > 0 then
+		and move > 0
+		and v.Y < -30
+		and not K.IsWhitelisted(pl, "airmove") then
 		s.freeMove = s.freeMove + 0.5
-		if s.freeMove >= K.Cfg.FREE_MOVE_LIM then
+		if s.freeMove >= K.Cfg.FreeMoveLimit then
 			K.Suspicion(pl, 4, "airmove")
 			s.freeMove = 0
 			return
@@ -581,9 +812,11 @@ function K.TickOne(uid)
 	end
 
 	if state == Enum.HumanoidStateType.Freefall
-		and not s.jumped then
+		and not s.jumped
+		and v.Y < -30
+		and not K.IsWhitelisted(pl, "freefall") then
 		s.freeTime = s.freeTime + 0.5
-		if s.freeTime >= K.Cfg.L then
+		if s.freeTime >= K.Cfg.FreefallLimit then
 			K.Suspicion(pl, 5, "freefall")
 			s.freeTime = 0
 		end
@@ -594,35 +827,38 @@ function K.StartHeartbeat()
 	local conn = rs.Heartbeat:Connect(function(dtF)
 		if K.Dead then return end
 
+		K.DsCheck()
+
 		for uid, s in pairs(K.S) do
 			local ch = s.ch
 			if not ch or not ch.Parent then
 				K.S[uid] = nil
-				continue
-			end
+			else
+				local hrp = s.hrp
+				if hrp and hrp.Parent then
+					local pl = s.pl
+					if pl then
+						local v = hrp.AssemblyLinearVelocity
+						local h = Vector3.new(v.X, 0, v.Z).Magnitude
+						local newY = v.Y
 
-			local hrp = s.hrp
-			if not hrp or not hrp.Parent then continue end
+						if not s.inCar then
+							local limit = K.Cfg.MaxSpeed * K.Cfg.SpeedClampMult
+							if h > limit then
+								v = Vector3.new(
+									v.X / h * K.Cfg.MaxSpeed,
+									v.Y,
+									v.Z / h * K.Cfg.MaxSpeed
+								)
+							end
 
-			local pl = s.pl
-			if not pl then continue end
+							if newY > 50 then newY = 50 end
+							if newY < -150 then newY = -150 end
 
-			local v = hrp.AssemblyLinearVelocity
-			local h = Vector3.new(v.X, 0, v.Z).Magnitude
-			local newY = v.Y
-
-			if not pl:GetAttribute("inCar") then
-				if h > K.Cfg.MS then
-					v = Vector3.new(v.X / h * K.Cfg.MS, v.Y, v.Z / h * K.Cfg.MS)
+							hrp.AssemblyLinearVelocity = Vector3.new(v.X, newY, v.Z)
+						end
+					end
 				end
-
-				if newY > 50 then
-					newY = 50
-				elseif newY < -150 then
-					newY = -150
-				end
-
-				hrp.AssemblyLinearVelocity = Vector3.new(v.X, newY, v.Z)
 			end
 		end
 
@@ -638,30 +874,33 @@ function K.StartHeartbeat()
 end
 
 function K.StartReportListener()
-	local conn = K.Report.OnServerEvent:Connect(function(pl, ws, state, pos, floor)
+	local conn = K.Report.OnServerEvent:Connect(function(pl, ws, token)
 		if K.Dead then return end
 		local s = K.S[pl.UserId]
 		if not s then return end
 
 		local now = os.clock()
-		if now - s.lastReport < 0.9 then
-			K.Suspicion(pl, 2, "report:spam")
+		if now - s.lastReport < 0.5 then
+			s.lastReport = now
+			K.Suspicion(pl, 1, "report:spam")
 			return
 		end
 		s.lastReport = now
-		s.reportOk = true
 
-		if type(ws) ~= "number" then return end
-		if ws < 0 or ws > 500 then
-			K.Suspicion(pl, 5, "report:ws")
+		if token ~= s.token then
+			K.Suspicion(pl, 2, "report:token")
+			s.lastReport = os.clock()
 			return
 		end
 
-		if not s.hum then return end
-		local realWS = s.hum.WalkSpeed
-		local tolerance = 2 + (K.GetPing(pl) / 100)
-		if math.abs(realWS - ws) > tolerance then
-			K.Suspicion(pl, 5, "report:mismatch")
+		if type(ws) ~= "number" then
+			K.Suspicion(pl, 2, "report:bad_ws")
+			return
+		end
+
+		if ws < 0 or ws > 500 then
+			K.Suspicion(pl, 5, "report:ws")
+			return
 		end
 	end)
 	table.insert(K.Connections, conn)
@@ -669,63 +908,41 @@ end
 
 function K.StartHoneypot()
 	task.spawn(function()
-		local base = workspace:WaitForChild("Baseplate", 10)
-		if not base then return end
 		if K.Dead then return end
 
-		for _, p in ipairs(workspace:GetChildren()) do
-			if p.Name == "_hp" then
-				p:Destroy()
-			end
-		end
-
-		local hp = Instance.new("Part")
-		hp.Name = "_hp"
-		hp.Size = Vector3.new(4, 4, 4)
-		hp.Anchored = true
-		hp.CanCollide = false
-		hp.Transparency = 1
-		hp.CanQuery = false
-		hp.CanTouch = true
-		hp.Position = Vector3.new(0, -100, 0)
-		hp.Parent = workspace
-		K.HP = hp
-
-		local hpGrace = {}
-
-		plrs.PlayerRemoving:Connect(function(pl)
-			hpGrace[pl.UserId] = nil
-		end)
-
-		hp.Touched:Connect(function(hit)
-			if K.Dead then return end
-			local ch = hit:FindFirstAncestorOfClass("Model")
-			if not ch then return end
-			local pl = plrs:GetPlayerFromCharacter(ch)
-			if not pl then return end
-
-			local hrp = ch:FindFirstChild("HumanoidRootPart")
-			if not hrp then return end
-
-			if hrp.AssemblyLinearVelocity.Y < -50 then return end
-			if hrp.Position.Y > -80 then return end
-
-			local now = os.clock()
-			if hpGrace[pl.UserId] and now - hpGrace[pl.UserId] < K.Cfg.HP_SAFE then return end
-			hpGrace[pl.UserId] = now
-
-			K.Suspicion(pl, 5, "noclip_honeypot")
-			if pl.Character then
-				hrp.CFrame = CFrame.new(0, 100, 0)
-			end
-		end)
+		local sizeVec = Vector3.new(K.Cfg.HoneypotSize, K.Cfg.HoneypotSize, K.Cfg.HoneypotSize)
 
 		while K.Running do
-			task.wait(60)
-			if not K.Running then break end
-			local x = math.random(-500, 500)
-			local z = math.random(-500, 500)
-			hp.Position = Vector3.new(x, -100, z)
+			task.wait(5)
+
+			for i = 1, K.Cfg.HoneypotCount do
+				local center = Vector3.new(
+					math.random(-K.Cfg.HoneypotRange, K.Cfg.HoneypotRange),
+					K.Cfg.HoneypotY,
+					math.random(-K.Cfg.HoneypotRange, K.Cfg.HoneypotRange)
+				)
+
+				local parts = workspace:GetPartBoundsInBox(
+					CFrame.new(center),
+					sizeVec
+				)
+
+				for _, part in ipairs(parts) do
+					local ch = part:FindFirstAncestorOfClass("Model")
+					if ch then
+						local pl = plrs:GetPlayerFromCharacter(ch)
+						if pl and pl.Character == ch then
+							local s = K.State(pl.UserId)
+							if not s.wlTag then
+								local hrp = ch:FindFirstChild("HumanoidRootPart")
+								if hrp and hrp.AssemblyLinearVelocity.Y >= -50 then
+									K.Suspicion(pl, 5, "noclip_honeypot")
+								end
+							end
+						end
+					end
+				end
+			end
 		end
 	end)
 end
@@ -734,17 +951,6 @@ function K.OnPlayerAdded(pl)
 	if K.Dead then return end
 	local s = K.State(pl.UserId)
 	s.pl = pl
-
-	local nw = os.clock()
-	if nw - s.js.t > K.Cfg.SW then
-		s.js = {n = 1, t = nw}
-	else
-		s.js.n = s.js.n + 1
-		if s.js.n >= K.Cfg.SL then
-			K.Kick(pl, "hvatit spamit XD")
-			s.js = {n = 0, t = nw}
-		end
-	end
 
 	local c1 = pl.CharacterAdded:Connect(function(ch)
 		K.Bind(pl, ch)
@@ -758,17 +964,27 @@ function K.OnPlayerAdded(pl)
 	task.spawn(function()
 		if K.Dead then return end
 
-		local ok, bu = pcall(K.Bans.GetAsync, K.Bans, "ban_" .. pl.UserId)
-		if not ok then
-			local k = "gB:" .. tostring(bu)
-			s.err[k] = (s.err[k] or 0) + 1
-			if s.err[k] >= K.Cfg.EL then
-				K.Dead = true
-				K.Dt = os.clock()
-				warn("[KotowAC] off: " .. k)
-			end
-			bu = nil
+		if K.DsDown then
+			K.Log(2, "ds down, kick: " .. pl.Name)
+			K.Kick(pl, "ac: ds unavailable")
+			return
 		end
+
+		local ok, bu
+		for attempt = 1, 3 do
+			ok, bu = pcall(K.Bans.GetAsync, K.Bans, "ban_" .. pl.UserId)
+			if ok then break end
+			task.wait(0.5)
+		end
+		if not ok then
+			K.DsErr("get:ban")
+			K.DsDownInc()
+			K.Log(3, "ds fail get:ban, kick " .. pl.Name)
+			K.Kick(pl, "ac: ds unavailable")
+			return
+		end
+
+		K.DsDownCount = 0
 
 		if type(bu) == "number" and bu > os.time() then
 			local left = math.floor((bu - os.time()) / 60)
@@ -776,30 +992,42 @@ function K.OnPlayerAdded(pl)
 			return
 		end
 
-		local ok2, wd = pcall(K.Bans.GetAsync, K.Bans, "warn_" .. pl.UserId)
+		local ok2, wd
+		for attempt = 1, 3 do
+			ok2, wd = pcall(K.Bans.GetAsync, K.Bans, "warn_" .. pl.UserId)
+			if ok2 then break end
+			task.wait(0.5)
+		end
 		if not ok2 then
-			local k = "gW:" .. tostring(wd)
-			s.err[k] = (s.err[k] or 0) + 1
-			if s.err[k] >= K.Cfg.EL then
-				K.Dead = true
-				K.Dt = os.clock()
-				warn("[KotowAC] off: " .. k)
-			end
-			wd = nil
+			K.DsErr("get:warn")
+			K.DsDownInc()
+			K.Log(3, "ds fail get:warn, kick " .. pl.Name)
+			K.Kick(pl, "ac: ds unavailable")
+			return
 		end
 
 		if type(wd) == "table"
 			and type(wd.n) == "number"
 			and type(wd.t) == "number"
-			and os.time() - wd.t < K.Cfg.WR then
+			and os.time() - wd.t < K.Cfg.WarnReset then
 			s.wrn = wd.n
 			if wd.n >= 4 then
-				K.Bans:SetAsync("ban_" .. pl.UserId, os.time() + K.Cfg.BT)
-				K.Kick(pl, K.Msgs.ban[math.random(#K.Msgs.ban)])
+				local msg = K.Msgs.ban[math.random(#K.Msgs.ban)]
+				task.spawn(function()
+					local ok3 = pcall(K.Bans.SetAsync, K.Bans, "ban_" .. pl.UserId, os.time() + K.Cfg.BanTime)
+					if not ok3 then
+						K.DsErr("set:ban")
+					end
+					K.Kick(pl, msg)
+				end)
 				return
 			end
 		else
 			s.wrn = 0
+		end
+
+		if #s.err > 50 then
+			s.err = {}
 		end
 	end)
 end
@@ -811,11 +1039,14 @@ function K.OnPlayerRemoving(pl)
 			pcall(function() c:Disconnect() end)
 		end
 
-		if K.Logs then
+		if K.Logs and not K.DsDead then
 			local uid = pl.UserId
 			local data = {susp = s.susp, wrn = s.wrn, t = os.time()}
 			task.spawn(function()
-				pcall(K.Logs.SetAsync, K.Logs, "last_" .. uid, data)
+				local ok = pcall(K.Logs.SetAsync, K.Logs, "last_" .. uid, data)
+				if not ok then
+					K.DsErr("log:last")
+				end
 			end)
 		end
 	end
@@ -827,13 +1058,13 @@ function K.Run()
 	K.Running = true
 	K.Dead = false
 	K.DsDead = false
-	K.Dt = nil
+	K.DsDown = false
+	K.DsDownAt = 0
+	K.DsDownCount = 0
+	K.DsErrCount = 0
+	K.DsErrAt = 0
 	K.Acc = 0
 	K.Init()
-
-	K.AddWhitelist("lift")
-	K.AddWhitelist("trampoline")
-	K.AddWhitelist("admin")
 
 	local c1 = plrs.PlayerAdded:Connect(K.OnPlayerAdded)
 	table.insert(K.Connections, c1)
@@ -851,20 +1082,8 @@ function K.Run()
 
 	task.spawn(function()
 		while K.Running do
-			task.wait(30)
-
-			if (K.Dead or K.DsDead) and K.Dt and os.clock() - K.Dt >= K.Cfg.RT then
-				K.Dead = false
-				K.DsDead = false
-				K.Dt = nil
-				for _, s in pairs(K.S) do
-					s.err = {}
-					s.js = {n = 0, t = 0}
-					s.jsp = {n = 0, t = 0}
-					s.susp = 0
-				end
-				warn("[KotowAC] revived")
-			end
+			task.wait(3600)
+			K.Stats = {}
 		end
 	end)
 
@@ -889,29 +1108,8 @@ function K.Stop()
 	end
 
 	K.S = {}
-
-	if K.HP then
-		K.HP:Destroy()
-		K.HP = nil
-	end
-
 	K.Acc = 0
 	print("[KotowAC] stopped")
-end
-
-local URL = ""
-
-K.RegisterPlugin("Webhook", {
-	Send = function(msg)
-		if URL == "" then return end
-		pcall(function()
-			http:PostAsync(URL, http:JSONEncode({content = msg}))
-		end)
-	end,
-})
-
-if URL == "" then
-	warn("[KotowAC] Webhook disabled (no URL)")
 end
 
 K.Run()
