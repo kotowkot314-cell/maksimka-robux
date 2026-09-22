@@ -13,6 +13,7 @@ local token = nil
 local lastSend = 0
 local lastAlert = 0
 local nextFetchAt = 0
+local fetchFails = 0
 
 local function fetchToken()
 	if not getToken then return end
@@ -21,14 +22,23 @@ local function fetchToken()
 	end)
 	if ok and type(t) == "string" then
 		token = t
+		fetchFails = 0
+		nextFetchAt = os.clock() + 5
+	else
+		fetchFails = fetchFails + 1
+		local delay = math.min(5 * (2 ^ (fetchFails - 1)), 60)
+		nextFetchAt = os.clock() + delay
 	end
-	nextFetchAt = os.clock() + 5
 end
 
-fetchToken()
+task.spawn(function()
+	task.wait(0.5)
+	fetchToken()
+end)
 
 pl.CharacterAdded:Connect(function()
 	task.wait(1)
+	fetchFails = 0
 	fetchToken()
 end)
 
@@ -49,6 +59,7 @@ rs.Heartbeat:Connect(function()
 	local hum = ch:FindFirstChildOfClass("Humanoid")
 	if not hum then return end
 
+	if not pl.Parent then return end
 	report:FireServer(hum.WalkSpeed, token)
 end)
 
