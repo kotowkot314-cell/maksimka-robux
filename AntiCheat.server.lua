@@ -1,3 +1,7 @@
+-- KotowAC v6.0.5
+-- Author: kotowkot314-cell
+-- Repo:   github.com/kotowkot314-cell/maksimka-robux
+
 local plrs = game:GetService("Players")
 local dss = game:GetService("DataStoreService")
 local rs = game:GetService("RunService")
@@ -8,95 +12,107 @@ if rs:IsStudio() then return end
 
 local K = {}
 
-K.Version = "5.0.3"
+K.Version = "6.0.5"
 K.Name = "KotowAC"
 K.Running = false
 
 K.Cfg = {
-	FreefallLimit = 4,
-	MaxSpeed = 80,
 	MaxSpeedWalk = 16,
 	MaxSpeedCar = 200,
 	SpeedTolerance = 15,
 	SpeedRatioMax = 2.0,
 	SpeedClampMult = 1.5,
+	FreefallLimit = 4,
 	JumpReset = 2,
+	MaxJumps = 10,
+	UpCount = 5,
+	UpWindow = 3,
+	FreeMoveLimit = 2,
+	TeleportDist = 50,
+	TeleportCount = 2,
+	CFrameWindow = 60,
+	CFrameMinDist = 5,
+	CFrameMaxSpeed = 15,
+	FlingVelocityMax = 500,
+	NeckAngleMax = 3.0,
 	BanTime = 3600,
 	WarnReset = 1800,
+	SuspKick = 8,
+	SuspBan = 15,
+	SuspDecay = 1,
+	SuspDecayTime = 60,
+	PunishCooldown = 2,
+	MacroWindow = 3,
+	MacroTolerance = 0.05,
+	MacroSamples = 10,
+	HoneypotCount = 8,
+	HoneypotSize = 8,
+	HoneypotRange = 500,
+	HoneypotY = -100,
+	HoneypotMinY = -200,
+	HoneypotVelocityMax = -50,
+	MinAccountAge = 30,
+	NewAccountSusp = 3,
+	GraceTime = 5,
+	PingMax = 150,
+	ReportTimeout = 30,
+	ReportSpamKick = 5,
+	ReportSpamWindow = 5,
+	TokenSpamLimit = 5,
+	TokenCooldown = 1,
+	BodyBanThreshold = 15,
+	BodyCountCooldown = 30,
+	BodyCountResetDays = 30,
 	ErrLimit = 10,
 	ErrWindow = 60,
 	DsDownLimit = 5,
 	DsDownTime = 60,
 	SpamLimit = 30,
 	SpamWindow = 5,
-	MaxJumps = 10,
-	UpCount = 5,
-	UpWindow = 3,
-	TeleportDist = 50,
-	TeleportCount = 2,
-	GraceTime = 5,
-	PunishCooldown = 2,
-	FreeMoveLimit = 2,
-	SuspKick = 8,
-	SuspBan = 15,
-	PingMax = 150,
-	SuspDecay = 1,
-	SuspDecayTime = 60,
-	ReportTimeout = 30,
-	LogCooldown = 5,
 	LogLevel = 1,
+	LogCooldown = 5,
 	WebhookURL = "",
-
-	ReportSpamKick = 5,
-	ReportSpamWindow = 5,
-
-	BodyBanThreshold = 15,
-	BodyCountCooldown = 30,
-	BodyCountResetDays = 30,
-
+	WebhookIncludeCategory = true,
 	DevUserIds = {
 		[11295895158] = true,
 	},
-
 	PunishRules = {
-		body = "kick",
-		cframe = "kick",
+		ws = "kick",
 		speed = "kick",
 		tp = "kick",
 		freefall = "log",
-		report = "log",
-		token = "log",
-		jump = "log",
-		ws = "kick",
-		jump_power = "kick",
-		hip_height = "kick",
+		airmove = "kick",
+		up = "kick",
 		pos_jump = "kick",
 		jumpmove = "kick",
-		up = "kick",
-		airmove = "kick",
+		jump_power = "kick",
+		hip_height = "kick",
+		jump = "log",
+		body = "kick",
+		cframe = "kick",
 		noclip_honeypot = "kick",
 		macro = "kick",
+		invisibility = "kick",
+		neck_glitch = "kick",
+		fling_velocity = "kick",
+		report = "log",
+		token = "log",
+		account_age = "log",
 	},
-	CFrameWindow = 60,
-	HoneypotCount = 8,
-	HoneypotSize = 8,
-	HoneypotRange = 500,
-	HoneypotY = -100,
-	HoneypotMinY = -200,
-	HoneypotExcludeZones = {},
-	MinAccountAge = 30,
-	NewAccountSusp = 3,
-	MacroWindow = 3,
-	MacroTolerance = 0.05,
-	MacroSamples = 10,
 	WhitelistTags = {
 		lift = {"tp", "speed", "freefall", "airmove"},
 		trampoline = {"up", "pos_jump", "freefall"},
-		admin = {"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump", "jumpmove", "body", "cframe", "hip_height", "jump_power", "noclip_honeypot"},
+		admin = {
+			"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump",
+			"jumpmove", "body", "cframe", "hip_height", "jump_power",
+			"noclip_honeypot", "macro", "invisibility", "neck_glitch",
+			"fling_velocity",
+		},
 		dev = {
 			"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump",
 			"jumpmove", "body", "cframe", "hip_height", "jump_power",
-			"noclip_honeypot", "macro", "jump", "report",
+			"noclip_honeypot", "macro", "jump", "report", "invisibility",
+			"neck_glitch", "fling_velocity",
 		},
 	},
 }
@@ -107,7 +123,6 @@ K.Msgs = {
 		"otdohny chasok :P",
 		"ban na chas, dumay",
 	},
-	bodyBan = "body/cframe abuse: ban",
 	kick = {
 		"hvatit spamit XD",
 		"chto ty delaesh :P",
@@ -140,61 +155,14 @@ K.Alert = nil
 K.Report = nil
 K.GetToken = nil
 K.Stats = {}
+K.Metrics = {
+	totalDetects = 0,
+	totalKicks = 0,
+	totalBans = 0,
+	byDetector = {},
+	byCategory = {},
+}
 K.Random = Random.new()
-
-function K.Init()
-	K.Bans = dss:GetDataStore("KotowAC_Bans_v2")
-	K.Logs = dss:GetDataStore("KotowAC_Logs_v2")
-	K.BodyCounts = dss:GetDataStore("KotowAC_BodyCounts_v1")
-
-	K.Alert = rs2:FindFirstChild("ACAlert")
-	if not K.Alert then
-		K.Alert = Instance.new("RemoteEvent")
-		K.Alert.Name = "ACAlert"
-		K.Alert.Parent = rs2
-	end
-
-	K.Report = rs2:FindFirstChild("ACReport")
-	if not K.Report then
-		K.Report = Instance.new("RemoteEvent")
-		K.Report.Name = "ACReport"
-		K.Report.Parent = rs2
-	end
-
-	K.GetToken = rs2:FindFirstChild("ACGetToken")
-	if not K.GetToken then
-		K.GetToken = Instance.new("RemoteFunction")
-		K.GetToken.Name = "ACGetToken"
-		K.GetToken.Parent = rs2
-	end
-
-	K.GetToken.OnServerInvoke = function(pl)
-		local s = K.S[pl.UserId]
-		if not s then return nil end
-		local now = os.clock()
-		if now - (s.lastTokenFetch or 0) < 1 then
-			s.tokenSpam = (s.tokenSpam or 0) + 1
-			if s.tokenSpam >= 5 then
-				local spam = s.tokenSpam
-				s.tokenSpam = 0
-				task.defer(function()
-					if pl.Parent then
-						K.Suspicion(pl, 2, "token:spam:" .. spam)
-					end
-				end)
-			end
-			return s.token
-		end
-		s.lastTokenFetch = now
-		s.tokenSpam = 0
-		if not s.token then
-			s.token = K.GenToken(pl.UserId)
-		end
-		return s.token
-	end
-
-	K.Log(1, "init v" .. K.Version)
-end
 
 function K.Log(level, msg)
 	if level < K.Cfg.LogLevel then return end
@@ -205,16 +173,67 @@ function K.Log(level, msg)
 	print(prefix .. " " .. msg)
 end
 
-function K.Webhook(msg)
+function K.Webhook(msg, category)
 	if K.Cfg.WebhookURL == "" then return end
 	if not string.find(K.Cfg.WebhookURL, "discord%.com/api/webhooks/") then return end
+	local content = msg
+	if K.Cfg.WebhookIncludeCategory and category then
+		content = "[" .. category .. "] " .. msg
+	end
 	pcall(function()
-		http:PostAsync(K.Cfg.WebhookURL, http:JSONEncode({content = msg}))
+		http:PostAsync(K.Cfg.WebhookURL, http:JSONEncode({content = content}))
 	end)
+end
+
+function K.MetricInc(detector, category)
+	K.Metrics.totalDetects = K.Metrics.totalDetects + 1
+	K.Metrics.byDetector[detector] = (K.Metrics.byDetector[detector] or 0) + 1
+	K.Metrics.byCategory[category] = (K.Metrics.byCategory[category] or 0) + 1
 end
 
 function K.StatsInc(key)
 	K.Stats[key] = (K.Stats[key] or 0) + 1
+end
+
+function K.IsBodyMover(d)
+	return d:IsA("BodyVelocity")
+		or d:IsA("BodyGyro")
+		or d:IsA("BodyAngularVelocity")
+		or d:IsA("BodyPosition")
+		or d:IsA("BodyThrust")
+		or d:IsA("BodyForce")
+		or d:IsA("LinearVelocity")
+		or d:IsA("AngularVelocity")
+		or d:IsA("AlignPosition")
+		or d:IsA("AlignOrientation")
+		or d:IsA("VectorForce")
+end
+
+function K.Kick(pl, txt)
+	if pl and pl.Parent then
+		pl:Kick(txt)
+	end
+end
+
+function K.KickRandom(pl)
+	local list = K.Msgs.kick
+	local msg = (list and #list > 0) and list[math.random(#list)] or "kick"
+	K.Kick(pl, msg)
+end
+
+function K.GetPing(pl)
+	local ok, ping = pcall(function()
+		return pl:GetNetworkPing() * 1000
+	end)
+	if ok then return ping end
+	return 0
+end
+
+function K.GenToken(uid)
+	local a = K.Random:NextNumber(100000, 999999)
+	local b = K.Random:NextInteger(0, 0x7FFFFFFF)
+	local c = uid or 0
+	return string.format("%x%x%x", math.floor(a), b, c)
 end
 
 function K.DsErr(reason)
@@ -266,57 +285,33 @@ function K.State(uid)
 			lastPunish = 0, wrn = 0,
 			jsp = {n = 0, t = 0},
 			ch = nil, hum = nil, hrp = nil, pl = nil,
-			detectCooldown = {},
 			conns = {},
 			susp = 0,
 			suspAt = 0,
 			lastDecay = 0,
 			lastReport = 0,
+			reportSpam = 0,
+			reportSpamAt = 0,
 			token = nil,
+			lastTokenFetch = -10,
+			tokenSpam = 0,
 			lastLog = 0,
 			inCar = false,
 			wlTag = nil,
 			wlChecks = nil,
 			legitSpeed = nil,
-			lastTokenFetch = -10,
-			tokenSpam = 0,
 			cframeCount = 0,
 			cframeAt = 0,
 			jumpTimes = {},
-			reportSpam = 0,
-			reportSpamAt = 0,
 			bodyCount = 0,
 			bodyCountAt = 0,
+			neckWarnCount = 0,
+			invisWarnCount = 0,
+			detectCooldown = {},
 		}
 		K.S[uid] = s
 	end
 	return s
-end
-
-function K.IsBodyMover(d)
-	return d:IsA("BodyVelocity")
-		or d:IsA("BodyGyro")
-		or d:IsA("BodyAngularVelocity")
-		or d:IsA("BodyPosition")
-		or d:IsA("BodyThrust")
-		or d:IsA("BodyForce")
-		or d:IsA("LinearVelocity")
-		or d:IsA("AngularVelocity")
-		or d:IsA("AlignPosition")
-		or d:IsA("AlignOrientation")
-		or d:IsA("VectorForce")
-end
-
-function K.Kick(pl, txt)
-	if pl and pl.Parent then
-		pl:Kick(txt)
-	end
-end
-
-function K.KickRandom(pl)
-	local list = K.Msgs.kick
-	local msg = (list and #list > 0) and list[math.random(#list)] or "kick"
-	K.Kick(pl, msg)
 end
 
 function K.SetInCar(pl, state)
@@ -351,16 +346,61 @@ function K.IsWhitelisted(pl, check)
 	end
 	return false
 end
+function K.Init()
+	K.Bans = dss:GetDataStore("KotowAC_Bans_v3")
+	K.Logs = dss:GetDataStore("KotowAC_Logs_v3")
+	K.BodyCounts = dss:GetDataStore("KotowAC_BodyCounts_v2")
 
-function K.GetPing(pl)
-	local ok, ping = pcall(function()
-		return pl:GetNetworkPing() * 1000
-	end)
-	if ok then return ping end
-	return 0
+	K.Alert = rs2:FindFirstChild("ACAlert")
+	if not K.Alert then
+		K.Alert = Instance.new("RemoteEvent")
+		K.Alert.Name = "ACAlert"
+		K.Alert.Parent = rs2
+	end
+
+	K.Report = rs2:FindFirstChild("ACReport")
+	if not K.Report then
+		K.Report = Instance.new("RemoteEvent")
+		K.Report.Name = "ACReport"
+		K.Report.Parent = rs2
+	end
+
+	K.GetToken = rs2:FindFirstChild("ACGetToken")
+	if not K.GetToken then
+		K.GetToken = Instance.new("RemoteFunction")
+		K.GetToken.Name = "ACGetToken"
+		K.GetToken.Parent = rs2
+	end
+
+	K.GetToken.OnServerInvoke = function(pl)
+		local s = K.S[pl.UserId]
+		if not s then return nil end
+		local now = os.clock()
+		if now - (s.lastTokenFetch or 0) < K.Cfg.TokenCooldown then
+			s.tokenSpam = (s.tokenSpam or 0) + 1
+			if s.tokenSpam >= K.Cfg.TokenSpamLimit then
+				local spam = s.tokenSpam
+				s.tokenSpam = 0
+				task.defer(function()
+					if pl.Parent then
+						K.Suspicion(pl, 2, "token:spam:" .. spam)
+					end
+				end)
+			end
+			return s.token
+		end
+		s.lastTokenFetch = now
+		s.tokenSpam = 0
+		if not s.token then
+			s.token = K.GenToken(pl.UserId)
+		end
+		return s.token
+	end
+
+	K.Log(1, "init v" .. K.Version)
 end
 
-function K.LogPunish(pl, reason, w)
+function K.LogPunish(pl, reason, w, category)
 	local entry = "[KotowAC] " .. pl.Name .. " (" .. pl.UserId .. ") | " .. (reason or "?") .. " | warn " .. w
 	K.Log(2, entry .. " | " .. os.date("%H:%M:%S"))
 
@@ -368,61 +408,89 @@ function K.LogPunish(pl, reason, w)
 		K.Alert:FireAllClients(pl.Name, reason, w)
 	end
 
-	K.Webhook(entry)
+	K.Webhook(entry, category)
 end
 
-function K.BodyCountInc(pl, reason)
-	local s = K.State(pl.UserId)
-	local now = os.clock()
+function K.AddDetect(name, fn, priority, cooldown, category, weight)
+	K.Detects[name] = {
+		name = name,
+		fn = fn,
+		priority = priority or 100,
+		cooldown = cooldown or 0,
+		category = category or "custom",
+		weight = weight or 5,
+	}
+	K.DetectsDirty = true
+end
 
-	if now - (s.bodyCountAt or 0) < K.Cfg.BodyCountCooldown then
-		return
+function K.AddPunish(name, fn)
+	K.Punishes[name] = fn
+end
+
+function K.RegisterPlugin(name, mod)
+	if type(mod) ~= "table" then return end
+	K.Plugins[name] = mod
+	if type(mod.OnLoad) == "function" then
+		pcall(mod.OnLoad, K)
 	end
-	s.bodyCountAt = now
-	s.bodyCount = (s.bodyCount or 0) + 1
+end
 
-	local uid = pl.UserId
-	local cnt = s.bodyCount
-	local threshold = K.Cfg.BodyBanThreshold
-
-	if cnt >= threshold then
-		s.bodyCount = 0
-		task.spawn(function()
-			if K.BodyCounts and not K.DsDead then
-				pcall(K.BodyCounts.SetAsync, K.BodyCounts, "bc_" .. uid, {n = 0, t = os.time()})
-			end
-			K.Punish(pl, "rule_ban:body_threshold")
+function K.RunDetects(pl, s)
+	if K.DetectsDirty then
+		K.DetectsSorted = {}
+		for _, d in pairs(K.Detects) do
+			table.insert(K.DetectsSorted, d)
+		end
+		table.sort(K.DetectsSorted, function(a, b)
+			return a.priority < b.priority
 		end)
-		return
+		K.DetectsDirty = false
 	end
 
-	task.spawn(function()
-		if K.BodyCounts and not K.DsDead then
-			pcall(K.BodyCounts.SetAsync, K.BodyCounts, "bc_" .. uid, {n = cnt, t = os.time()})
+	for _, d in ipairs(K.DetectsSorted) do
+		local skip = false
+		if d.cooldown > 0 then
+			local last = s.detectCooldown[d.name] or 0
+			if os.clock() - last < d.cooldown then
+				skip = true
+			end
 		end
-	end)
+
+		if not skip then
+			local ok, result = pcall(d.fn, pl, s)
+			s.detectCooldown[d.name] = os.clock()
+			if ok and result then
+				return d.name, d.category, d.weight
+			end
+		end
+	end
+	return nil, nil, nil
 end
 
-function K.BodyCountLoad(pl)
-	local uid = pl.UserId
-	local s = K.State(uid)
-	task.spawn(function()
-		if not K.BodyCounts or K.DsDead then return end
-		local ok, data
-		for attempt = 1, 3 do
-			ok, data = pcall(K.BodyCounts.GetAsync, K.BodyCounts, "bc_" .. uid)
-			if ok then break end
-			task.wait(0.5)
-		end
-		if not ok or type(data) ~= "table" then return end
-
-		local age = os.time() - (data.t or 0)
-		if age > K.Cfg.BodyCountResetDays * 86400 then
-			return
-		end
-		s.bodyCount = tonumber(data.n) or 0
-		K.Log(1, "bodyCount load: " .. pl.Name .. " = " .. s.bodyCount)
-	end)
+function K.CategorizeRule(reason)
+	if not reason then return "unknown" end
+	if string.find(reason, "body", 1, true) == 1 then return "state" end
+	if string.find(reason, "cframe", 1, true) == 1 then return "state" end
+	if string.find(reason, "noclip", 1, true) == 1 then return "state" end
+	if string.find(reason, "macro", 1, true) == 1 then return "state" end
+	if string.find(reason, "ws", 1, true) == 1 then return "movement" end
+	if string.find(reason, "speed", 1, true) == 1 then return "movement" end
+	if string.find(reason, "tp", 1, true) == 1 then return "movement" end
+	if string.find(reason, "freefall", 1, true) == 1 then return "movement" end
+	if string.find(reason, "airmove", 1, true) == 1 then return "movement" end
+	if string.find(reason, "pos_jump", 1, true) == 1 then return "movement" end
+	if string.find(reason, "jumpmove", 1, true) == 1 then return "movement" end
+	if string.find(reason, "jump_power", 1, true) == 1 then return "movement" end
+	if string.find(reason, "hip_height", 1, true) == 1 then return "movement" end
+	if string.find(reason, "up", 1, true) == 1 then return "movement" end
+	if string.find(reason, "jump", 1, true) == 1 then return "movement" end
+	if string.find(reason, "invisibility", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "neck_glitch", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "fling", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "report", 1, true) == 1 then return "meta" end
+	if string.find(reason, "token", 1, true) == 1 then return "meta" end
+	if string.find(reason, "account_age", 1, true) == 1 then return "meta" end
+	return "custom"
 end
 
 function K.Suspicion(pl, weight, reason)
@@ -431,7 +499,10 @@ function K.Suspicion(pl, weight, reason)
 	local s = K.State(pl.UserId)
 	s.susp = s.susp + weight
 	s.suspAt = os.clock()
+
+	local category = K.CategorizeRule(reason)
 	K.StatsInc(reason or "?")
+	K.MetricInc(reason or "?", category)
 
 	if K.Logs and weight >= 3 and not K.DsDead then
 		local now = os.clock()
@@ -439,6 +510,7 @@ function K.Suspicion(pl, weight, reason)
 			s.lastLog = now
 			local uid = pl.UserId
 			local suspNow = s.susp
+			local cat = category
 			task.spawn(function()
 				local ok = pcall(K.Logs.UpdateAsync, K.Logs, "susp_" .. uid, function(data)
 					if type(data) ~= "table" then
@@ -452,6 +524,7 @@ function K.Suspicion(pl, weight, reason)
 						n = suspNow,
 						w = weight,
 						r = reason,
+						c = cat,
 						t = os.time(),
 					})
 
@@ -463,6 +536,7 @@ function K.Suspicion(pl, weight, reason)
 						n = suspNow,
 						w = weight,
 						r = reason,
+						c = cat,
 						t = os.time(),
 					}
 
@@ -476,40 +550,42 @@ function K.Suspicion(pl, weight, reason)
 	end
 
 	local rule = nil
+	local ruleKey = nil
 	if reason then
 		for key, action in pairs(K.Cfg.PunishRules) do
 			if string.find(reason, key, 1, true) == 1 then
 				rule = action
+				ruleKey = key
 				break
 			end
 		end
 	end
 
 	if rule == "ban" then
-		K.Punish(pl, "rule_ban:" .. (reason or "?"))
+		K.Punish(pl, "rule_ban:" .. (reason or "?"), category)
 		s.susp = 0
 		s.cframeCount = 0
 		s.cframeAt = 0
 	elseif rule == "kick" and s.susp >= K.Cfg.SuspKick then
-		K.Punish(pl, "rule_kick:" .. (reason or "?"))
+		K.Punish(pl, "rule_kick:" .. (reason or "?"), category)
 		s.susp = 0
 		s.cframeCount = 0
 		s.cframeAt = 0
 	elseif rule == "log" then
 	elseif s.susp >= K.Cfg.SuspBan then
-		K.Punish(pl, "susp_ban:" .. (reason or "?"))
+		K.Punish(pl, "susp_ban:" .. (reason or "?"), category)
 		s.susp = 0
 		s.cframeCount = 0
 		s.cframeAt = 0
 	elseif s.susp >= K.Cfg.SuspKick then
-		K.Punish(pl, "susp_kick:" .. (reason or "?"))
+		K.Punish(pl, "susp_kick:" .. (reason or "?"), category)
 		s.susp = 0
 		s.cframeCount = 0
 		s.cframeAt = 0
 	end
 end
 
-function K.Punish(pl, reason)
+function K.Punish(pl, reason, category)
 	if K.Dead then return end
 	if not pl.Parent then return end
 
@@ -543,6 +619,7 @@ function K.Punish(pl, reason)
 					n = wrnNow,
 					s = suspNow,
 					r = reason,
+					c = category,
 					t = os.time(),
 				})
 				if not ok then
@@ -552,10 +629,10 @@ function K.Punish(pl, reason)
 		end
 	end)
 
-	K.LogPunish(pl, reason, s.wrn)
+	K.LogPunish(pl, reason, s.wrn, category)
 
 	for _, punishFn in pairs(K.Punishes) do
-		local ok2, result = pcall(punishFn, pl, s, reason)
+		local ok2, result = pcall(punishFn, pl, s, reason, category)
 		if ok2 and result == "stop" then
 			return
 		end
@@ -565,6 +642,7 @@ function K.Punish(pl, reason)
 	local isKick = reason and string.find(reason, "rule_kick:", 1, true) == 1
 
 	if isBan then
+		K.Metrics.totalBans = K.Metrics.totalBans + 1
 		local msg = K.Msgs.ban[math.random(#K.Msgs.ban)]
 		task.spawn(function()
 			local ok = pcall(K.Bans.SetAsync, K.Bans, "ban_" .. uid, banUntil)
@@ -574,68 +652,137 @@ function K.Punish(pl, reason)
 			K.Kick(pl, msg)
 		end)
 	elseif isKick then
+		K.Metrics.totalKicks = K.Metrics.totalKicks + 1
 		task.spawn(function()
 			K.KickRandom(pl)
 		end)
 	end
 end
+function K.BodyCountInc(pl, reason)
+	local s = K.State(pl.UserId)
+	local now = os.clock()
 
-function K.AddDetect(name, fn, priority, cooldown)
-	K.Detects[name] = {
-		name = name,
-		fn = fn,
-		priority = priority or 100,
-		cooldown = cooldown or 0,
-	}
-	K.DetectsDirty = true
-end
+	if now - (s.bodyCountAt or 0) < K.Cfg.BodyCountCooldown then
+		return
+	end
+	s.bodyCountAt = now
+	s.bodyCount = (s.bodyCount or 0) + 1
 
-function K.AddPunish(name, fn)
-	K.Punishes[name] = fn
-end
+	local uid = pl.UserId
+	local cnt = s.bodyCount
+	local threshold = K.Cfg.BodyBanThreshold
 
-function K.RegisterPlugin(name, mod)
-	K.Plugins[name] = mod
-end
-
-function K.RunDetects(pl, s)
-	if K.DetectsDirty then
-		K.DetectsSorted = {}
-		for _, d in pairs(K.Detects) do
-			table.insert(K.DetectsSorted, d)
-		end
-		table.sort(K.DetectsSorted, function(a, b)
-			return a.priority < b.priority
+	if cnt >= threshold then
+		s.bodyCount = 0
+		task.spawn(function()
+			if K.BodyCounts and not K.DsDead then
+				pcall(K.BodyCounts.SetAsync, K.BodyCounts, "bc_" .. uid, {n = 0, t = os.time()})
+			end
+			K.Punish(pl, "rule_ban:body_threshold", "state")
 		end)
-		K.DetectsDirty = false
+		return
 	end
 
-	for _, d in ipairs(K.DetectsSorted) do
-		local skip = false
-		if d.cooldown > 0 then
-			local last = s.detectCooldown[d.name] or 0
-			if os.clock() - last < d.cooldown then
-				skip = true
-			end
+	task.spawn(function()
+		if K.BodyCounts and not K.DsDead then
+			pcall(K.BodyCounts.SetAsync, K.BodyCounts, "bc_" .. uid, {n = cnt, t = os.time()})
 		end
+	end)
+end
 
-		if not skip then
-			local ok, result = pcall(d.fn, pl, s)
-			s.detectCooldown[d.name] = os.clock()
-			if ok and result then
-				return d.name
+function K.BodyCountLoad(pl)
+	local uid = pl.UserId
+	local s = K.State(uid)
+	task.spawn(function()
+		if not K.BodyCounts or K.DsDead then return end
+		local ok, data
+		for attempt = 1, 3 do
+			ok, data = pcall(K.BodyCounts.GetAsync, K.BodyCounts, "bc_" .. uid)
+			if ok then break end
+			task.wait(0.5)
+		end
+		if not ok or type(data) ~= "table" then return end
+
+		local age = os.time() - (data.t or 0)
+		if age > K.Cfg.BodyCountResetDays * 86400 then
+			return
+		end
+		s.bodyCount = tonumber(data.n) or 0
+		K.Log(1, "bodyCount load: " .. pl.Name .. " = " .. s.bodyCount)
+	end)
+end
+
+function K.DetectInvisibility(pl, s)
+	if K.IsWhitelisted(pl, "invisibility") then return false end
+	if not s.ch then return false end
+	if os.clock() < s.grace + 1 then return false end
+
+	local totalParts = 0
+	local invisibleParts = 0
+
+	for _, obj in ipairs(s.ch:GetChildren()) do
+		if obj:IsA("BasePart") and obj.Name ~= "HumanoidRootPart" then
+			totalParts = totalParts + 1
+			if obj.Transparency >= 0.95 then
+				invisibleParts = invisibleParts + 1
 			end
 		end
 	end
-	return nil
+
+	if totalParts >= 4 and invisibleParts >= totalParts then
+		return true
+	end
+	return false
 end
 
-function K.GenToken(uid)
-	local a = K.Random:NextNumber(100000, 999999)
-	local b = K.Random:NextInteger(0, 0x7FFFFFFF)
-	local c = uid or 0
-	return string.format("%x%x%x", math.floor(a), b, c)
+function K.DetectNeckGlitch(pl, s)
+	if K.IsWhitelisted(pl, "neck_glitch") then return false end
+	if not s.ch or not s.ch:FindFirstChild("Torso") then return false end
+	if os.clock() < s.grace + 1 then return false end
+	local torso = s.ch.Torso
+	local neck = torso:FindFirstChild("Neck")
+	if not neck or not neck:IsA("Motor6D") then return false end
+
+
+	local ok, x, y, z = pcall(function()
+		local a, b, c = neck.C0:toEulerAnglesXYZ()
+		return a, b, c
+	end)
+
+
+	if not ok then return false end
+
+
+	if math.abs(x) > 2.5
+		or math.abs(y) > 4.0
+		or math.abs(z) > 1.5 then
+		return true
+	end
+	return false
 end
+
+function K.DetectFlingVelocity(pl, s)
+	if K.IsWhitelisted(pl, "fling_velocity") then return false end
+	if not s.hrp then return false end
+
+	local v = s.hrp.AssemblyLinearVelocity
+	if v.Magnitude > K.Cfg.FlingVelocityMax then
+		return true
+	end
+	return false
+end
+
+K.AddDetect("invisibility", function(pl, s)
+	return K.DetectInvisibility(pl, s)
+end, 30, 2, "anomaly", 5)
+
+K.AddDetect("neck_glitch", function(pl, s)
+	return K.DetectNeckGlitch(pl, s)
+end, 35, 3, "anomaly", 3)
+
+K.AddDetect("fling_velocity", function(pl, s)
+	return K.DetectFlingVelocity(pl, s)
+end, 25, 1, "anomaly", 5)
 
 function K.Bind(pl, ch)
 	if K.Dead then return end
@@ -686,6 +833,8 @@ function K.Bind(pl, ch)
 	s.tokenSpam = 0
 	s.jumpTimes = {}
 	s.reportSpam = 0
+	s.neckWarnCount = 0
+	s.invisWarnCount = 0
 
 	if not s.legitSpeed or s.legitSpeed <= 0 then
 		s.legitSpeed = s.hum.WalkSpeed
@@ -860,13 +1009,13 @@ function K.TickOne(uid)
 		return
 	end
 
-	local name = K.RunDetects(pl, s)
-	if name then
-		K.Suspicion(pl, 3, name)
-		return
-	end
+	local name, category, weight = K.RunDetects(pl, s)
+if name then
+	K.Suspicion(pl, weight or 5, name)
+	return
+end
 
-	if cfDist > 5 and h < 15 and not inCar and not K.IsWhitelisted(pl, "cframe") then
+	if cfDist > K.Cfg.CFrameMinDist and h < K.Cfg.CFrameMaxSpeed and not inCar and not K.IsWhitelisted(pl, "cframe") then
 		local now = os.clock()
 		if now - s.cframeAt > K.Cfg.CFrameWindow then
 			s.cframeCount = 0
@@ -974,7 +1123,6 @@ function K.TickOne(uid)
 		end
 	end
 end
-
 function K.StartHeartbeat()
 	local conn = rs.Heartbeat:Connect(function(dtF)
 		if K.Dead then return end
@@ -997,12 +1145,12 @@ function K.StartHeartbeat()
 						local newY = v.Y
 
 						if not s.inCar then
-							local limit = K.Cfg.MaxSpeed * K.Cfg.SpeedClampMult
+							local limit = K.Cfg.MaxSpeedWalk * K.Cfg.SpeedClampMult * 8
 							if h > limit then
 								v = Vector3.new(
-									v.X / h * K.Cfg.MaxSpeed,
+									v.X / h * K.Cfg.MaxSpeedWalk,
 									v.Y,
-									v.Z / h * K.Cfg.MaxSpeed
+									v.Z / h * K.Cfg.MaxSpeedWalk
 								)
 							end
 
@@ -1110,7 +1258,7 @@ function K.StartHoneypot()
 								if pl and pl.Character == ch then
 									local hum = ch:FindFirstChildOfClass("Humanoid")
 									if hum and hum.Health > 0 then
-										if part.AssemblyLinearVelocity.Y >= -50 then
+										if part.AssemblyLinearVelocity.Y >= K.Cfg.HoneypotVelocityMax then
 											if not K.IsWhitelisted(pl, "noclip_honeypot") then
 												K.Suspicion(pl, 5, "noclip_honeypot")
 											end
@@ -1141,6 +1289,11 @@ function K.OnPlayerAdded(pl)
 	if pl.AccountAge < K.Cfg.MinAccountAge then
 		s.susp = s.susp + K.Cfg.NewAccountSusp
 		K.Log(2, "new account: " .. pl.Name .. " (age " .. pl.AccountAge .. ")")
+		task.defer(function()
+			if pl.Parent then
+				K.Suspicion(pl, 0, "account_age:" .. pl.AccountAge)
+			end
+		end)
 	end
 
 	local c1 = pl.CharacterAdded:Connect(function(ch)
@@ -1290,6 +1443,13 @@ function K.Run()
 			task.wait(3600)
 			if K.StatsGen == myGen then
 				K.Stats = {}
+				K.Metrics = {
+					totalDetects = 0,
+					totalKicks = 0,
+					totalBans = 0,
+					byDetector = {},
+					byCategory = {},
+				}
 			end
 		end
 	end)
@@ -1315,12 +1475,16 @@ function K.Stop()
 		s.conns = {}
 	end
 
-	K.S = {}
-	K.Acc = 0
-	print("[KotowAC] stopped")
+K.S = {}
+K.Acc = 0
+K.Metrics = {
+	totalDetects = 0,
+	totalKicks = 0,
+	totalBans = 0,
+	byDetector = {},
+	byCategory = {},
+}
+print("[KotowAC] stopped")
 end
 
 K.Run()
-
--- idi na hyi ya ne II;)
--- автор заебался XD
