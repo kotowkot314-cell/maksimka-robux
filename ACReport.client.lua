@@ -59,7 +59,6 @@ rs.Heartbeat:Connect(function()
 	local hum = ch:FindFirstChildOfClass("Humanoid")
 	if not hum then return end
 
-	if not pl.Parent then return end
 	report:FireServer(hum.WalkSpeed, token)
 end)
 
