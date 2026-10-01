@@ -2,6 +2,8 @@ local plr = game.Players.LocalPlayer
 local rs = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 local cam = workspace.CurrentCamera
+local tween = game:GetService("TweenService")
+local http = game:GetService("HttpService")
 
 getgenv().i_Russicool = getgenv().i_Russicool or {}
 local F = getgenv().i_Russicool
@@ -10,34 +12,81 @@ F.on = true
 F.espPlayers = false
 F.esp = {}
 F.fly = false
+F.flySpeed = 60
 F.noclip = false
 F.speed = 0
+F.jumpPower = 50
+F.infiniteJump = false
 F.autoDrive = false
+F.autoFling = false
 F.antiGrab = false
 F.strongFling = false
-F.notify = true
 F.flingStrength = 470
-F.flySpeed = 60
+F.notify = true
+F.theme = "red"
+F.minimized = false
+F.hitboxSize = 1
+
+local themes = {
+    red = {accent = Color3.fromRGB(220, 30, 30), bg = Color3.fromRGB(12, 12, 16)},
+    blue = {accent = Color3.fromRGB(30, 120, 220), bg = Color3.fromRGB(12, 14, 20)},
+    green = {accent = Color3.fromRGB(30, 200, 80), bg = Color3.fromRGB(10, 16, 12)},
+    purple = {accent = Color3.fromRGB(150, 30, 220), bg = Color3.fromRGB(16, 12, 20)},
+}
+
+local CONFIG_FILE = "i_Russicool_config.json"
+
+function F.saveConfig()
+    local data = {
+        theme = F.theme,
+        flySpeed = F.flySpeed,
+        flingStrength = F.flingStrength,
+        speed = F.speed,
+        hitboxSize = F.hitboxSize,
+    }
+    pcall(function()
+        writefile(CONFIG_FILE, http:JSONEncode(data))
+    end)
+end
+
+function F.loadConfig()
+    pcall(function()
+        if isfile and isfile(CONFIG_FILE) then
+            local data = http:JSONDecode(readfile(CONFIG_FILE))
+            F.theme = data.theme or F.theme
+            F.flySpeed = data.flySpeed or F.flySpeed
+            F.flingStrength = data.flingStrength or F.flingStrength
+            F.speed = data.speed or F.speed
+            F.hitboxSize = data.hitboxSize or F.hitboxSize
+        end
+    end)
+end
+
+F.loadConfig()
 
 function F.notif(title, body, t)
     if not F.notify then return end
     t = t or 4
+    local th = themes[F.theme]
     local gui = Instance.new("ScreenGui")
     gui.Name = "i_Russicool_notif"
     gui.ResetOnSpawn = false
     gui.Parent = plr:WaitForChild("PlayerGui")
 
     local f = Instance.new("Frame")
-    f.Size = UDim2.new(0, 260, 0, 56)
+    f.Size = UDim2.new(0, 280, 0, 60)
     f.Position = UDim2.new(1, 10, 0, 20)
-    f.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    f.BackgroundColor3 = th.bg
     f.BorderSizePixel = 0
     f.Parent = gui
     Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
+    local stroke = Instance.new("UIStroke", f)
+    stroke.Color = th.accent
+    stroke.Thickness = 1
 
     local line = Instance.new("Frame", f)
     line.Size = UDim2.new(0, 4, 1, 0)
-    line.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+    line.BackgroundColor3 = th.accent
     line.BorderSizePixel = 0
     Instance.new("UICorner", line).CornerRadius = UDim.new(0, 8)
 
@@ -52,8 +101,8 @@ function F.notif(title, body, t)
     t1.TextXAlignment = Enum.TextXAlignment.Left
 
     local t2 = Instance.new("TextLabel", f)
-    t2.Size = UDim2.new(1, -20, 0, 24)
-    t2.Position = UDim2.new(0, 14, 0, 26)
+    t2.Size = UDim2.new(1, -20, 0, 26)
+    t2.Position = UDim2.new(0, 14, 0, 28)
     t2.BackgroundTransparency = 1
     t2.Text = body or ""
     t2.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -62,13 +111,13 @@ function F.notif(title, body, t)
     t2.TextXAlignment = Enum.TextXAlignment.Left
     t2.TextWrapped = true
 
-    game:GetService("TweenService"):Create(f, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {
-        Position = UDim2.new(1, -270, 0, 20)
+    tween:Create(f, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {
+        Position = UDim2.new(1, -290, 0, 20)
     }):Play()
 
     task.delay(t, function()
         if f and f.Parent then
-            game:GetService("TweenService"):Create(f, TweenInfo.new(0.3), {
+            tween:Create(f, TweenInfo.new(0.3), {
                 Position = UDim2.new(1, 10, 0, 20)
             }):Play()
             task.wait(0.3)
@@ -80,14 +129,13 @@ end
 function F.addEsp(obj, txt, color)
     if not obj or not obj.Parent then return end
     if F.esp[obj] then return end
-
     local part = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")) or obj
     if not part then return end
 
     local hl = Instance.new("Highlight", obj)
-    hl.FillColor = color or Color3.fromRGB(255, 0, 0)
+    hl.FillColor = color or themes[F.theme].accent
     hl.FillTransparency = 0.5
-    hl.OutlineColor = color or Color3.fromRGB(255, 0, 0)
+    hl.OutlineColor = color or themes[F.theme].accent
     hl.OutlineTransparency = 0
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 
@@ -186,6 +234,7 @@ function F.speedLoop()
             local hum = char:FindFirstChildOfClass("Humanoid")
             if hum then
                 hum.WalkSpeed = 16 + F.speed
+                hum.JumpPower = F.jumpPower
             end
         end
         task.wait(0.2)
@@ -201,7 +250,7 @@ function F.espPlayersLoop()
                     local myHrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
                     if hrp and myHrp then
                         local dist = (hrp.Position - myHrp.Position).Magnitude
-                        F.addEsp(p.Character, p.Name .. " [" .. math.floor(dist) .. "m]", Color3.fromRGB(255, 0, 0))
+                        F.addEsp(p.Character, p.Name .. " [" .. math.floor(dist) .. "m]", themes[F.theme].accent)
                     end
                 end
             end
@@ -212,7 +261,7 @@ function F.espPlayersLoop()
                 end
             end
         end
-        task.wait(0.3)
+        task.wait(0.5)
     end
 end
 
@@ -224,8 +273,7 @@ function F.autoDriveLoop()
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 local myHrp = char:FindFirstChild("HumanoidRootPart")
                 if hum and myHrp then
-                    local closest = nil
-                    local closestDist = math.huge
+                    local closest, closestDist = nil, math.huge
                     for _, p in pairs(game.Players:GetPlayers()) do
                         if p ~= plr and p.Character then
                             local hrp = p.Character:FindFirstChild("HumanoidRootPart")
@@ -245,6 +293,60 @@ function F.autoDriveLoop()
             end
         end
         task.wait(0.2)
+    end
+end
+
+function F.autoFlingLoop()
+    while F.on do
+        if F.autoFling then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= plr and p.Character then
+                    local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local bv = hrp:FindFirstChild("i_Russicool_autofling") or Instance.new("BodyVelocity", hrp)
+                        bv.Name = "i_Russicool_autofling"
+                        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                        bv.Velocity = Vector3.new(math.random(-500,500), 500, math.random(-500,500))
+                        game:GetService("Debris"):AddItem(bv, 0.5)
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end
+
+function F.infiniteJumpLoop()
+    while F.on do
+        if F.infiniteJump then
+            local char = plr.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum:GetState() == Enum.HumanoidStateType.Freefall then
+                    if uis:IsKeyDown(Enum.KeyCode.Space) then
+                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end
+
+function F.hitboxLoop()
+    while F.on do
+        if F.hitboxSize > 1 then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= plr and p.Character then
+                    for _, part in pairs(p.Character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                            part.Size = part.Size * F.hitboxSize
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(2)
     end
 end
 
@@ -297,8 +399,11 @@ end)
 task.spawn(F.speedLoop)
 task.spawn(F.espPlayersLoop)
 task.spawn(F.autoDriveLoop)
+task.spawn(F.autoFlingLoop)
+task.spawn(F.infiniteJumpLoop)
+task.spawn(F.hitboxLoop)
 
-F.notif("i_Russicool loaded", "xeno edition", 5)
+F.notif("i_Russicool v2.0", "loaded | theme: " .. F.theme, 5)
 
 local sg = Instance.new("ScreenGui")
 sg.Name = "i_Russicool_panel"
@@ -306,37 +411,64 @@ sg.ResetOnSpawn = false
 sg.Parent = plr:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame", sg)
-main.Size = UDim2.new(0, 240, 0, 420)
-main.Position = UDim2.new(0, 20, 0.5, -210)
-main.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+main.Size = UDim2.new(0, 260, 0, 520)
+main.Position = UDim2.new(0, 20, 0.5, -260)
+main.BackgroundColor3 = themes[F.theme].bg
 main.BorderSizePixel = 0
 main.Visible = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = themes[F.theme].accent
+mainStroke.Thickness = 1
 
 local toggleBtn = Instance.new("TextButton", sg)
-toggleBtn.Size = UDim2.new(0, 40, 0, 40)
-toggleBtn.Position = UDim2.new(0, 20, 0.5, -20)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+toggleBtn.Size = UDim2.new(0, 44, 0, 44)
+toggleBtn.Position = UDim2.new(0, 20, 0.5, -22)
+toggleBtn.BackgroundColor3 = themes[F.theme].accent
 toggleBtn.Text = "R"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 18
+toggleBtn.TextSize = 20
 toggleBtn.BorderSizePixel = 0
 toggleBtn.Visible = false
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
 
 local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1, -40, 0, 30)
+title.Size = UDim2.new(1, -50, 0, 30)
 title.BackgroundTransparency = 1
-title.Text = "i_Russicool | xeno"
+title.Text = "i_Russicool v2.0"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 15
 
+local themeBtn = Instance.new("TextButton", main)
+themeBtn.Size = UDim2.new(0, 24, 0, 24)
+themeBtn.Position = UDim2.new(1, -56, 0, 3)
+themeBtn.BackgroundColor3 = themes[F.theme].accent
+themeBtn.Text = "T"
+themeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+themeBtn.Font = Enum.Font.GothamBold
+themeBtn.TextSize = 14
+themeBtn.BorderSizePixel = 0
+Instance.new("UICorner", themeBtn).CornerRadius = UDim.new(1, 0)
+themeBtn.MouseButton1Down:Connect(function()
+    local order = {"red", "blue", "green", "purple"}
+    local idx = 1
+    for i, v in ipairs(order) do if v == F.theme then idx = i break end end
+    idx = idx % #order + 1
+    F.theme = order[idx]
+    local th = themes[F.theme]
+    main.BackgroundColor3 = th.bg
+    mainStroke.Color = th.accent
+    toggleBtn.BackgroundColor3 = th.accent
+    themeBtn.BackgroundColor3 = th.accent
+    F.saveConfig()
+end)
+
 local closeBtn = Instance.new("TextButton", main)
 closeBtn.Size = UDim2.new(0, 24, 0, 24)
 closeBtn.Position = UDim2.new(1, -28, 0, 3)
-closeBtn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
+closeBtn.BackgroundColor3 = themes[F.theme].accent
 closeBtn.Text = "-"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.Font = Enum.Font.GothamBold
@@ -353,10 +485,33 @@ toggleBtn.MouseButton1Down:Connect(function()
     toggleBtn.Visible = false
 end)
 
-local function mkBtn(txt, y, cb)
-    local b = Instance.new("TextButton", main)
-    b.Size = UDim2.new(1, -20, 0, 28)
-    b.Position = UDim2.new(0, 10, 0, y)
+local scroll = Instance.new("ScrollingFrame", main)
+scroll.Size = UDim2.new(1, -20, 1, -50)
+scroll.Position = UDim2.new(0, 10, 0, 40)
+scroll.BackgroundTransparency = 1
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.ScrollBarThickness = 4
+
+local y = 0
+
+local function mkCat(name)
+    local lbl = Instance.new("TextLabel", scroll)
+    lbl.Size = UDim2.new(1, -10, 0, 22)
+    lbl.Position = UDim2.new(0, 5, 0, y)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "— " .. name .. " —"
+    lbl.TextColor3 = themes[F.theme].accent
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    y = y + 26
+end
+
+local function mkBtn(txt, cb)
+    local b = Instance.new("TextButton", scroll)
+    b.Size = UDim2.new(1, -10, 0, 28)
+    b.Position = UDim2.new(0, 5, 0, y)
     b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     b.BorderSizePixel = 0
     b.Text = txt
@@ -365,107 +520,143 @@ local function mkBtn(txt, y, cb)
     b.TextSize = 12
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
     b.MouseButton1Down:Connect(cb)
+    y = y + 32
     return b
 end
 
-mkBtn("esp игроков: выкл", 40, function(b)
-    F.espPlayers = not F.espPlayers
-    if F.espPlayers then
-        b.Text = "esp игроков: вкл"
-        b.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
-    else
-        b.Text = "esp игроков: выкл"
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
-end)
+local function mkSlider(txt, minV, maxV, default, cb)
+    local container = Instance.new("Frame", scroll)
+    container.Size = UDim2.new(1, -10, 0, 36)
+    container.Position = UDim2.new(0, 5, 0, y)
+    container.BackgroundTransparency = 1
 
-mkBtn("fly: выкл", 72, function(b)
+    local lbl = Instance.new("TextLabel", container)
+    lbl.Size = UDim2.new(1, 0, 0, 14)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = txt .. ": " .. default
+    lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 11
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local bar = Instance.new("Frame", container)
+    bar.Size = UDim2.new(1, 0, 0, 6)
+    bar.Position = UDim2.new(0, 0, 0, 20)
+    bar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    bar.BorderSizePixel = 0
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+
+    local fill = Instance.new("Frame", bar)
+    fill.Size = UDim2.new((default - minV) / (maxV - minV), 0, 1, 0)
+    fill.BackgroundColor3 = themes[F.theme].accent
+    fill.BorderSizePixel = 0
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+    local dragging = false
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+        end
+    end)
+    uis.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    uis.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local mouseX = input.Position.X
+            local barPos = bar.AbsolutePosition.X
+            local barSize = bar.AbsoluteSize.X
+            local pct = math.clamp((mouseX - barPos) / barSize, 0, 1)
+            fill.Size = UDim2.new(pct, 0, 1, 0)
+            local val = minV + (maxV - minV) * pct
+            lbl.Text = txt .. ": " .. math.floor(val)
+            cb(val)
+        end
+    end)
+
+    y = y + 42
+end
+
+mkCat("Movement")
+mkBtn("Fly: выкл", function(b)
     F.fly = not F.fly
-    if F.fly then
-        b.Text = "fly: вкл"
-        b.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
-        task.spawn(F.flyLoop)
-    else
-        b.Text = "fly: выкл"
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
+    if F.fly then b.Text = "Fly: вкл" b.BackgroundColor3 = themes[F.theme].accent task.spawn(F.flyLoop)
+    else b.Text = "Fly: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
 end)
-
-mkBtn("noclip: выкл", 104, function(b)
+mkSlider("Fly Speed", 20, 200, F.flySpeed, function(v) F.flySpeed = v F.saveConfig() end)
+mkBtn("Noclip: выкл", function(b)
     F.noclip = not F.noclip
-    if F.noclip then
-        b.Text = "noclip: вкл"
-        b.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
-        task.spawn(F.noclipLoop)
-    else
-        b.Text = "noclip: выкл"
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
+    if F.noclip then b.Text = "Noclip: вкл" b.BackgroundColor3 = themes[F.theme].accent task.spawn(F.noclipLoop)
+    else b.Text = "Noclip: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
+end)
+mkSlider("Speed", 0, 100, F.speed, function(v) F.speed = v F.saveConfig() end)
+mkSlider("Jump Power", 50, 300, F.jumpPower, function(v) F.jumpPower = v end)
+mkBtn("Infinite Jump: выкл", function(b)
+    F.infiniteJump = not F.infiniteJump
+    if F.infiniteJump then b.Text = "Infinite Jump: вкл" b.BackgroundColor3 = themes[F.theme].accent
+    else b.Text = "Infinite Jump: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
 end)
 
-mkBtn("speed +0", 136, function(b)
-    F.speed = F.speed + 10
-    if F.speed > 50 then F.speed = 0 end
-    b.Text = "speed +" .. F.speed
-    b.BackgroundColor3 = F.speed > 0 and Color3.fromRGB(180, 20, 20) or Color3.fromRGB(30, 30, 40)
+mkCat("ESP")
+mkBtn("ESP игроков: выкл", function(b)
+    F.espPlayers = not F.espPlayers
+    if F.espPlayers then b.Text = "ESP игроков: вкл" b.BackgroundColor3 = themes[F.theme].accent
+    else b.Text = "ESP игроков: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
 end)
 
-mkBtn("fly speed +60", 168, function(b)
-    F.flySpeed = F.flySpeed + 20
-    if F.flySpeed > 200 then F.flySpeed = 60 end
-    b.Text = "fly speed +" .. F.flySpeed
-    b.BackgroundColor3 = F.flySpeed > 60 and Color3.fromRGB(180, 20, 20) or Color3.fromRGB(30, 30, 40)
-end)
-
-mkBtn("auto drive: выкл", 200, function(b)
-    F.autoDrive = not F.autoDrive
-    if F.autoDrive then
-        b.Text = "auto drive: вкл"
-        b.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
-    else
-        b.Text = "auto drive: выкл"
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
-end)
-
-mkBtn("strong fling: выкл", 232, function(b)
+mkCat("Fling")
+mkBtn("Strong Fling: выкл", function(b)
     F.strongFling = not F.strongFling
-    if F.strongFling then
-        b.Text = "strong fling: вкл"
-        b.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
-    else
-        b.Text = "strong fling: выкл"
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
+    if F.strongFling then b.Text = "Strong Fling: вкл" b.BackgroundColor3 = themes[F.theme].accent
+    else b.Text = "Strong Fling: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
 end)
-
-mkBtn("fling сила +470", 264, function(b)
-    F.flingStrength = F.flingStrength + 100
-    if F.flingStrength > 1000 then F.flingStrength = 470 end
-    b.Text = "fling сила +" .. F.flingStrength
+mkSlider("Fling Strength", 100, 1500, F.flingStrength, function(v) F.flingStrength = v F.saveConfig() end)
+mkBtn("Auto Fling: выкл", function(b)
+    F.autoFling = not F.autoFling
+    if F.autoFling then b.Text = "Auto Fling: вкл" b.BackgroundColor3 = themes[F.theme].accent
+    else b.Text = "Auto Fling: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
 end)
-
-mkBtn("anti grab: выкл", 296, function(b)
+mkBtn("Anti Grab: выкл", function(b)
     F.antiGrab = not F.antiGrab
-    if F.antiGrab then
-        b.Text = "anti grab: вкл"
-        b.BackgroundColor3 = Color3.fromRGB(180, 20, 20)
-    else
-        b.Text = "anti grab: выкл"
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
+    if F.antiGrab then b.Text = "Anti Grab: вкл" b.BackgroundColor3 = themes[F.theme].accent
+    else b.Text = "Anti Grab: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
 end)
 
-mkBtn("уведомления: вкл", 328, function(b)
+mkCat("Player")
+mkBtn("TP к ближайшему", function()
+    local char = plr.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local myHrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not myHrp then return end
+    local closest, closestDist = nil, math.huge
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= plr and p.Character then
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local d = (hrp.Position - myHrp.Position).Magnitude
+                if d < closestDist then closestDist = d closest = hrp end
+            end
+        end
+    end
+    if closest then char:PivotTo(closest.CFrame + Vector3.new(0, 3, 0)) end
+end)
+mkBtn("Auto Drive: выкл", function(b)
+    F.autoDrive = not F.autoDrive
+    if F.autoDrive then b.Text = "Auto Drive: вкл" b.BackgroundColor3 = themes[F.theme].accent
+    else b.Text = "Auto Drive: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
+end)
+
+mkCat("Misc")
+mkBtn("Уведомления: вкл", function(b)
     F.notify = not F.notify
-    b.Text = F.notify and "уведомления: вкл" or "уведомления: выкл"
-    b.BackgroundColor3 = F.notify and Color3.fromRGB(180, 20, 20) or Color3.fromRGB(30, 30, 40)
+    b.Text = F.notify and "Уведомления: вкл" or "Уведомления: выкл"
+    b.BackgroundColor3 = F.notify and themes[F.theme].accent or Color3.fromRGB(30, 30, 40)
 end)
-
-mkBtn("выгрузить", 360, function()
-    if getgenv().i_Russicool_unload then
-        getgenv().i_Russicool_unload()
-    end
+mkBtn("Выгрузить", function()
+    if getgenv().i_Russicool_unload then getgenv().i_Russicool_unload() end
 end)
 
 local cross = Instance.new("ScreenGui", plr:WaitForChild("PlayerGui"))
@@ -480,7 +671,7 @@ lbl.BackgroundTransparency = 1
 lbl.Text = "卍"
 lbl.TextSize = 30
 lbl.Font = Enum.Font.GothamBold
-lbl.TextColor3 = Color3.fromRGB(255, 0, 0)
+lbl.TextColor3 = themes[F.theme].accent
 lbl.TextStrokeTransparency = 0
 lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 
@@ -505,5 +696,6 @@ getgenv().i_Russicool_unload = function()
     F.clearEsp()
     sg:Destroy()
     cross:Destroy()
+    F.saveConfig()
     F.notif("i_Russicool unloaded", "", 3)
 end
