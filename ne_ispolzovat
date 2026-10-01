@@ -4,6 +4,7 @@ local uis = game:GetService("UserInputService")
 local cam = workspace.CurrentCamera
 local tween = game:GetService("TweenService")
 local http = game:GetService("HttpService")
+local stats = game:GetService("Stats")
 
 getgenv().i_Russicool = getgenv().i_Russicool or {}
 local F = getgenv().i_Russicool
@@ -24,8 +25,14 @@ F.strongFling = false
 F.flingStrength = 470
 F.notify = true
 F.theme = "red"
-F.minimized = false
 F.hitboxSize = 1
+F.notifyPlayers = false
+F.notifyNpcs = false
+F.playerRange = 15
+F.npcRange = 150
+F.notifiedPlayers = {}
+F.notifiedNpcs = {}
+F.notifyCooldown = 10
 
 local themes = {
     red = {accent = Color3.fromRGB(220, 30, 30), bg = Color3.fromRGB(12, 12, 16)},
@@ -37,15 +44,14 @@ local themes = {
 local CONFIG_FILE = "i_Russicool_config.json"
 
 function F.saveConfig()
-    local data = {
-        theme = F.theme,
-        flySpeed = F.flySpeed,
-        flingStrength = F.flingStrength,
-        speed = F.speed,
-        hitboxSize = F.hitboxSize,
-    }
     pcall(function()
-        writefile(CONFIG_FILE, http:JSONEncode(data))
+        writefile(CONFIG_FILE, http:JSONEncode({
+            theme = F.theme,
+            flySpeed = F.flySpeed,
+            flingStrength = F.flingStrength,
+            speed = F.speed,
+            hitboxSize = F.hitboxSize,
+        }))
     end)
 end
 
@@ -172,6 +178,54 @@ function F.clearEsp()
     end
 end
 
+function F.checkNearby()
+    if not (F.notifyPlayers or F.notifyNpcs) then return end
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if F.notifyPlayers then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= plr and p.Character then
+                local p_hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                if p_hrp then
+                    local dist = (p_hrp.Position - hrp.Position).Magnitude
+                    if dist <= F.playerRange then
+                        local now = tick()
+                        if not F.notifiedPlayers[p] or now - F.notifiedPlayers[p] > F.notifyCooldown then
+                            F.notifiedPlayers[p] = now
+                            F.notif("Игрок рядом", p.Name .. " [" .. math.floor(dist) .. "m]", 3)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if F.notifyNpcs then
+        for _, obj in pairs(workspace:GetChildren()) do
+            if obj:IsA("Model") and obj ~= char then
+                local hum = obj:FindFirstChildOfClass("Humanoid")
+                local obj_hrp = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+                if hum and obj_hrp then
+                    local isPlayer = game.Players:GetPlayerFromCharacter(obj)
+                    if not isPlayer then
+                        local dist = (obj_hrp.Position - hrp.Position).Magnitude
+                        if dist <= F.npcRange then
+                            local now = tick()
+                            if not F.notifiedNpcs[obj] or now - F.notifiedNpcs[obj] > F.notifyCooldown then
+                                F.notifiedNpcs[obj] = now
+                                F.notif("NPC рядом", obj.Name .. " [" .. math.floor(dist) .. "m]", 3)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 function F.flyLoop()
     while F.fly do
         local char = plr.Character
@@ -199,7 +253,7 @@ function F.flyLoop()
                 bg.CFrame = cam.CFrame
             end
         end
-        task.wait()
+        task.wait(0.05)
     end
     local char = plr.Character
     if char then
@@ -223,27 +277,43 @@ function F.noclipLoop()
                 end
             end
         end
-        task.wait(0.1)
+        task.wait(0.3)
     end
 end
 
-function F.speedLoop()
+function F.mainLoop()
+    local tick_counter = 0
     while F.on do
+        tick_counter = tick_counter + 1
+
         local char = plr.Character
         if char then
             local hum = char:FindFirstChildOfClass("Humanoid")
             if hum then
-                hum.WalkSpeed = 16 + F.speed
-                hum.JumpPower = F.jumpPower
+                if F.speed ~= 0 then
+                    hum.WalkSpeed = 16 + F.speed
+                end
+                if F.jumpPower ~= 50 then
+                    hum.JumpPower = F.jumpPower
+                end
+            end
+
+            if F.antiGrab then
+                for _, obj in pairs(char:GetDescendants()) do
+                    if obj:IsA("BasePart") and obj.Anchored then
+                        obj.Anchored = false
+                    end
+                end
+            end
+
+            if F.infiniteJump and hum and hum:GetState() == Enum.HumanoidStateType.Freefall then
+                if uis:IsKeyDown(Enum.KeyCode.Space) then
+                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
             end
         end
-        task.wait(0.2)
-    end
-end
 
-function F.espPlayersLoop()
-    while F.on do
-        if F.espPlayers then
+        if F.espPlayers and tick_counter % 4 == 0 then
             for _, p in pairs(game.Players:GetPlayers()) do
                 if p ~= plr and p.Character then
                     local hrp = p.Character:FindFirstChild("HumanoidRootPart")
@@ -254,20 +324,15 @@ function F.espPlayersLoop()
                     end
                 end
             end
-        else
+        elseif not F.espPlayers then
             for _, p in pairs(game.Players:GetPlayers()) do
                 if p ~= plr and p.Character then
                     F.remEsp(p.Character)
                 end
             end
         end
-        task.wait(0.5)
-    end
-end
 
-function F.autoDriveLoop()
-    while F.on do
-        if F.autoDrive then
+        if F.autoDrive and tick_counter % 2 == 0 then
             local char = plr.Character
             if char then
                 local hum = char:FindFirstChildOfClass("Humanoid")
@@ -279,10 +344,7 @@ function F.autoDriveLoop()
                             local hrp = p.Character:FindFirstChild("HumanoidRootPart")
                             if hrp then
                                 local d = (hrp.Position - myHrp.Position).Magnitude
-                                if d < closestDist then
-                                    closestDist = d
-                                    closest = hrp
-                                end
+                                if d < closestDist then closestDist = d closest = hrp end
                             end
                         end
                     end
@@ -292,19 +354,13 @@ function F.autoDriveLoop()
                 end
             end
         end
-        task.wait(0.2)
-    end
-end
 
-function F.autoFlingLoop()
-    while F.on do
-        if F.autoFling then
+        if F.autoFling and tick_counter % 12 == 0 then
             for _, p in pairs(game.Players:GetPlayers()) do
                 if p ~= plr and p.Character then
                     local hrp = p.Character:FindFirstChild("HumanoidRootPart")
                     if hrp then
-                        local bv = hrp:FindFirstChild("i_Russicool_autofling") or Instance.new("BodyVelocity", hrp)
-                        bv.Name = "i_Russicool_autofling"
+                        local bv = Instance.new("BodyVelocity", hrp)
                         bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
                         bv.Velocity = Vector3.new(math.random(-500,500), 500, math.random(-500,500))
                         game:GetService("Debris"):AddItem(bv, 0.5)
@@ -312,47 +368,8 @@ function F.autoFlingLoop()
                 end
             end
         end
-        task.wait(1)
-    end
-end
 
-function F.infiniteJumpLoop()
-    while F.on do
-        if F.infiniteJump then
-            local char = plr.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum and hum:GetState() == Enum.HumanoidStateType.Freefall then
-                    if uis:IsKeyDown(Enum.KeyCode.Space) then
-                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
-                    end
-                end
-            end
-        end
-        task.wait(0.1)
-    end
-end
-
-function F.hitboxLoop()
-    while F.on do
-        if F.hitboxSize > 1 then
-            for _, p in pairs(game.Players:GetPlayers()) do
-                if p ~= plr and p.Character then
-                    for _, part in pairs(p.Character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                            part.Size = part.Size * F.hitboxSize
-                        end
-                    end
-                end
-            end
-        end
-        task.wait(2)
-    end
-end
-
-task.spawn(function()
-    while F.on do
-        if F.strongFling then
+        if F.strongFling and tick_counter % 2 == 0 then
             for _, obj in pairs(workspace:GetChildren()) do
                 if obj.Name == "GrabParts" then
                     local partInfo = obj:FindFirstChild("GrabPart")
@@ -370,25 +387,14 @@ task.spawn(function()
                 end
             end
         end
-        task.wait(0.1)
-    end
-end)
 
-task.spawn(function()
-    while F.on do
-        if F.antiGrab then
-            local char = plr.Character
-            if char then
-                for _, obj in pairs(char:GetDescendants()) do
-                    if obj:IsA("BasePart") and obj.Anchored then
-                        obj.Anchored = false
-                    end
-                end
-            end
+        if tick_counter % 20 == 0 then
+            F.checkNearby()
         end
+
         task.wait(0.1)
     end
-end)
+end
 
 plr.CharacterAdded:Connect(function(c)
     task.wait(1)
@@ -396,14 +402,9 @@ plr.CharacterAdded:Connect(function(c)
     if F.noclip then F.noclip = false task.wait(0.1) F.noclip = true task.spawn(F.noclipLoop) end
 end)
 
-task.spawn(F.speedLoop)
-task.spawn(F.espPlayersLoop)
-task.spawn(F.autoDriveLoop)
-task.spawn(F.autoFlingLoop)
-task.spawn(F.infiniteJumpLoop)
-task.spawn(F.hitboxLoop)
+task.spawn(F.mainLoop)
 
-F.notif("i_Russicool v2.0", "loaded | theme: " .. F.theme, 5)
+F.notif("i_Russicool v2.1", "loaded | optimized | theme: " .. F.theme, 5)
 
 local sg = Instance.new("ScreenGui")
 sg.Name = "i_Russicool_panel"
@@ -411,8 +412,8 @@ sg.ResetOnSpawn = false
 sg.Parent = plr:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame", sg)
-main.Size = UDim2.new(0, 260, 0, 520)
-main.Position = UDim2.new(0, 20, 0.5, -260)
+main.Size = UDim2.new(0, 260, 0, 560)
+main.Position = UDim2.new(0, 20, 0.5, -280)
 main.BackgroundColor3 = themes[F.theme].bg
 main.BorderSizePixel = 0
 main.Visible = true
@@ -434,12 +435,25 @@ toggleBtn.Visible = false
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
 
 local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1, -50, 0, 30)
+title.Size = UDim2.new(1, -90, 0, 30)
 title.BackgroundTransparency = 1
-title.Text = "i_Russicool v2.0"
+title.Text = "i_Russicool v2.1"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 15
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Position = UDim2.new(0, 10, 0, 0)
+
+local infoBtn = Instance.new("TextButton", main)
+infoBtn.Size = UDim2.new(0, 24, 0, 24)
+infoBtn.Position = UDim2.new(1, -84, 0, 3)
+infoBtn.BackgroundColor3 = themes[F.theme].accent
+infoBtn.Text = "i"
+infoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+infoBtn.Font = Enum.Font.GothamBold
+infoBtn.TextSize = 14
+infoBtn.BorderSizePixel = 0
+Instance.new("UICorner", infoBtn).CornerRadius = UDim.new(1, 0)
 
 local themeBtn = Instance.new("TextButton", main)
 themeBtn.Size = UDim2.new(0, 24, 0, 24)
@@ -451,19 +465,6 @@ themeBtn.Font = Enum.Font.GothamBold
 themeBtn.TextSize = 14
 themeBtn.BorderSizePixel = 0
 Instance.new("UICorner", themeBtn).CornerRadius = UDim.new(1, 0)
-themeBtn.MouseButton1Down:Connect(function()
-    local order = {"red", "blue", "green", "purple"}
-    local idx = 1
-    for i, v in ipairs(order) do if v == F.theme then idx = i break end end
-    idx = idx % #order + 1
-    F.theme = order[idx]
-    local th = themes[F.theme]
-    main.BackgroundColor3 = th.bg
-    mainStroke.Color = th.accent
-    toggleBtn.BackgroundColor3 = th.accent
-    themeBtn.BackgroundColor3 = th.accent
-    F.saveConfig()
-end)
 
 local closeBtn = Instance.new("TextButton", main)
 closeBtn.Size = UDim2.new(0, 24, 0, 24)
@@ -475,14 +476,43 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 16
 closeBtn.BorderSizePixel = 0
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1, 0)
-closeBtn.MouseButton1Down:Connect(function()
-    main.Visible = false
-    toggleBtn.Visible = true
-end)
 
-toggleBtn.MouseButton1Down:Connect(function()
-    main.Visible = true
-    toggleBtn.Visible = false
+local infoPanel = Instance.new("Frame", main)
+infoPanel.Size = UDim2.new(1, -20, 0, 170)
+infoPanel.Position = UDim2.new(0, 10, 0, 40)
+infoPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+infoPanel.BorderSizePixel = 0
+infoPanel.Visible = false
+infoPanel.ZIndex = 10
+Instance.new("UICorner", infoPanel).CornerRadius = UDim.new(0, 6)
+local infoStroke = Instance.new("UIStroke", infoPanel)
+infoStroke.Color = themes[F.theme].accent
+infoStroke.Thickness = 1
+
+local infoTitle = Instance.new("TextLabel", infoPanel)
+infoTitle.Size = UDim2.new(1, -10, 0, 22)
+infoTitle.Position = UDim2.new(0, 5, 0, 4)
+infoTitle.BackgroundTransparency = 1
+infoTitle.Text = "Информация"
+infoTitle.TextColor3 = themes[F.theme].accent
+infoTitle.Font = Enum.Font.GothamBold
+infoTitle.TextSize = 13
+infoTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local infoText = Instance.new("TextLabel", infoPanel)
+infoText.Size = UDim2.new(1, -10, 1, -30)
+infoText.Position = UDim2.new(0, 5, 0, 26)
+infoText.BackgroundTransparency = 1
+infoText.Text = "Загрузка..."
+infoText.TextColor3 = Color3.fromRGB(220, 220, 220)
+infoText.Font = Enum.Font.Code
+infoText.TextSize = 12
+infoText.TextXAlignment = Enum.TextXAlignment.Left
+infoText.TextYAlignment = Enum.TextYAlignment.Top
+infoText.TextWrapped = true
+
+infoBtn.MouseButton1Down:Connect(function()
+    infoPanel.Visible = not infoPanel.Visible
 end)
 
 local scroll = Instance.new("ScrollingFrame", main)
@@ -565,10 +595,9 @@ local function mkSlider(txt, minV, maxV, default, cb)
     end)
     uis.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local mouseX = input.Position.X
             local barPos = bar.AbsolutePosition.X
             local barSize = bar.AbsoluteSize.X
-            local pct = math.clamp((mouseX - barPos) / barSize, 0, 1)
+            local pct = math.clamp((input.Position.X - barPos) / barSize, 0, 1)
             fill.Size = UDim2.new(pct, 0, 1, 0)
             local val = minV + (maxV - minV) * pct
             lbl.Text = txt .. ": " .. math.floor(val)
@@ -628,9 +657,8 @@ mkCat("Player")
 mkBtn("TP к ближайшему", function()
     local char = plr.Character
     if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
     local myHrp = char:FindFirstChild("HumanoidRootPart")
-    if not hum or not myHrp then return end
+    if not myHrp then return end
     local closest, closestDist = nil, math.huge
     for _, p in pairs(game.Players:GetPlayers()) do
         if p ~= plr and p.Character then
@@ -647,6 +675,30 @@ mkBtn("Auto Drive: выкл", function(b)
     F.autoDrive = not F.autoDrive
     if F.autoDrive then b.Text = "Auto Drive: вкл" b.BackgroundColor3 = themes[F.theme].accent
     else b.Text = "Auto Drive: выкл" b.BackgroundColor3 = Color3.fromRGB(30, 30, 40) end
+end)
+
+mkCat("Notify")
+mkBtn("Notify Players (15m): выкл", function(b)
+    F.notifyPlayers = not F.notifyPlayers
+    if F.notifyPlayers then
+        b.Text = "Notify Players (15m): вкл"
+        b.BackgroundColor3 = themes[F.theme].accent
+    else
+        b.Text = "Notify Players (15m): выкл"
+        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        F.notifiedPlayers = {}
+    end
+end)
+mkBtn("Notify NPC (150m): выкл", function(b)
+    F.notifyNpcs = not F.notifyNpcs
+    if F.notifyNpcs then
+        b.Text = "Notify NPC (150m): вкл"
+        b.BackgroundColor3 = themes[F.theme].accent
+    else
+        b.Text = "Notify NPC (150m): выкл"
+        b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        F.notifiedNpcs = {}
+    end
 end)
 
 mkCat("Misc")
@@ -676,9 +728,65 @@ lbl.TextStrokeTransparency = 0
 lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 
 local rot = 0
-rs.RenderStepped:Connect(function(dt)
-    rot = rot + dt * 180
-    lbl.Rotation = rot % 360
+local crossAccum = 0
+rs.Heartbeat:Connect(function(dt)
+    crossAccum = crossAccum + dt
+    if crossAccum >= 0.03 then
+        rot = rot + crossAccum * 180
+        lbl.Rotation = rot % 360
+        crossAccum = 0
+    end
+end)
+
+task.spawn(function()
+    local fps = 0
+    local frames = 0
+    local lastFpsUpdate = tick()
+    rs.RenderStepped:Connect(function()
+        frames = frames + 1
+    end)
+    while F.on do
+        local now = tick()
+        if now - lastFpsUpdate >= 1 then
+            fps = frames
+            frames = 0
+            lastFpsUpdate = now
+        end
+
+        local ping = 0
+        pcall(function()
+            ping = stats.Network.ServerStatsItem["Data Ping"]:GetValue()
+        end)
+
+        local device = "PC"
+        if uis.TouchEnabled and not uis.KeyboardEnabled then
+            device = "Mobile"
+        elseif uis.GamepadEnabled then
+            device = "Console"
+        end
+
+        local osName = "Unknown"
+        pcall(function()
+            local platform = game:GetService("GuiService"):GetPlatform()
+            osName = tostring(platform)
+        end)
+
+        local mem = 0
+        pcall(function()
+            mem = math.floor(stats:GetTotalMemoryUsageMb())
+        end)
+
+        local players = #game.Players:GetPlayers()
+
+        infoText.Text = "FPS: " .. fps .. "\n" ..
+                        "Ping: " .. math.floor(ping) .. " ms\n" ..
+                        "Устройство: " .. device .. "\n" ..
+                        "Платформа: " .. osName .. "\n" ..
+                        "Память: " .. mem .. " MB\n" ..
+                        "Игроков: " .. players
+
+        task.wait(1)
+    end
 end)
 
 uis.InputBegan:Connect(function(input, gp)
@@ -687,6 +795,33 @@ uis.InputBegan:Connect(function(input, gp)
         main.Visible = not main.Visible
         toggleBtn.Visible = not main.Visible
     end
+end)
+
+themeBtn.MouseButton1Down:Connect(function()
+    local order = {"red", "blue", "green", "purple"}
+    local idx = 1
+    for i, v in ipairs(order) do if v == F.theme then idx = i break end end
+    idx = idx % #order + 1
+    F.theme = order[idx]
+    local th = themes[F.theme]
+    main.BackgroundColor3 = th.bg
+    mainStroke.Color = th.accent
+    toggleBtn.BackgroundColor3 = th.accent
+    themeBtn.BackgroundColor3 = th.accent
+    infoBtn.BackgroundColor3 = th.accent
+    closeBtn.BackgroundColor3 = th.accent
+    infoStroke.Color = th.accent
+    F.saveConfig()
+end)
+
+closeBtn.MouseButton1Down:Connect(function()
+    main.Visible = false
+    toggleBtn.Visible = true
+end)
+
+toggleBtn.MouseButton1Down:Connect(function()
+    main.Visible = true
+    toggleBtn.Visible = false
 end)
 
 getgenv().i_Russicool_unload = function()
