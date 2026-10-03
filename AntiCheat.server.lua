@@ -144,7 +144,8 @@ K.Msgs = {
 		"tormozi, bratan",
 	},
 	reportSpam = "report spam XD",
-}K.S = {}
+}
+K.S = {}
 K.Detects = {}
 K.DetectsSorted = {}
 K.DetectsDirty = false
@@ -397,7 +398,8 @@ function K.FpsMult(s)
 	local deficit = K.Cfg.FpsSofteningThreshold - fps
 	local mult = 1 + (deficit / K.Cfg.FpsSofteningThreshold) * (K.Cfg.FpsSofteningFactor - 1)
 	return mult
-endfunction K.Init()
+end
+function K.Init()
 	K.Bans = dss:GetDataStore("KotowAC_Bans_v3")
 	K.Logs = dss:GetDataStore("KotowAC_Logs_v3")
 	K.BodyCounts = dss:GetDataStore("KotowAC_BodyCounts_v2")
@@ -715,7 +717,8 @@ function K.Punish(pl, reason, category)
 	else
 		K.LogPunish(pl, reason, s.wrn, category)
 	end
-endfunction K.BodyCountInc(pl, reason)
+end
+function K.BodyCountInc(pl, reason)
 	local s = K.State(pl.UserId)
 	local now = os.clock()
 
@@ -1062,7 +1065,8 @@ function K.Bind(pl, ch)
 		end
 	end)
 	table.insert(s.conns, c2)
-endfunction K.TickOne(uid)
+end
+function K.TickOne(uid)
 	if K.Dead then return end
 	local s = K.S[uid]
 	if not s or not s.ch or not s.hrp or not s.hum then return end
@@ -1256,7 +1260,8 @@ endfunction K.TickOne(uid)
 			s.freeTime = 0
 		end
 	end
-endfunction K.StartHeartbeat()
+end
+function K.StartHeartbeat()
 	local conn = rs.Heartbeat:Connect(function(dtF)
 		if K.Dead then return end
 
@@ -1621,4 +1626,4 @@ function K.Stop()
 	print("[KotowAC] stopped")
 end
 
-K.Run()
+K.Run() 
