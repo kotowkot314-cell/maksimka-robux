@@ -1,4 +1,4 @@
--- KotowAC v6.0.5
+-- KotowAC v7.0.0
 -- Author: kotowkot314-cell
 -- Repo:   github.com/kotowkot314-cell/maksimka-robux
 
@@ -12,7 +12,7 @@ if rs:IsStudio() then return end
 
 local K = {}
 
-K.Version = "6.0.5"
+K.Version = "7.0.0"
 K.Name = "KotowAC"
 K.Running = false
 
@@ -34,7 +34,10 @@ K.Cfg = {
 	CFrameMinDist = 5,
 	CFrameMaxSpeed = 15,
 	FlingVelocityMax = 500,
+	RotVelocityMax = 50,
 	NeckAngleMax = 3.0,
+	MaxHealthMax = 200,
+	MinHrpSize = 3,
 	BanTime = 3600,
 	WarnReset = 1800,
 	SuspKick = 8,
@@ -55,6 +58,8 @@ K.Cfg = {
 	NewAccountSusp = 3,
 	GraceTime = 5,
 	PingMax = 150,
+	FpsSofteningThreshold = 15,
+	FpsSofteningFactor = 2.0,
 	ReportTimeout = 30,
 	ReportSpamKick = 5,
 	ReportSpamWindow = 5,
@@ -73,6 +78,8 @@ K.Cfg = {
 	LogCooldown = 5,
 	WebhookURL = "",
 	WebhookIncludeCategory = true,
+	WebhookBansOnly = true,
+	WebhookBatchInterval = 30,
 	DevUserIds = {
 		[11295895158] = true,
 	},
@@ -95,6 +102,11 @@ K.Cfg = {
 		invisibility = "kick",
 		neck_glitch = "kick",
 		fling_velocity = "kick",
+		rot_velocity = "kick",
+		fly_state = "kick",
+		max_health = "kick",
+		small_hrp = "kick",
+		unknown_motor6d = "kick",
 		report = "log",
 		token = "log",
 		account_age = "log",
@@ -106,13 +118,15 @@ K.Cfg = {
 			"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump",
 			"jumpmove", "body", "cframe", "hip_height", "jump_power",
 			"noclip_honeypot", "macro", "invisibility", "neck_glitch",
-			"fling_velocity",
+			"fling_velocity", "rot_velocity",
+			"fly_state", "max_health", "small_hrp", "unknown_motor6d",
 		},
 		dev = {
 			"ws", "speed", "tp", "freefall", "airmove", "up", "pos_jump",
 			"jumpmove", "body", "cframe", "hip_height", "jump_power",
 			"noclip_honeypot", "macro", "jump", "report", "invisibility",
-			"neck_glitch", "fling_velocity",
+			"neck_glitch", "fling_velocity", "rot_velocity",
+			"fly_state", "max_health", "small_hrp", "unknown_motor6d",
 		},
 	},
 }
@@ -130,9 +144,7 @@ K.Msgs = {
 		"tormozi, bratan",
 	},
 	reportSpam = "report spam XD",
-}
-
-K.S = {}
+}K.S = {}
 K.Detects = {}
 K.DetectsSorted = {}
 K.DetectsDirty = false
@@ -164,6 +176,9 @@ K.Metrics = {
 }
 K.Random = Random.new()
 
+K.WebhookQueue = {}
+K.WebhookThread = nil
+
 function K.Log(level, msg)
 	if level < K.Cfg.LogLevel then return end
 	local prefix = "[KotowAC]"
@@ -176,12 +191,40 @@ end
 function K.Webhook(msg, category)
 	if K.Cfg.WebhookURL == "" then return end
 	if not string.find(K.Cfg.WebhookURL, "discord%.com/api/webhooks/") then return end
+
+	if K.Cfg.WebhookBansOnly then
+		if not category or category ~= "ban" then return end
+	end
+
 	local content = msg
 	if K.Cfg.WebhookIncludeCategory and category then
 		content = "[" .. category .. "] " .. msg
 	end
-	pcall(function()
-		http:PostAsync(K.Cfg.WebhookURL, http:JSONEncode({content = content}))
+
+	table.insert(K.WebhookQueue, content)
+end
+
+function K.StartWebhook()
+	if K.Cfg.WebhookURL == "" then return end
+	if K.WebhookThread then return end
+
+	K.WebhookThread = task.spawn(function()
+		while K.Running do
+			task.wait(K.Cfg.WebhookBatchInterval)
+
+			if #K.WebhookQueue > 0 then
+				local batch = table.concat(K.WebhookQueue, "\n")
+				if #batch > 1900 then
+					batch = batch:sub(1, 1900) .. "..."
+				end
+
+				K.WebhookQueue = {}
+
+				pcall(function()
+					http:PostAsync(K.Cfg.WebhookURL, http:JSONEncode({content = batch}))
+				end)
+			end
+		end
 	end)
 end
 
@@ -308,6 +351,7 @@ function K.State(uid)
 			neckWarnCount = 0,
 			invisWarnCount = 0,
 			detectCooldown = {},
+			fps = 60,
 		}
 		K.S[uid] = s
 	end
@@ -346,7 +390,14 @@ function K.IsWhitelisted(pl, check)
 	end
 	return false
 end
-function K.Init()
+
+function K.FpsMult(s)
+	local fps = s.fps or 60
+	if fps >= K.Cfg.FpsSofteningThreshold then return 1 end
+	local deficit = K.Cfg.FpsSofteningThreshold - fps
+	local mult = 1 + (deficit / K.Cfg.FpsSofteningThreshold) * (K.Cfg.FpsSofteningFactor - 1)
+	return mult
+endfunction K.Init()
 	K.Bans = dss:GetDataStore("KotowAC_Bans_v3")
 	K.Logs = dss:GetDataStore("KotowAC_Logs_v3")
 	K.BodyCounts = dss:GetDataStore("KotowAC_BodyCounts_v2")
@@ -487,6 +538,11 @@ function K.CategorizeRule(reason)
 	if string.find(reason, "invisibility", 1, true) == 1 then return "anomaly" end
 	if string.find(reason, "neck_glitch", 1, true) == 1 then return "anomaly" end
 	if string.find(reason, "fling", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "rot_velocity", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "fly_state", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "max_health", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "small_hrp", 1, true) == 1 then return "anomaly" end
+	if string.find(reason, "unknown_motor6d", 1, true) == 1 then return "anomaly" end
 	if string.find(reason, "report", 1, true) == 1 then return "meta" end
 	if string.find(reason, "token", 1, true) == 1 then return "meta" end
 	if string.find(reason, "account_age", 1, true) == 1 then return "meta" end
@@ -629,8 +685,6 @@ function K.Punish(pl, reason, category)
 		end
 	end)
 
-	K.LogPunish(pl, reason, s.wrn, category)
-
 	for _, punishFn in pairs(K.Punishes) do
 		local ok2, result = pcall(punishFn, pl, s, reason, category)
 		if ok2 and result == "stop" then
@@ -643,6 +697,7 @@ function K.Punish(pl, reason, category)
 
 	if isBan then
 		K.Metrics.totalBans = K.Metrics.totalBans + 1
+		K.LogPunish(pl, reason, s.wrn, "ban")
 		local msg = K.Msgs.ban[math.random(#K.Msgs.ban)]
 		task.spawn(function()
 			local ok = pcall(K.Bans.SetAsync, K.Bans, "ban_" .. uid, banUntil)
@@ -653,12 +708,14 @@ function K.Punish(pl, reason, category)
 		end)
 	elseif isKick then
 		K.Metrics.totalKicks = K.Metrics.totalKicks + 1
+		K.LogPunish(pl, reason, s.wrn, category)
 		task.spawn(function()
 			K.KickRandom(pl)
 		end)
+	else
+		K.LogPunish(pl, reason, s.wrn, category)
 	end
-end
-function K.BodyCountInc(pl, reason)
+endfunction K.BodyCountInc(pl, reason)
 	local s = K.State(pl.UserId)
 	local now = os.clock()
 
@@ -739,23 +796,23 @@ function K.DetectNeckGlitch(pl, s)
 	if K.IsWhitelisted(pl, "neck_glitch") then return false end
 	if not s.ch or not s.ch:FindFirstChild("Torso") then return false end
 	if os.clock() < s.grace + 1 then return false end
+
 	local torso = s.ch.Torso
 	local neck = torso:FindFirstChild("Neck")
 	if not neck or not neck:IsA("Motor6D") then return false end
-
 
 	local ok, x, y, z = pcall(function()
 		local a, b, c = neck.C0:toEulerAnglesXYZ()
 		return a, b, c
 	end)
 
-
 	if not ok then return false end
 
+	local fpsMult = K.FpsMult(s)
 
-	if math.abs(x) > 2.5
-		or math.abs(y) > 4.0
-		or math.abs(z) > 1.5 then
+	if math.abs(x) > 2.5 * fpsMult
+		or math.abs(y) > 4.0 * fpsMult
+		or math.abs(z) > 1.5 * fpsMult then
 		return true
 	end
 	return false
@@ -765,8 +822,46 @@ function K.DetectFlingVelocity(pl, s)
 	if K.IsWhitelisted(pl, "fling_velocity") then return false end
 	if not s.hrp then return false end
 
+	local fpsMult = K.FpsMult(s)
 	local v = s.hrp.AssemblyLinearVelocity
-	if v.Magnitude > K.Cfg.FlingVelocityMax then
+
+	if v.Magnitude > K.Cfg.FlingVelocityMax * fpsMult then
+		return true
+	end
+	return false
+end
+
+function K.DetectFlyState(pl, s)
+	if K.IsWhitelisted(pl, "fly_state") then return false end
+	if not s.hum or not s.ch then return false end
+
+	local state = s.hum:GetState()
+	if state == Enum.HumanoidStateType.Flying then
+		if not s.inCar then
+			local seat = s.hum.SeatPart
+			if not seat then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+function K.DetectMaxHealth(pl, s)
+	if K.IsWhitelisted(pl, "max_health") then return false end
+	if not s.hum then return false end
+
+	if s.hum.MaxHealth > K.Cfg.MaxHealthMax then
+		return true
+	end
+	return false
+end
+
+function K.DetectSmallHrp(pl, s)
+	if K.IsWhitelisted(pl, "small_hrp") then return false end
+	if not s.hrp then return false end
+
+	if s.hrp.Size.Magnitude < K.Cfg.MinHrpSize then
 		return true
 	end
 	return false
@@ -783,6 +878,18 @@ end, 35, 3, "anomaly", 3)
 K.AddDetect("fling_velocity", function(pl, s)
 	return K.DetectFlingVelocity(pl, s)
 end, 25, 1, "anomaly", 5)
+
+K.AddDetect("fly_state", function(pl, s)
+	return K.DetectFlyState(pl, s)
+end, 20, 1, "anomaly", 5)
+
+K.AddDetect("max_health", function(pl, s)
+	return K.DetectMaxHealth(pl, s)
+end, 22, 1, "anomaly", 5)
+
+K.AddDetect("small_hrp", function(pl, s)
+	return K.DetectSmallHrp(pl, s)
+end, 24, 1, "anomaly", 5)
 
 function K.Bind(pl, ch)
 	if K.Dead then return end
@@ -841,8 +948,19 @@ function K.Bind(pl, ch)
 	end
 	s.hum:SetAttribute("legitSpeed", s.legitSpeed)
 
+	local ALLOWED_MOTORS = {
+		Neck = true,
+		["Right Shoulder"] = true,
+		["Left Shoulder"] = true,
+		["Right Hip"] = true,
+		["Left Hip"] = true,
+		RootJoint = true,
+		Waist = true,
+	}
+
 	local c1 = ch.DescendantAdded:Connect(function(d)
 		if K.Dead then return end
+
 		if K.IsBodyMover(d) and not K.IsWhitelisted(pl, "body") then
 			local className = d.ClassName
 			task.defer(function()
@@ -854,6 +972,18 @@ function K.Bind(pl, ch)
 			task.defer(function()
 				d:Destroy()
 			end)
+			return
+		end
+
+		if d:IsA("Motor6D") and not ALLOWED_MOTORS[d.Name] then
+			if not K.IsWhitelisted(pl, "unknown_motor6d") then
+				local motorName = d.Name
+				task.defer(function()
+					if pl.Parent then
+						K.Suspicion(pl, 5, "unknown_motor6d:" .. motorName)
+					end
+				end)
+			end
 		end
 	end)
 	table.insert(s.conns, c1)
@@ -932,9 +1062,7 @@ function K.Bind(pl, ch)
 		end
 	end)
 	table.insert(s.conns, c2)
-end
-
-function K.TickOne(uid)
+endfunction K.TickOne(uid)
 	if K.Dead then return end
 	local s = K.S[uid]
 	if not s or not s.ch or not s.hrp or not s.hum then return end
@@ -958,6 +1086,7 @@ function K.TickOne(uid)
 	local wl = K.IsWhitelisted(pl)
 	local ping = K.GetPing(pl)
 	local mult = 1 + math.min(ping, K.Cfg.PingMax) / 500
+	local fpsMult = K.FpsMult(s)
 
 	local dist = s.lastPos and (pos - s.lastPos).Magnitude or 0
 	s.lastPos = pos
@@ -992,6 +1121,11 @@ function K.TickOne(uid)
 	local walkSpeed = s.hum.WalkSpeed
 	local ls = s.legitSpeed or 16
 
+	if s.hrp.RotVelocity.Magnitude > K.Cfg.RotVelocityMax * fpsMult and not inCar and not K.IsWhitelisted(pl, "rot_velocity") then
+		K.Suspicion(pl, 5, "rot_velocity:" .. math.floor(s.hrp.RotVelocity.Magnitude))
+		return
+	end
+
 	if walkSpeed > ls + 9 and not inCar and not K.IsWhitelisted(pl, "ws") then
 		K.Suspicion(pl, 4, "ws:" .. tostring(walkSpeed))
 		return
@@ -1010,12 +1144,12 @@ function K.TickOne(uid)
 	end
 
 	local name, category, weight = K.RunDetects(pl, s)
-if name then
-	K.Suspicion(pl, weight or 5, name)
-	return
-end
+	if name then
+		K.Suspicion(pl, weight or 5, name)
+		return
+	end
 
-	if cfDist > K.Cfg.CFrameMinDist and h < K.Cfg.CFrameMaxSpeed and not inCar and not K.IsWhitelisted(pl, "cframe") then
+	if cfDist > K.Cfg.CFrameMinDist * fpsMult and h < K.Cfg.CFrameMaxSpeed and not inCar and not K.IsWhitelisted(pl, "cframe") then
 		local now = os.clock()
 		if now - s.cframeAt > K.Cfg.CFrameWindow then
 			s.cframeCount = 0
@@ -1030,7 +1164,7 @@ end
 		return
 	end
 
-	if dist > K.Cfg.TeleportDist * mult and not s.jumped and onGround and not inCar and not K.IsWhitelisted(pl, "tp") then
+	if dist > K.Cfg.TeleportDist * mult * fpsMult and not s.jumped and onGround and not inCar and not K.IsWhitelisted(pl, "tp") then
 		s.tpCount = s.tpCount + 1
 		if s.tpCount >= K.Cfg.TeleportCount then
 			K.Suspicion(pl, 4, "tp")
@@ -1043,7 +1177,7 @@ end
 
 	local limit = inCar and K.Cfg.MaxSpeedCar or (walkSpeed + K.Cfg.SpeedTolerance)
 	local ratio = ls > 0 and (h / ls) or 0
-	local overLimit = (not inCar) and (h > limit or ratio > K.Cfg.SpeedRatioMax)
+	local overLimit = (not inCar) and (h > limit * fpsMult or ratio > K.Cfg.SpeedRatioMax * fpsMult)
 
 	if overLimit and not K.IsWhitelisted(pl, "speed") then
 		s.spd = s.spd + 1
@@ -1059,7 +1193,7 @@ end
 	if s.jumped
 		and state == Enum.HumanoidStateType.Freefall
 		and s.lastJumpY
-		and y > s.lastJumpY + 15
+		and y > s.lastJumpY + 15 * fpsMult
 		and dist > 20
 		and v.Y > -5
 		and not inCar
@@ -1122,8 +1256,7 @@ end
 			s.freeTime = 0
 		end
 	end
-end
-function K.StartHeartbeat()
+endfunction K.StartHeartbeat()
 	local conn = rs.Heartbeat:Connect(function(dtF)
 		if K.Dead then return end
 
@@ -1182,7 +1315,7 @@ function K.StartHeartbeat()
 end
 
 function K.StartReportListener()
-	local conn = K.Report.OnServerEvent:Connect(function(pl, ws, token)
+	local conn = K.Report.OnServerEvent:Connect(function(pl, ws, token, fps)
 		if K.Dead then return end
 		local s = K.S[pl.UserId]
 		if not s then return end
@@ -1223,6 +1356,10 @@ function K.StartReportListener()
 		if ws < 0 or ws > 500 then
 			K.Suspicion(pl, 5, "report:ws")
 			return
+		end
+
+		if type(fps) == "number" and fps >= 0 and fps <= 240 then
+			s.fps = fps
 		end
 	end)
 	table.insert(K.Connections, conn)
@@ -1289,11 +1426,6 @@ function K.OnPlayerAdded(pl)
 	if pl.AccountAge < K.Cfg.MinAccountAge then
 		s.susp = s.susp + K.Cfg.NewAccountSusp
 		K.Log(2, "new account: " .. pl.Name .. " (age " .. pl.AccountAge .. ")")
-		task.defer(function()
-			if pl.Parent then
-				K.Suspicion(pl, 0, "account_age:" .. pl.AccountAge)
-			end
-		end)
 	end
 
 	local c1 = pl.CharacterAdded:Connect(function(ch)
@@ -1421,6 +1553,7 @@ function K.Run()
 	K.DsErrAt = 0
 	K.Acc = 0
 	K.Init()
+	K.StartWebhook()
 
 	local c1 = plrs.PlayerAdded:Connect(K.OnPlayerAdded)
 	table.insert(K.Connections, c1)
@@ -1475,16 +1608,17 @@ function K.Stop()
 		s.conns = {}
 	end
 
-K.S = {}
-K.Acc = 0
-K.Metrics = {
-	totalDetects = 0,
-	totalKicks = 0,
-	totalBans = 0,
-	byDetector = {},
-	byCategory = {},
-}
-print("[KotowAC] stopped")
+	K.S = {}
+	K.Acc = 0
+	K.Metrics = {
+		totalDetects = 0,
+		totalKicks = 0,
+		totalBans = 0,
+		byDetector = {},
+		byCategory = {},
+	}
+	K.WebhookQueue = {}
+	print("[KotowAC] stopped")
 end
 
 K.Run()
