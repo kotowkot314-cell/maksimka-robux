@@ -14,6 +14,7 @@ local lastSend = 0
 local lastAlert = 0
 local nextFetchAt = 0
 local fetchFails = 0
+local lastDt = 0
 
 local function fetchToken()
 	if not getToken then return end
@@ -42,7 +43,9 @@ pl.CharacterAdded:Connect(function()
 	fetchToken()
 end)
 
-rs.Heartbeat:Connect(function()
+rs.Heartbeat:Connect(function(dt)
+	lastDt = dt
+
 	if not token then
 		if os.clock() >= nextFetchAt then
 			fetchToken()
@@ -59,7 +62,12 @@ rs.Heartbeat:Connect(function()
 	local hum = ch:FindFirstChildOfClass("Humanoid")
 	if not hum then return end
 
-	report:FireServer(hum.WalkSpeed, token)
+	local fps = 60
+	if lastDt and lastDt > 0 then
+		fps = math.clamp(1 / lastDt, 0, 240)
+	end
+
+	report:FireServer(hum.WalkSpeed, token, fps)
 end)
 
 if alert then
