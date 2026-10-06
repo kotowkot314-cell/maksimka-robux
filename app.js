@@ -1,20 +1,33 @@
 const API = "https://maxxi1mka.pythonanywhere.com";
+const TOK_KEY = "futon_tok";
 
-const state = { feed: [], me: null };
+const state = { feed: [], me: null, tok: localStorage.getItem(TOK_KEY) || "" };
 const $ = (id) => document.getElementById(id);
 const view = $("view");
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 
 async function api(path, opts={}){
-  const r = await fetch(API+path, {credentials:"include", headers:{"Content-Type":"application/json"}, ...opts});
-  if(!r.ok) throw new Error(r.status);
+  const headers = { "Content-Type": "application/json" };
+  if(state.tok) headers["Authorization"] = "Bearer " + state.tok;
+  const r = await fetch(API+path, {headers, ...opts});
+  if(!r.ok){
+    let t = "";
+    try{ t = await r.text(); }catch(e){}
+    throw new Error(r.status + " " + t.slice(0,140));
+  }
   return r.json();
+}
+
+function setTok(t){
+  state.tok = t || "";
+  if(t) localStorage.setItem(TOK_KEY, t);
+  else localStorage.removeItem(TOK_KEY);
 }
 
 function setNav(active){
   ["nav-feed","nav-auth","nav-new","nav-out"].forEach(id=>$(id).classList.toggle("active", id===active));
-  const logged = !!state.me;
+  const logged = !!state.me && !!state.me.uid;
   $("nav-auth").hidden = logged;
   $("nav-new").hidden = !logged;
   $("nav-out").hidden = !logged;
@@ -55,18 +68,20 @@ function renderAuth(){
     const fd=e.target;
     try{
       const r = await api("/api/register",{method:"POST",body:JSON.stringify({n:fd.n.value,p:fd.p.value})});
-      state.me = r;
+      setTok(r.token);
+      state.me = {uid:r.uid, nick:r.nick};
       await loadFeed(); renderFeed();
-    }catch{ $("e1").textContent="taken or empty"; }
+    }catch(err){ $("e1").textContent = "err " + (err.message||"?"); console.log("register failed:", err); }
   };
   $("log").onsubmit = async e=>{
     e.preventDefault();
     const fd=e.target;
     try{
       const r = await api("/api/login",{method:"POST",body:JSON.stringify({n:fd.n.value,p:fd.p.value})});
-      state.me = r;
+      setTok(r.token);
+      state.me = {uid:r.uid, nick:r.nick};
       await loadFeed(); renderFeed();
-    }catch{ $("e2").textContent="bad nick/password"; }
+    }catch(err){ $("e2").textContent = "err " + (err.message||"?"); console.log("login failed:", err); }
   };
 }
 
@@ -95,7 +110,10 @@ function renderNew(){
     try{
       await api("/api/post",{method:"POST",body:JSON.stringify({b:fd.b.value, media, media_type})});
       await loadFeed(); renderFeed();
-    }catch{ $("e").textContent="error"; }
+    }catch(err){
+      $("e").textContent = "err " + (err.message||"?");
+      console.log("post failed:", err);
+    }
   };
 }
 
@@ -114,6 +132,7 @@ $("nav-new").onclick=e=>{e.preventDefault();renderNew();};
 $("nav-out").onclick=async e=>{
   e.preventDefault();
   try{ await api("/api/out",{method:"POST"}); }catch{}
+  setTok("");
   state.me=null; await loadFeed(); renderFeed();
 };
 
