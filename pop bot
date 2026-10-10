@@ -1,0 +1,36 @@
+import json
+import time
+import urllib.request
+import urllib.parse
+
+TOKEN = "8738553593:AAHZkaKhiSBgMNZR_mizLrrHZF-GT6wifw8"
+CHAT_ID = -1004334205687  
+BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
+
+
+def send_message(chat_id, text):
+    url = f"{BASE_URL}/sendMessage"
+    data = urllib.parse.urlencode({
+        "chat_id": chat_id,
+        "text": text
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=data, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return None
+
+
+def main():
+    print(f"Отправляю '...' в чат {CHAT_ID} каждую секунду.")
+    while True:
+        result = send_message(CHAT_ID, "...")
+        if result and not result.get("ok"):
+            print(f"Telegram ответил ошибкой: {result}")
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()
