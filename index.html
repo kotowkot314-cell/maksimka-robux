@@ -75,25 +75,12 @@
 // ============================================================
 // ПРОКСИ (по очереди — какой сработает)
 // ============================================================
-const PROXIES = [
-  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
-  u => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
-  u => "https://thingproxy.freeboard.io/fetch/" + u,
-  u => "https://cors-anywhere.herokuapp.com/" + u,
-];
-
 async function px(url, opts) {
-  let lastErr = null;
-  for (const wrap of PROXIES) {
-    try {
-      const r = await fetch(wrap(url), opts || {});
-      if (!r.ok) { lastErr = new Error("HTTP " + r.status); continue; }
-      return await r.json();
-    } catch (e) { lastErr = e; }
-  }
-  throw lastErr || new Error("Все прокси недоступны");
+  // Прямой запрос к Roblox (без прокси)
+  const r = await fetch(url, opts || {});
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return await r.json();
 }
-
 const pxGet = (url) => px(url);
 const pxPost = (url, body) => px(url, {
   method: "POST",
