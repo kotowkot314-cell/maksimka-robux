@@ -5,222 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Roblox Info</title>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: #0e1116;
-    color: #e6edf3;
-    min-height: 100vh;
-  }
-  .wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  header {
-    padding: 20px 0;
-    text-align: center;
-  }
-  header h1 {
-    margin: 0 0 6px 0;
-    font-size: 26px;
-  }
-  header p {
-    margin: 0;
-    color: #8b949e;
-    font-size: 14px;
-  }
-  .search {
-    display: flex;
-    gap: 8px;
-    margin: 24px 0;
-    flex-wrap: wrap;
-  }
-  .search input {
-    flex: 1;
-    min-width: 200px;
-    padding: 12px 14px;
-    background: #161b22;
-    color: #e6edf3;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    font-size: 15px;
-    outline: none;
-  }
-  .search input:focus { border-color: #58a6ff; }
-  .search button {
-    padding: 12px 20px;
-    background: #238636;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .search button:hover { background: #2ea043; }
-  .search button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .status {
-    padding: 12px;
-    background: #161b22;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 14px;
-    color: #8b949e;
-    display: none;
-  }
-  .status.show { display: block; }
-  .status.error { color: #ff7b72; border: 1px solid #5c1f1f; }
-
-  .card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 14px;
-  }
-  .profile-head {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .avatar {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: #21262d;
-    object-fit: cover;
-  }
-  .profile-name {
-    flex: 1;
-    min-width: 180px;
-  }
-  .profile-name h2 {
-    margin: 0 0 4px 0;
-    font-size: 20px;
-  }
-  .profile-name .display {
-    color: #8b949e;
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
-  .badges-row {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 6px;
-  }
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .badge.ok { background: #1f3d24; color: #3fb950; }
-  .badge.ban { background: #5c1f1f; color: #ff7b72; }
-  .badge.prem { background: #3d2f1f; color: #d29922; }
-  .badge.info { background: #1f2d3d; color: #58a6ff; }
-
-  .row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 14px;
-    color: #8b949e;
-    margin: 4px 0;
-  }
-  .row b { color: #e6edf3; }
-
-  .section-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 0 0 10px 0;
-    color: #e6edf3;
-    border-bottom: 1px solid #30363d;
-    padding-bottom: 6px;
-  }
-
-  .desc {
-    background: #0d1117;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: #c9d1d9;
-    margin-top: 10px;
-  }
-
-  .list-item {
-    padding: 10px 12px;
-    background: #0d1117;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    font-size: 14px;
-  }
-  .list-item .name { color: #58a6ff; font-weight: 600; }
-  .list-item .sub { color: #8b949e; font-size: 12px; margin-top: 2px; }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-  @media (max-width: 640px) {
-    .grid { grid-template-columns: 1fr; }
-    .avatar { width: 70px; height: 70px; }
-  }
-
-  footer {
-    text-align: center;
-    padding: 30px 0;
-    color: #6e7681;
-    font-size: 12px;
-  }
-  a { color: #58a6ff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
+       background:#0e1116;color:#e6edf3;min-height:100vh}
+  .wrap{max-width:920px;margin:0 auto;padding:16px}
+  header{padding:16px 0;text-align:center}
+  header h1{margin:0 0 4px 0;font-size:24px}
+  header p{margin:0;color:#8b949e;font-size:13px}
+  .search{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}
+  .search input{flex:1;min-width:200px;padding:12px 14px;background:#161b22;
+    color:#e6edf3;border:1px solid #30363d;border-radius:8px;font-size:15px;outline:none}
+  .search input:focus{border-color:#58a6ff}
+  .search button{padding:12px 20px;background:#238636;color:#fff;border:none;
+    border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+  .search button:hover{background:#2ea043}
+  .search button:disabled{opacity:.5;cursor:not-allowed}
+  .status{padding:12px;background:#161b22;border-radius:8px;margin-bottom:14px;
+    font-size:14px;color:#8b949e;display:none}
+  .status.show{display:block}
+  .status.error{color:#ff7b72;border:1px solid #5c1f1f}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:12px;
+    padding:18px;margin-bottom:12px}
+  .profile-head{display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .avatar{width:90px;height:90px;border-radius:50%;background:#21262d;object-fit:cover}
+  .profile-name{flex:1;min-width:180px}
+  .profile-name h2{margin:0 0 4px 0;font-size:20px}
+  .profile-name .display{color:#8b949e;font-size:14px;margin-bottom:6px}
+  .badges-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+  .badge.ok{background:#1f3d24;color:#3fb950}
+  .badge.ban{background:#5c1f1f;color:#ff7b72}
+  .badge.prem{background:#3d2f1f;color:#d29922}
+  .badge.info{background:#1f2d3d;color:#58a6ff}
+  .row{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:#8b949e;margin:4px 0}
+  .row b{color:#e6edf3}
+  .section-title{font-size:15px;font-weight:700;margin:0 0 10px 0;color:#e6edf3;
+    border-bottom:1px solid #30363d;padding-bottom:6px}
+  .desc{background:#0d1117;padding:12px;border-radius:8px;font-size:14px;
+    white-space:pre-wrap;word-break:break-word;color:#c9d1d9;margin-top:10px}
+  .list-item{padding:10px 12px;background:#0d1117;border-radius:8px;margin-bottom:6px;font-size:14px}
+  .list-item .name{color:#58a6ff;font-weight:600}
+  .list-item .sub{color:#8b949e;font-size:12px;margin-top:2px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.avatar{width:70px;height:70px}}
+  footer{text-align:center;padding:24px 0;color:#6e7681;font-size:12px}
+  a{color:#58a6ff;text-decoration:none}
+  a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Roblox Info</h1>
-    <p>Информация по Roblox-аккаунту — профиль, друзья, группы, игры, бейджи</p>
+    <p>Профиль, друзья, группы, игры, бейджи, история ников</p>
   </header>
 
   <div class="search">
-    <input id="query" placeholder="Введи User ID или никнейм" autocomplete="off">
+    <input id="query" placeholder="User ID или никнейм" autocomplete="off">
     <button id="go">Найти</button>
   </div>
 
   <div id="status" class="status"></div>
   <div id="result"></div>
 
-  <footer>
-    Данные из Roblox API. Пароль, email, телефон недоступны.
-  </footer>
+  <footer>Данные из Roblox API. Пароль, email, телефон недоступны.</footer>
 </div>
 
 <script>
 // ============================================================
-// ПРОКСИ — обход CORS
+// ПРОКСИ (по очереди — какой сработает)
 // ============================================================
 const PROXIES = [
-  (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
-  (u) => "https://corsproxy.io/?" + encodeURIComponent(u),
-  (u) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
+  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  u => "https://corsproxy.io/?" + encodeURIComponent(u),
+  u => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
 ];
 
-async function fetchRoblox(url) {
+async function px(url, opts) {
   let lastErr = null;
   for (const wrap of PROXIES) {
     try {
-      const r = await fetch(wrap(url));
+      const r = await fetch(wrap(url), opts || {});
       if (!r.ok) { lastErr = new Error("HTTP " + r.status); continue; }
       return await r.json();
     } catch (e) { lastErr = e; }
@@ -228,58 +93,72 @@ async function fetchRoblox(url) {
   throw lastErr || new Error("Все прокси недоступны");
 }
 
-async function postRoblox(url, body) {
-  let lastErr = null;
-  for (const wrap of PROXIES) {
-    try {
-      const r = await fetch(wrap(url), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!r.ok) { lastErr = new Error("HTTP " + r.status); continue; }
-      return await r.json();
-    } catch (e) { lastErr = e; }
-  }
-  throw lastErr || new Error("Все прокси недоступны");
+const pxGet = (url) => px(url);
+const pxPost = (url, body) => px(url, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
+
+// ============================================================
+// КЭШ (5 минут)
+// ============================================================
+const CACHE_TTL = 5 * 60 * 1000;
+function cacheGet(k) {
+  try {
+    const raw = localStorage.getItem("cache_" + k);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    if (Date.now() - o.t > CACHE_TTL) return null;
+    return o.v;
+  } catch { return null; }
+}
+function cacheSet(k, v) {
+  try { localStorage.setItem("cache_" + k, JSON.stringify({ t: Date.now(), v })); } catch {}
 }
 
 // ============================================================
-// UI helpers
+// UI
 // ============================================================
 const $status = document.getElementById("status");
 const $result = document.getElementById("result");
+const $btn = document.getElementById("go");
+const $input = document.getElementById("query");
 
-function setStatus(text, isErr) {
-  $status.textContent = text;
-  $status.className = "status show" + (isErr ? " error" : "");
+function setStatus(t, err) {
+  $status.textContent = t;
+  $status.className = "status show" + (err ? " error" : "");
 }
 function clearStatus() { $status.className = "status"; }
-
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
-
 function fmtNum(n) {
   if (n === null || n === undefined) return "?";
   return Number(n).toLocaleString("ru-RU");
 }
-
-function fmtDate(s) {
-  if (!s) return "?";
-  return s.slice(0, 10);
-}
+function fmtDate(s) { return s ? String(s).slice(0, 10) : "?"; }
 
 // ============================================================
-// MAIN
+// ОСНОВНАЯ ЛОГИКА
 // ============================================================
-const $btn = document.getElementById("go");
-const $input = document.getElementById("query");
-
 $btn.addEventListener("click", run);
 $input.addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+
+async function resolveId(q) {
+  if (/^\d+$/.test(q)) return parseInt(q, 10);
+  const key = "name_" + q.toLowerCase();
+  const c = cacheGet(key);
+  if (c) return c;
+  const r = await pxPost("https://users.roblox.com/v1/usernames/users",
+    { usernames: [q], excludeBannedUsers: false });
+  if (!r.data || !r.data.length) throw new Error("Пользователь не найден");
+  const id = r.data[0].id;
+  cacheSet(key, id);
+  return id;
+}
 
 async function run() {
   const q = $input.value.trim();
@@ -290,67 +169,48 @@ async function run() {
   setStatus("Ищу...");
 
   try {
-    let userId = null;
+    const userId = await resolveId(q);
 
-    // если число — это ID
-    if (/^\d+$/.test(q)) {
-      userId = parseInt(q, 10);
-    } else {
-      // иначе — поиск по нику
-      setStatus("Ищу по нику...");
-      const byName = await postRoblox(
-        "https://users.roblox.com/v1/usernames/users",
-        { usernames: [q], excludeBannedUsers: false }
-      );
-      if (!byName.data || byName.data.length === 0) {
-        throw new Error("Пользователь не найден");
-      }
-      userId = byName.data[0].id;
-    }
+    // ---- 1. Параллельно тянем всё, что можно ----
+    setStatus("Загружаю данные...");
 
-    setStatus("Загружаю профиль...");
-
-    // Параллельные запросы
-    const [
-      user, avatar, friendsCount, followersCount, followingsCount,
-      history, groups, games, badges, presence
-    ] = await Promise.all([
-      fetchRoblox(`https://users.roblox.com/v1/users/${userId}`).catch(() => null),
-      fetchRoblox(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`).catch(() => null),
-      fetchRoblox(`https://friends.roblox.com/v1/users/${userId}/friends/count`).catch(() => null),
-      fetchRoblox(`https://friends.roblox.com/v1/users/${userId}/followers/count`).catch(() => null),
-      fetchRoblox(`https://friends.roblox.com/v1/users/${userId}/followings/count`).catch(() => null),
-      fetchRoblox(`https://users.roblox.com/v1/users/${userId}/username-history?limit=10&sortOrder=Desc`).catch(() => null),
-      fetchRoblox(`https://groups.roblox.com/v1/users/${userId}/groups/roles`).catch(() => null),
-      fetchRoblox(`https://games.roblox.com/v2/users/${userId}/games?accessFilter=Public&limit=10&sortOrder=Desc`).catch(() => null),
-      fetchRoblox(`https://badges.roblox.com/v1/users/${userId}/badges?limit=10&sortOrder=Desc`).catch(() => null),
-      postRoblox(`https://presence.roblox.com/v1/presence/users`, { userIds: [userId] }).catch(() => null),
+    const [user, avatar, friendsCount, followersCount, followingsCount,
+           history, groups, games, badges, presence] = await Promise.all([
+      pxGet(`https://users.roblox.com/v1/users/${userId}`).catch(()=>null),
+      pxGet(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`).catch(()=>null),
+      pxGet(`https://friends.roblox.com/v1/users/${userId}/friends/count`).catch(()=>null),
+      pxGet(`https://friends.roblox.com/v1/users/${userId}/followers/count`).catch(()=>null),
+      pxGet(`https://friends.roblox.com/v1/users/${userId}/followings/count`).catch(()=>null),
+      pxGet(`https://users.roblox.com/v1/users/${userId}/username-history?limit=20&sortOrder=Desc`).catch(()=>null),
+      pxGet(`https://groups.roblox.com/v1/users/${userId}/groups/roles`).catch(()=>null),
+      pxGet(`https://games.roblox.com/v2/users/${userId}/games?accessFilter=Public&limit=20&sortOrder=Desc`).catch(()=>null),
+      pxGet(`https://badges.roblox.com/v1/users/${userId}/badges?limit=20&sortOrder=Desc`).catch(()=>null),
+      pxPost(`https://presence.roblox.com/v1/presence/users`, { userIds:[userId] }).catch(()=>null),
     ]);
 
-    if (!user || !user.id) {
-      throw new Error("Профиль не найден");
-    }
+    if (!user || !user.id) throw new Error("Профиль не найден");
 
-    // Друзья (список)
+    // ---- 2. Список друзей ----
     setStatus("Загружаю друзей...");
-    const friendsList = await fetchRoblox(
+    const friendsList = await pxGet(
       `https://friends.roblox.com/v1/users/${userId}/friends`
-    ).catch(() => null);
+    ).catch(()=>null);
 
-    // Обогащаем друзей именами
     let friendsDetailed = [];
-    if (friendsList && friendsList.data && friendsList.data.length > 0) {
-      const ids = friendsList.data.slice(0, 50).map(f => f.id);
-      const names = await postRoblox(
+    if (friendsList && friendsList.data && friendsList.data.length) {
+      const ids = friendsList.data.slice(0, 100).map(f => f.id);
+      const names = await pxPost(
         "https://users.roblox.com/v1/userids",
         { userIds: ids }
-      ).catch(() => null);
-      const nameMap = {};
-      if (names) for (const u of Object.values(names)) nameMap[u.id] = u;
-      friendsDetailed = friendsList.data.slice(0, 50).map(f => ({
+      ).catch(()=>null);
+
+      const map = {};
+      if (names) for (const k of Object.keys(names)) map[names[k].id] = names[k];
+
+      friendsDetailed = friendsList.data.slice(0, 100).map(f => ({
         id: f.id,
-        name: (nameMap[f.id] && nameMap[f.id].name) || ("user_" + f.id),
-        display: (nameMap[f.id] && nameMap[f.id].displayName) || ""
+        name: (map[f.id] && map[f.id].name) || ("user_" + f.id),
+        display: (map[f.id] && map[f.id].displayName) || ""
       }));
     }
 
@@ -368,7 +228,7 @@ async function run() {
 }
 
 // ============================================================
-// RENDER
+// РЕНДЕР
 // ============================================================
 function render(d) {
   const u = d.user;
@@ -382,33 +242,26 @@ function render(d) {
   const followersCount = (d.followersCount && d.followersCount.count) ?? "?";
   const followingsCount = (d.followingsCount && d.followingsCount.count) ?? "?";
 
-  // presence
-  let presenceText = "Неизвестно";
-  let lastOnline = null;
+  let presenceText = "Неизвестно", lastOnline = null;
   if (d.presence && d.presence.userPresences && d.presence.userPresences[0]) {
     const p = d.presence.userPresences[0];
-    const map = { 0: "Оффлайн", 1: "Онлайн (сайт)", 2: "В игре", 3: "В Studio" };
+    const map = { 0:"Оффлайн", 1:"Онлайн (сайт)", 2:"В игре", 3:"В Studio" };
     presenceText = map[p.userPresenceType] || "Неизвестно";
     lastOnline = p.lastOnline;
   }
 
-  // history
+  // История ников
   const oldNames = (d.history && d.history.data)
-    ? d.history.data.map(x => x.name).filter(n => n && n !== u.name).slice(0, 10)
+    ? d.history.data.filter(x => x.name && x.name !== u.name)
     : [];
 
-  // groups
   const groups = (d.groups && d.groups.data) ? d.groups.data : [];
-
-  // games
-  const games = (d.games && d.games.data) ? d.games.data : [];
-
-  // badges
+  const games  = (d.games  && d.games.data ) ? d.games.data  : [];
   const badges = (d.badges && d.badges.data) ? d.badges.data : [];
 
   let html = "";
 
-  // === Профиль ===
+  // === ПРОФИЛЬ ===
   html += `
     <div class="card">
       <div class="profile-head">
@@ -422,7 +275,6 @@ function render(d) {
           </div>
         </div>
       </div>
-
       <div class="row"><span>Создан: <b>${esc(created)}</b></span></div>
       <div class="row"><span>Присутствие: <b>${esc(presenceText)}</b></span></div>
       ${lastOnline ? `<div class="row"><span>Последний онлайн: <b>${esc(lastOnline)}</b></span></div>` : ""}
@@ -438,18 +290,23 @@ function render(d) {
     </div>
   `;
 
-  // === История ников ===
+  // === ИСТОРИЯ НИКОВ ===
   if (oldNames.length) {
     html += `
       <div class="card">
-        <div class="section-title">История ников</div>
-        ${oldNames.map(n => `<div class="list-item">${esc(n)}</div>`).join("")}
+        <div class="section-title">История ников (${oldNames.length})</div>
+        ${oldNames.map(n => `
+          <div class="list-item">
+            <div class="name">${esc(n.name)}</div>
+            <div class="sub">Сменён: ${esc(fmtDate(n.created))}</div>
+          </div>
+        `).join("")}
       </div>
     `;
   }
 
-  // === Друзья ===
-  if (d.friendsDetailed && d.friendsDetailed.length) {
+  // === ДРУЗЬЯ ===
+  if (d.friendsDetailed.length) {
     html += `
       <div class="card">
         <div class="section-title">Друзья (первые ${d.friendsDetailed.length})</div>
@@ -463,22 +320,20 @@ function render(d) {
     `;
   }
 
-  // === Группы + Игры ===
+  // === ГРУППЫ + ИГРЫ ===
   html += `<div class="grid">`;
 
   if (groups.length) {
     html += `
       <div class="card">
         <div class="section-title">Группы (${groups.length})</div>
-        ${groups.slice(0, 20).map(g => {
-          const grp = g.group || {};
-          const role = g.role || {};
+        ${groups.slice(0, 30).map(g => {
+          const grp = g.group || {}, role = g.role || {};
           return `
             <div class="list-item">
               <div class="name">${esc(grp.name || "?")}</div>
-              <div class="sub">Роль: ${esc(role.name || "?")}</div>
-            </div>
-          `;
+              <div class="sub">Роль: ${esc(role.name || "?")} • ID: ${grp.id || "?"}</div>
+            </div>`;
         }).join("")}
       </div>
     `;
@@ -488,10 +343,10 @@ function render(d) {
     html += `
       <div class="card">
         <div class="section-title">Игры (${games.length})</div>
-        ${games.slice(0, 20).map(g => `
+        ${games.slice(0, 30).map(g => `
           <div class="list-item">
             <div class="name">${esc(g.name || "?")}</div>
-            <div class="sub">Посещений: ${fmtNum(g.placeVisits || 0)}</div>
+            <div class="sub">Посещений: ${fmtNum(g.placeVisits || 0)} • Обновлена: ${esc(fmtDate(g.updated))}</div>
           </div>
         `).join("")}
       </div>
@@ -500,14 +355,15 @@ function render(d) {
 
   html += `</div>`;
 
-  // === Бейджи ===
+  // === БЕЙДЖИ ===
   if (badges.length) {
     html += `
       <div class="card">
         <div class="section-title">Бейджи (${badges.length})</div>
-        ${badges.slice(0, 20).map(b => `
+        ${badges.map(b => `
           <div class="list-item">
             <div class="name">${esc(b.name || "?")}</div>
+            <div class="sub">ID: ${b.id} ${b.awardedDate ? "• Получен: " + esc(fmtDate(b.awardedDate)) : ""}</div>
           </div>
         `).join("")}
       </div>
