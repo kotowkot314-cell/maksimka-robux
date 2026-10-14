@@ -1,1 +1,122 @@
-. 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox Finder</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #1a1a2e;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #00b4d8; }
+  input {
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #00b4d8;
+    background: #16213e;
+    color: #fff;
+    width: 70%;
+    max-width: 300px;
+  }
+  button {
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #00b4d8;
+    color: #fff;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+  button:active { background: #0096c7; }
+  .result {
+    margin-top: 20px;
+    padding: 20px;
+    background: #16213e;
+    border-radius: 12px;
+    display: none;
+  }
+  .result img {
+    width: 150px;
+    height: 150px;
+    border-radius: 12px;
+    border: 3px solid #00b4d8;
+  }
+  .result p { margin: 8px 0; }
+  .link {
+    color: #00b4d8;
+    word-break: break-all;
+  }
+  .error { color: #ff6b6b; }
+</style>
+</head>
+<body>
+  <h1>🔍 Roblox Finder</h1>
+  <p>Введи ник игрока:</p>
+  <input id="nick" placeholder="например: platon388" />
+  <button onclick="findUser()">Найти</button>
+
+  <div class="result" id="result"></div>
+
+<script>
+async function findUser() {
+  const nick = document.getElementById('nick').value.trim();
+  const result = document.getElementById('result');
+  result.style.display = 'block';
+  result.innerHTML = 'Ищу...';
+
+  if (!nick) {
+    result.innerHTML = '<p class="error">Введи ник!</p>';
+    return;
+  }
+
+  try {
+    // 1. Получаем ID по нику
+    const searchRes = await fetch('https://users.roblox.com/v1/usernames/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernames: [nick], excludeBannedUsers: false })
+    });
+    const searchData = await searchRes.json();
+
+    if (!searchData.data || searchData.data.length === 0) {
+      result.innerHTML = '<p class="error">❌ Игрок не найден</p>';
+      return;
+    }
+
+    const userId = searchData.data[0].id;
+
+    // 2. Получаем инфо о профиле
+    const infoRes = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+    const info = await infoRes.json();
+
+    // 3. Получаем аватар
+    const avatarRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`);
+    const avatarData = await avatarRes.json();
+    const avatarUrl = avatarData.data[0]?.imageUrl || '';
+
+    // 4. Показываем результат
+    result.innerHTML = `
+      <img src="${avatarUrl}" alt="avatar" />
+      <p><strong>Ник:</strong> ${info.name}</p>
+      <p><strong>Display:</strong> ${info.displayName}</p>
+      <p><strong>ID:</strong> ${userId}</p>
+      <p><strong>Создан:</strong> ${new Date(info.created).toLocaleDateString('ru-RU')}</p>
+      <p><strong>Профиль:</strong><br>
+        <a class="link" href="https://www.roblox.com/users/${userId}/profile" target="_blank">
+          https://www.roblox.com/users/${userId}/profile
+        </a>
+      </p>
+    `;
+  } catch (e) {
+    result.innerHTML = '<p class="error">Ошибка: ' + e.message + '</p>';
+  }
+}
+</script>
+</body>
+</html>
