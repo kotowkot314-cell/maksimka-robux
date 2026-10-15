@@ -52,7 +52,9 @@
 
     <div id="game-canvas"></div>
 
+    <!-- Three.js и RoundedBoxGeometry -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
     <script>
         const myNick = localStorage.getItem('maxxi_nick') || 'Гость';
         document.getElementById('nick-label').innerText = 'Вы: ' + myNick;
@@ -85,13 +87,16 @@
 
         const WALLS = [];
 
-        // --- РАЗМЕРЫ ПЕРСОНАЖА (шире, голова меньше) ---
-        const TORSO_W = 0.9;    // Ширина торса (было 0.7)
-        const TORSO_H = 0.9;    // Высота торса
-        const TORSO_D = 0.4;    // Глубина торса
-        const LIMB_W = 0.35;    // Ширина рук/ног (было 0.3)
-        const LIMB_H = 0.9;     // Высота рук/ног
-        const HEAD_R = 0.18;    // Радиус головы (было 0.35, теперь в 2 раза меньше)
+        // --- РАЗМЕРЫ ПЕРСОНАЖА ---
+        const TORSO_W = 0.9;
+        const TORSO_H = 0.9;
+        const TORSO_D = 0.4;
+        const LIMB_W = 0.4;      // Руки/ноги чуть больше
+        const LIMB_H = 0.9;
+        const HEAD_W = 0.5;      // Ширина головы (прямоугольник)
+        const HEAD_H = 0.55;     // Высота головы
+        const HEAD_D = 0.5;      // Глубина головы
+        const HEAD_ROUND = 0.12; // Радиус скругления углов
 
         init3D();
         animate();
@@ -151,25 +156,23 @@
             const blueMat = new THREE.MeshStandardMaterial({ color: 0x0f5cff });
             const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
-            // Считаем общую высоту персонажа: ноги + торс + голова
-            const LEG_H = LIMB_H;             // Высота ног
-            const TOTAL_H = LEG_H + TORSO_H + HEAD_R * 2; // Общая высота
+            const LEG_H = LIMB_H;
 
-            // ГОЛОВА — маленькая, овальная, над торсом
-            const headGeo = new THREE.SphereGeometry(HEAD_R, 16, 16);
+            // ГОЛОВА — прямоугольник со скруглёнными углами (RoundedBox)
+            // RoundedBoxGeometry(width, height, depth, segments, radius)
+            const headGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 4, HEAD_ROUND);
             const head = new THREE.Mesh(headGeo, yellowMat);
-            head.position.y = LEG_H + TORSO_H + HEAD_R + 0.05;
-            head.scale.set(1, 1.1, 1); // Чуть вытянута — овал
+            head.position.y = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
             head.castShadow = true;
             player.add(head);
 
-            // ТУЛОВИЩЕ — стоит на ногах
+            // ТУЛОВИЩЕ
             const torso = new THREE.Mesh(new THREE.BoxGeometry(TORSO_W, TORSO_H, TORSO_D), blueMat);
             torso.position.y = LEG_H + TORSO_H / 2;
             torso.castShadow = true;
             player.add(torso);
 
-            // ЛЕВАЯ РУКА
+            // ЛЕВАЯ РУКА (чуть больше)
             armL = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), yellowMat);
             armL.geometry.translate(0, -LIMB_H/2, 0);
             armL.position.set(
@@ -191,22 +194,23 @@
             armR.castShadow = true;
             player.add(armR);
 
-            // ЛЕВАЯ НОГА — стоит на полу (низ на уровне 0)
+            // НОГИ — почти вплотную (маленький зазор)
+            const LEG_GAP = 0.02; // Очень маленький зазор между ногами
+
             legL = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), greenMat);
             legL.geometry.translate(0, -LIMB_H/2, 0);
             legL.position.set(
-                -TORSO_W/4,
+                -LIMB_W/2 - LEG_GAP/2,
                 LEG_H,
                 0
             );
             legL.castShadow = true;
             player.add(legL);
 
-            // ПРАВАЯ НОГА
             legR = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), greenMat);
             legR.geometry.translate(0, -LIMB_H/2, 0);
             legR.position.set(
-                TORSO_W/4,
+                LIMB_W/2 + LEG_GAP/2,
                 LEG_H,
                 0
             );
@@ -228,7 +232,7 @@
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = LEG_H + TORSO_H + HEAD_R * 2 + 0.3;
+            sprite.position.y = LEG_H + TORSO_H + HEAD_H + 0.3;
             sprite.scale.set(2, 0.5, 1);
             player.add(sprite);
 
@@ -450,7 +454,6 @@
             velocityY += GRAVITY * delta;
             player.position.y += velocityY * delta;
 
-            // Приземление: ноги стоят на полу (низ ног на уровне 0)
             if (player.position.y <= 0) {
                 player.position.y = 0;
                 velocityY = 0;
