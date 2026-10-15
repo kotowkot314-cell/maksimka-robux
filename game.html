@@ -98,11 +98,12 @@
         const LEG_H = 0.8;
         const LEG_D = TORSO_D;
         
-        // ГОЛОВА — чуть ниже, спереди квадрат, сверху круглая
+        // ГОЛОВА — выше, сверху круглая
         const HEAD_W = 0.5;    // Ширина
-        const HEAD_H = 0.4;    // Высота (чуть ниже)
+        const HEAD_H = 0.5;    // Высота (вернули и даже чуть выше)
         const HEAD_D = 0.5;    // Глубина
-        const HEAD_ROUND = 0.08; // Радиус скругления углов (небольшой)
+        const HEAD_ROUND = 0.1; // Скругление углов
+        const HEAD_TOP_R = 0.25; // Радиус верхней полусферы (круглая сверху)
 
         init3D();
         animate();
@@ -163,7 +164,6 @@
             const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
             // --- ГОЛОВА С ЛИЦОМ ---
-            // Создаём текстуру для лица
             const faceCanvas = document.createElement('canvas');
             faceCanvas.width = 256;
             faceCanvas.height = 256;
@@ -190,41 +190,39 @@
 
             const faceTexture = new THREE.CanvasTexture(faceCanvas);
 
-            // Материал головы: жёлтый с текстурой лица только спереди
             const faceMaterial = new THREE.MeshStandardMaterial({ map: faceTexture });
             const plainMaterial = new THREE.MeshStandardMaterial({ color: 0xffe000 });
 
-            // Порядок граней: +X, -X, +Y, -Y, +Z, -Z
             const headMats = [
-                plainMaterial,  // +X (правая)
-                plainMaterial,  // -X (левая)
-                plainMaterial,  // +Y (верх)
-                plainMaterial,  // -Y (низ)
-                faceMaterial,   // +Z (перед — лицо)
-                plainMaterial   // -Z (зад)
+                plainMaterial,  // +X
+                plainMaterial,  // -X
+                plainMaterial,  // +Y
+                plainMaterial,  // -Y
+                faceMaterial,   // +Z
+                plainMaterial   // -Z
             ];
 
             const headBaseY = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
 
-            // Основная часть головы — куб с закруглёнными углами (небольшое скругление)
+            // Основная часть — куб с закруглёнными углами
             const headCubeGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 3, HEAD_ROUND);
             const headCube = new THREE.Mesh(headCubeGeo, headMats);
             headCube.position.y = headBaseY;
             headCube.castShadow = true;
             player.add(headCube);
 
-            // Верх головы — полусфера (чтобы верх был круглый)
-            const topSphereGeo = new THREE.SphereGeometry(HEAD_W / 2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+            // ВЕРХ — полноценная полусфера (круглая сверху)
+            const topSphereGeo = new THREE.SphereGeometry(HEAD_TOP_R, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2);
             const topSphere = new THREE.Mesh(topSphereGeo, plainMaterial);
-            topSphere.position.y = headBaseY + HEAD_H / 2 - HEAD_ROUND;
-            topSphere.scale.set(1, 0.5, 1);
+            // Ставим полусферу так, чтобы её основание совпало с верхом куба
+            topSphere.position.y = headBaseY + HEAD_H / 2;
             topSphere.castShadow = true;
             player.add(topSphere);
 
-            // Низ головы — полусфера (чуть выпуклая)
+            // НИЗ — полусфера (чуть выпуклая)
             const bottomSphereGeo = new THREE.SphereGeometry(HEAD_W / 2, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
             const bottomSphere = new THREE.Mesh(bottomSphereGeo, plainMaterial);
-            bottomSphere.position.y = headBaseY - HEAD_H / 2 + HEAD_ROUND;
+            bottomSphere.position.y = headBaseY - HEAD_H / 2;
             bottomSphere.scale.set(1, 0.4, 1);
             bottomSphere.castShadow = true;
             player.add(bottomSphere);
@@ -279,7 +277,7 @@
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = LEG_H + TORSO_H + HEAD_H + 0.4;
+            sprite.position.y = LEG_H + TORSO_H + HEAD_H + HEAD_TOP_R + 0.3;
             sprite.scale.set(2, 0.5, 1);
             player.add(sprite);
 
