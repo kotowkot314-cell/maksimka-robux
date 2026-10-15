@@ -98,11 +98,11 @@
         const LEG_H = 0.8;
         const LEG_D = TORSO_D;
         
-        // ГОЛОВА — чуть вытянута вверх, чуть уже
-        const HEAD_W = 0.45;   // Уже
-        const HEAD_H = 0.55;   // Выше
-        const HEAD_D = 0.45;   // Уже
-        const HEAD_ROUND = 0.15;
+        // ГОЛОВА — чуть ниже, спереди квадрат, сверху круглая
+        const HEAD_W = 0.5;    // Ширина
+        const HEAD_H = 0.4;    // Высота (чуть ниже)
+        const HEAD_D = 0.5;    // Глубина
+        const HEAD_ROUND = 0.08; // Радиус скругления углов (небольшой)
 
         init3D();
         animate();
@@ -162,61 +162,72 @@
             const blueMat = new THREE.MeshStandardMaterial({ color: 0x0f5cff });
             const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
-            // --- ГОЛОВА С ЛИЦОМ СПЕРЕДИ ---
-            // Создаём текстуру для лица (улыбка как в Roblox, не детская)
+            // --- ГОЛОВА С ЛИЦОМ ---
+            // Создаём текстуру для лица
             const faceCanvas = document.createElement('canvas');
             faceCanvas.width = 256;
             faceCanvas.height = 256;
             const fctx = faceCanvas.getContext('2d');
-
-            // Фон — жёлтый
             fctx.fillStyle = '#ffe000';
             fctx.fillRect(0, 0, 256, 256);
 
-            // Глаза — чёрные овалы (как в Roblox)
+            // Глаза
             fctx.fillStyle = '#000000';
-            // Левый глаз
             fctx.beginPath();
-            fctx.ellipse(85, 100, 15, 22, 0, 0, Math.PI * 2);
+            fctx.ellipse(85, 110, 14, 20, 0, 0, Math.PI * 2);
             fctx.fill();
-            // Правый глаз
             fctx.beginPath();
-            fctx.ellipse(171, 100, 15, 22, 0, 0, Math.PI * 2);
+            fctx.ellipse(171, 110, 14, 20, 0, 0, Math.PI * 2);
             fctx.fill();
 
-            // Улыбка — классическая, тонкая, как в Roblox (без «детского» изгиба)
+            // Улыбка
             fctx.strokeStyle = '#000000';
             fctx.lineWidth = 4;
             fctx.lineCap = 'round';
             fctx.beginPath();
-            // Плоская улыбка — дуга, но не сильно изогнутая
-            fctx.arc(128, 155, 38, 0.2 * Math.PI, 0.8 * Math.PI);
+            fctx.arc(128, 160, 35, 0.2 * Math.PI, 0.8 * Math.PI);
             fctx.stroke();
 
             const faceTexture = new THREE.CanvasTexture(faceCanvas);
 
-            // Материалы для головы:
-            // - Передняя грань: текстура с лицом
-            // - Остальные: однотонный жёлтый
+            // Материал головы: жёлтый с текстурой лица только спереди
             const faceMaterial = new THREE.MeshStandardMaterial({ map: faceTexture });
             const plainMaterial = new THREE.MeshStandardMaterial({ color: 0xffe000 });
 
-            // Порядок граней в BoxGeometry: +X, -X, +Y, -Y, +Z, -Z
-            // Лицо должно быть на грани +Z (передняя)
+            // Порядок граней: +X, -X, +Y, -Y, +Z, -Z
             const headMats = [
-                plainMaterial,  // +X (правая сторона)
-                plainMaterial,  // -X (левая сторона)
+                plainMaterial,  // +X (правая)
+                plainMaterial,  // -X (левая)
                 plainMaterial,  // +Y (верх)
                 plainMaterial,  // -Y (низ)
                 faceMaterial,   // +Z (перед — лицо)
                 plainMaterial   // -Z (зад)
             ];
 
-            const headGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 6, HEAD_ROUND);
-            const head = new THREE.Mesh(headGeo, headMats);
-            head.position.y = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
-            head.castShadow = true;
-            player.add(head);
+            const headBaseY = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
+
+            // Основная часть головы — куб с закруглёнными углами (небольшое скругление)
+            const headCubeGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 3, HEAD_ROUND);
+            const headCube = new THREE.Mesh(headCubeGeo, headMats);
+            headCube.position.y = headBaseY;
+            headCube.castShadow = true;
+            player.add(headCube);
+
+            // Верх головы — полусфера (чтобы верх был круглый)
+            const topSphereGeo = new THREE.SphereGeometry(HEAD_W / 2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+            const topSphere = new THREE.Mesh(topSphereGeo, plainMaterial);
+            topSphere.position.y = headBaseY + HEAD_H / 2 - HEAD_ROUND;
+            topSphere.scale.set(1, 0.5, 1);
+            topSphere.castShadow = true;
+            player.add(topSphere);
+
+            // Низ головы — полусфера (чуть выпуклая)
+            const bottomSphereGeo = new THREE.SphereGeometry(HEAD_W / 2, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+            const bottomSphere = new THREE.Mesh(bottomSphereGeo, plainMaterial);
+            bottomSphere.position.y = headBaseY - HEAD_H / 2 + HEAD_ROUND;
+            bottomSphere.scale.set(1, 0.4, 1);
+            bottomSphere.castShadow = true;
+            player.add(bottomSphere);
 
             // ТУЛОВИЩЕ
             const torso = new THREE.Mesh(new THREE.BoxGeometry(TORSO_W, TORSO_H, TORSO_D), blueMat);
@@ -227,46 +238,29 @@
             // ЛЕВАЯ РУКА
             armL = new THREE.Mesh(new THREE.BoxGeometry(ARM_W, ARM_H, ARM_W), yellowMat);
             armL.geometry.translate(0, -ARM_H/2, 0);
-            armL.position.set(
-                -TORSO_W/2 - ARM_W/2,
-                LEG_H + TORSO_H,
-                0
-            );
+            armL.position.set(-TORSO_W/2 - ARM_W/2, LEG_H + TORSO_H, 0);
             armL.castShadow = true;
             player.add(armL);
 
             // ПРАВАЯ РУКА
             armR = new THREE.Mesh(new THREE.BoxGeometry(ARM_W, ARM_H, ARM_W), yellowMat);
             armR.geometry.translate(0, -ARM_H/2, 0);
-            armR.position.set(
-                TORSO_W/2 + ARM_W/2,
-                LEG_H + TORSO_H,
-                0
-            );
+            armR.position.set(TORSO_W/2 + ARM_W/2, LEG_H + TORSO_H, 0);
             armR.castShadow = true;
             player.add(armR);
 
             // ЛЕВАЯ НОГА
             const legOffset = LEG_W / 2;
-
             legL = new THREE.Mesh(new THREE.BoxGeometry(LEG_W, LEG_H, LEG_D), greenMat);
             legL.geometry.translate(0, -LEG_H/2, 0);
-            legL.position.set(
-                -legOffset,
-                LEG_H,
-                0
-            );
+            legL.position.set(-legOffset, LEG_H, 0);
             legL.castShadow = true;
             player.add(legL);
 
             // ПРАВАЯ НОГА
             legR = new THREE.Mesh(new THREE.BoxGeometry(LEG_W, LEG_H, LEG_D), greenMat);
             legR.geometry.translate(0, -LEG_H/2, 0);
-            legR.position.set(
-                legOffset,
-                LEG_H,
-                0
-            );
+            legR.position.set(legOffset, LEG_H, 0);
             legR.castShadow = true;
             player.add(legR);
 
@@ -285,7 +279,7 @@
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = LEG_H + TORSO_H + HEAD_H + 0.3;
+            sprite.position.y = LEG_H + TORSO_H + HEAD_H + 0.4;
             sprite.scale.set(2, 0.5, 1);
             player.add(sprite);
 
