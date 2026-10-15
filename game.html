@@ -80,10 +80,9 @@
         let currentSpeedX = 0;
         let currentSpeedZ = 0;
 
-        // Для анимации ходьбы
-        let walkCycle = 0;
-        let isWalking = false;
+        // R6-части тела (выносим для анимации)
         let armL, armR, legL, legR;
+        let walkCycle = 0;
 
         const WALLS = [];
 
@@ -138,55 +137,63 @@
                 WALLS.push({ x: pos.x, z: pos.z, w: pos.w, d: pos.d, h: pos.h });
             });
 
-            // --- ПЕРСОНАЖ (R6) ---
+            // --- ПЕРСОНАЖ R6 ---
+            // Классические цвета Roblox R6:
+            // Голова — жёлтая (0xffff00 или ближе к 0xffe000)
+            // Торс — синий (0x0000ff или 0x0f5cff)
+            // Руки — жёлтые (как голова)
+            // Ноги — зелёные (0x00ff00 или 0x00aa00)
+            
             player = new THREE.Group();
             
-            const skinMat = new THREE.MeshStandardMaterial({ color: 0x3a7bd5 });
-            const skinMat2 = new THREE.MeshStandardMaterial({ color: 0x2a5a9e });
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
+            const yellowMat = new THREE.MeshStandardMaterial({ color: 0xffe000 });
+            const blueMat = new THREE.MeshStandardMaterial({ color: 0x0f5cff });
+            const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), headMat);
-            head.position.y = 1.85;
+            // Голова (R6 — куб)
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), yellowMat);
+            head.position.y = 1.9;
             head.castShadow = true;
             player.add(head);
 
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), skinMat);
-            torso.position.y = 1.15;
+            // Туловище (R6 — куб)
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.4), blueMat);
+            torso.position.y = 1.2;
             torso.castShadow = true;
             player.add(torso);
 
-            // Руки и ноги выносим в глобальные переменные для анимации
-            armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.25), skinMat2);
-            armL.position.set(-0.5, 1.15, 0);
+            // Левая рука (R6 — цельный блок)
+            // Точка вращения — вверху (плечо)
+            armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), yellowMat);
+            armL.geometry.translate(0, -0.4, 0); // Сдвигаем центр вниз
+            armL.position.set(-0.525, 1.6, 0);   // Плечо
             armL.castShadow = true;
-            // Точка вращения — верх руки
-            armL.geometry.translate(0, -0.45, 0);
-            armL.position.y = 1.6;
             player.add(armL);
 
-            armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.25), skinMat2);
-            armR.position.set(0.5, 1.15, 0);
+            // Правая рука
+            armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), yellowMat);
+            armR.geometry.translate(0, -0.4, 0);
+            armR.position.set(0.525, 1.6, 0);
             armR.castShadow = true;
-            armR.geometry.translate(0, -0.45, 0);
-            armR.position.y = 1.6;
             player.add(armR);
 
-            legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.3), skinMat2);
-            legL.position.set(-0.2, 0.45, 0);
+            // Левая нога (R6 — цельный блок)
+            legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), greenMat);
+            legL.geometry.translate(0, -0.4, 0);
+            legL.position.set(-0.22, 0.8, 0);   // Бедро
             legL.castShadow = true;
-            legL.geometry.translate(0, -0.45, 0);
-            legL.position.y = 0.9;
             player.add(legL);
 
-            legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.3), skinMat2);
-            legR.position.set(0.2, 0.45, 0);
+            // Правая нога
+            legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), greenMat);
+            legR.geometry.translate(0, -0.4, 0);
+            legR.position.set(0.22, 0.8, 0);
             legR.castShadow = true;
-            legR.geometry.translate(0, -0.45, 0);
-            legR.position.y = 0.9;
             player.add(legR);
 
             scene.add(player);
 
+            // Ник над игроком
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext('2d');
@@ -199,7 +206,7 @@
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = 2.6;
+            sprite.position.y = 2.7;
             sprite.scale.set(2, 0.5, 1);
             player.add(sprite);
 
@@ -387,43 +394,40 @@
                 currentSpeedZ = 0;
             }
 
-            // --- ПОВОРОТ ПЕРСОНАЖА ---
-            // Если персонаж движется, поворачиваем его в сторону движения
+            // Поворот персонажа
             const speedMag = Math.sqrt(currentSpeedX*currentSpeedX + currentSpeedZ*currentSpeedZ);
             if (speedMag > 0.5) {
-                // Целевой угол поворота
                 const targetAngle = Math.atan2(currentSpeedX, currentSpeedZ);
-                // Плавно поворачиваем
                 const currentAngle = player.rotation.y;
                 let angleDiff = targetAngle - currentAngle;
-                // Нормализуем угол в диапазон -PI..PI
                 while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                 while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                 player.rotation.y += angleDiff * 15 * delta;
             }
 
-            // --- АНИМАЦИЯ ХОДЬБЫ ---
-            const isMoving = speedMag > 0.5;
-            if (isMoving && canJump) {
-                // Идём по земле — качаем руками и ногами
-                walkCycle += delta * 10;
-                const swing = Math.sin(walkCycle) * 0.5;
+            // --- ЖЁСТКАЯ R6-АНИМАЦИЯ ---
+            if (canJump && speedMag > 0.5) {
+                // Идём по земле: руки/ноги качаются целиком, как маятники
+                walkCycle += delta * 12;
+                const swing = Math.sin(walkCycle) * 0.7;
+                
+                // R6: руки и ноги двигаются целыми блоками, в противофазе
                 armL.rotation.x = swing;
                 armR.rotation.x = -swing;
                 legL.rotation.x = -swing;
                 legR.rotation.x = swing;
             } else if (!canJump) {
-                // В воздухе — руки вверх, ноги в стороны
-                armL.rotation.x = -0.5;
-                armR.rotation.x = -0.5;
-                legL.rotation.x = 0.3;
-                legR.rotation.x = -0.3;
+                // В воздухе: R6-поза прыжка
+                armL.rotation.x = -2.5;  // Руки вверх (жёстко)
+                armR.rotation.x = -2.5;
+                legL.rotation.x = 0.4;    // Ноги слегка в стороны
+                legR.rotation.x = -0.4;
             } else {
-                // Стоим — возвращаем в исходное положение
-                armL.rotation.x *= 0.9;
-                armR.rotation.x *= 0.9;
-                legL.rotation.x *= 0.9;
-                legR.rotation.x *= 0.9;
+                // Стоим: резкий возврат в исходное положение
+                armL.rotation.x *= 0.7;
+                armR.rotation.x *= 0.7;
+                legL.rotation.x *= 0.7;
+                legR.rotation.x *= 0.7;
             }
 
             // Гравитация
