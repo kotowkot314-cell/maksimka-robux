@@ -1,1 +1,190 @@
-loadstring(game:HttpGet("https://maxxi1mka.pythonanywhere.com/get_script"))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LP = Players.LocalPlayer
+local PlayerGui = LP:WaitForChild("PlayerGui")
+
+local CHECK_RATE = 0.01
+local MAX_LOG = 100
+
+local captured = {}
+
+local function scanChat()
+    local chat = PlayerGui:FindFirstChild("Chat", true)
+    if not chat then return end
+
+    for _, label in ipairs(chat:GetDescendants()) do
+        if label:IsA("TextLabel") then
+            local text = label.Text
+            if text and #text >= 2 then
+                local already = false
+                for _, entry in ipairs(captured) do
+                    if entry.text == text then
+                        already = true
+                        break
+                    end
+                end
+
+                if not already then
+                    local isRaw = not text:match("^#+$") and not text:match("^%s*$")
+                    table.insert(captured, {
+                        text = text,
+                        time = os.time(),
+                        raw = isRaw,
+                    })
+                    if #captured > MAX_LOG then
+                        table.remove(captured, 1)
+                    end
+                    print("[CAPTURED]", isRaw and "RAW" or "FILTERED", text)
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(CHECK_RATE) do
+        pcall(scanChat)
+    end
+end)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ChatSniper"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Size = UDim2.new(0, 60, 0, 30)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+OpenBtn.BorderSizePixel = 0
+OpenBtn.Text = "LOG"
+OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 13
+OpenBtn.Parent = ScreenGui
+
+local OC = Instance.new("UICorner")
+OC.CornerRadius = UDim.new(0, 8)
+OC.Parent = OpenBtn
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 340, 0, 400)
+Main.Position = UDim2.new(0, 80, 0.25, 0)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Main.BorderSizePixel = 0
+Main.Visible = false
+Main.Active = true
+Main.Draggable = true
+Main.Parent = ScreenGui
+
+local MC = Instance.new("UICorner")
+MC.CornerRadius = UDim.new(0, 10)
+MC.Parent = Main
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Color = Color3.fromRGB(60, 60, 80)
+Stroke.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 32)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+Title.BorderSizePixel = 0
+Title.Text = "Chat Sniper"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+Title.Parent = Main
+
+local TC = Instance.new("UICorner")
+TC.CornerRadius = UDim.new(0, 10)
+TC.Parent = Title
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -32, 0, 2)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 14
+CloseBtn.Parent = Main
+
+local CC = Instance.new("UICorner")
+CC.CornerRadius = UDim.new(0, 8)
+CC.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    OpenBtn.Visible = true
+end)
+
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -8, 1, -44)
+Scroll.Position = UDim2.new(0, 4, 0, 38)
+Scroll.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Scroll.BorderSizePixel = 0
+Scroll.ScrollBarThickness = 6
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Scroll.Parent = Main
+
+local SC = Instance.new("UICorner")
+SC.CornerRadius = UDim.new(0, 8)
+SC.Parent = Scroll
+
+local Layout = Instance.new("UIListLayout")
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0, 4)
+Layout.Parent = Scroll
+
+local Padding = Instance.new("UIPadding")
+Padding.PaddingLeft = UDim.new(0, 6)
+Padding.PaddingRight = UDim.new(0, 6)
+Padding.PaddingTop = UDim.new(0, 6)
+Padding.PaddingBottom = UDim.new(0, 6)
+Padding.Parent = Scroll
+
+local function refresh()
+    for _, child in ipairs(Scroll:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+
+    for i = #captured, 1, -1 do
+        local e = captured[i]
+        local line = Instance.new("TextLabel")
+        line.Size = UDim2.new(1, 0, 0, 0)
+        line.AutomaticSize = Enum.AutomaticSize.Y
+        line.BackgroundTransparency = 1
+        line.TextColor3 = e.raw and Color3.fromRGB(120, 220, 120) or Color3.fromRGB(160, 160, 180)
+        line.Font = Enum.Font.Code
+        line.TextSize = 13
+        line.TextXAlignment = Enum.TextXAlignment.Left
+        line.TextWrapped = true
+
+        local prefix = e.raw and "[RAW] " or "[###] "
+        local t = os.date("%H:%M:%S", e.time)
+        line.Text = prefix .. "[" .. t .. "] " .. e.text
+
+        line.Parent = Scroll
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if Main.Visible then
+            refresh()
+        end
+    end
+end)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    OpenBtn.Visible = false
+    refresh()
+end)
+
+print("[ChatSniper] Загружен. Проверка каждые " .. CHECK_RATE .. " сек")
