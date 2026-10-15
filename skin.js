@@ -18,15 +18,18 @@ function createSkin() {
     const torsoMat = new THREE.MeshStandardMaterial({ color: SKIN.torsoColor, roughness: 0.7 });
     const limbMat = new THREE.MeshStandardMaterial({ color: SKIN.limbColor, roughness: 0.7 });
 
+    // Торс
     const torsoGeo = new THREE.BoxGeometry(SKIN.torsoW, SKIN.torsoH, SKIN.torsoD);
     const torso = new THREE.Mesh(torsoGeo, torsoMat);
     torso.position.y = SKIN.legH + SKIN.torsoH / 2;
     torso.castShadow = true;
     group.add(torso);
 
+    // Руки и ноги
     const armGeo = new THREE.BoxGeometry(SKIN.armW, SKIN.armH, SKIN.armD);
     const legGeo = new THREE.BoxGeometry(SKIN.legW, SKIN.legH, SKIN.legD);
 
+    // Левая рука
     const armLGroup = new THREE.Group();
     armLGroup.position.set(-(SKIN.torsoW / 2 + SKIN.armW / 2), SKIN.legH + SKIN.torsoH, 0);
     const armLMesh = new THREE.Mesh(armGeo, limbMat);
@@ -35,6 +38,7 @@ function createSkin() {
     armLGroup.add(armLMesh);
     group.add(armLGroup);
 
+    // Правая рука
     const armRGroup = new THREE.Group();
     armRGroup.position.set(SKIN.torsoW / 2 + SKIN.armW / 2, SKIN.legH + SKIN.torsoH, 0);
     const armRMesh = new THREE.Mesh(armGeo, limbMat);
@@ -43,6 +47,7 @@ function createSkin() {
     armRGroup.add(armRMesh);
     group.add(armRGroup);
 
+    // Левая нога
     const legLGroup = new THREE.Group();
     legLGroup.position.set(-SKIN.legW / 2, SKIN.legH, 0);
     const legLMesh = new THREE.Mesh(legGeo, limbMat);
@@ -51,6 +56,7 @@ function createSkin() {
     legLGroup.add(legLMesh);
     group.add(legLGroup);
 
+    // Правая нога
     const legRGroup = new THREE.Group();
     legRGroup.position.set(SKIN.legW / 2, SKIN.legH, 0);
     const legRMesh = new THREE.Mesh(legGeo, limbMat);
