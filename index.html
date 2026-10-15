@@ -173,11 +173,42 @@
         let loginAttempts = {};
         let blockUntil = {};
 
+        // ============== АВТОЛОГИН ==============
+        // Проверяем, есть ли ник в localStorage. Если есть — сразу "логиним" игрока.
+        window.addEventListener('load', function() {
+            const savedNick = localStorage.getItem('maxxi_nick');
+            if (savedNick) {
+                applyLogin(savedNick);
+            }
+        });
+
+        //
+        function applyLogin(nick) {
+            // Обновляем шапку
+            document.getElementById('header-user').innerHTML = 
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'30\' height=\'30\'%3E%3Crect width=\'30\' height=\'30\' fill=\'%23333\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-size=\'14\' fill=\'%23fff\' text-anchor=\'middle\' dy=\'.3em\'%3E' + nick[0].toUpperCase() + '%3C/text%3E%3C/svg%3E"><span>' + nick + '</span>';
+
+            //
+            document.getElementById('main-nick').innerText = nick;
+            document.getElementById('main-avatar').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'%3E" + nick[0].toUpperCase() + "%3C/text%3E%3C/svg%3E";
+
+            //
+            document.getElementById('chat-not-logged').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'flex';
+            document.getElementById('games-not-logged').style.display = 'none';
+            document.getElementById('games-content').style.display = 'block';
+
+            // Сохраняем ник (на случай, если его там не было)
+            localStorage.setItem('maxxi_nick', nick);
+        }
+
+        //
         function switchTab(tab) {
             document.querySelectorAll('.nav-links span').forEach(s => s.classList.remove('active'));
             event.target.classList.add('active');
         }
 
+        //
         function openLogin() { 
             document.getElementById('login-modal').style.display = 'flex';
             document.getElementById('login-error').style.display = 'none';
@@ -247,21 +278,10 @@
             errorEl.style.display = 'none';
             document.getElementById('login-modal').style.display = 'none';
 
-            document.getElementById('header-user').innerHTML = 
-                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'30\' height=\'30\'%3E%3Crect width=\'30\' height=\'30\' fill=\'%23333\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-size=\'14\' fill=\'%23fff\' text-anchor=\'middle\' dy=\'.3em\'%3E' + nick[0].toUpperCase() + '%3C/text%3E%3C/svg%3E"><span>' + nick + '</span>';
-
-            document.getElementById('main-nick').innerText = nick;
-            document.getElementById('main-avatar').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'%3E" + nick[0].toUpperCase() + "%3C/text%3E%3C/svg%3E";
-
-            document.getElementById('chat-not-logged').style.display = 'none';
-            document.getElementById('chat-content').style.display = 'flex';
-            document.getElementById('games-not-logged').style.display = 'none';
-            document.getElementById('games-content').style.display = 'block';
-
-            // Сохраняем ник в localStorage, чтобы игра знала, кто играет
-            localStorage.setItem('maxxi_nick', nick);
+            applyLogin(nick);
         }
 
+        
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
@@ -277,4 +297,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
