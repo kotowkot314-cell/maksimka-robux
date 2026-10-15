@@ -270,7 +270,8 @@
                 const dy = touch.clientY - touchStart.y;
                 
                 camYaw -= dx * 0.01;
-                camPitch -= dy * 0.01;
+                // ИСПРАВЛЕНО: теперь вниз — вниз, вверх — вверх
+                camPitch += dy * 0.01;
                 
                 if (camPitch > 1.2) camPitch = 1.2;
                 if (camPitch < -0.8) camPitch = -0.8;
@@ -310,7 +311,8 @@
 
             let inputX = 0, inputZ = 0;
             if (joystickActive) {
-                inputX = joystickVector.x;
+                // ИСПРАВЛЕНО: инвертируем X, чтобы влево было влево
+                inputX = -joystickVector.x;
                 inputZ = -joystickVector.y;
             }
 
