@@ -66,7 +66,6 @@
         let camYaw = 0;
         let camPitch = 0;
         
-        // Для камеры (второй палец)
         let cameraTouchId = null;
         let cameraTouchStart = { x: 0, y: 0 };
 
@@ -76,10 +75,15 @@
         const ACCELERATION = 40;
         const AIR_CONTROL = 5;
         const FRICTION = 15;
-        const DEADZONE = 0.15; // Мёртвая зона джойстика
+        const DEADZONE = 0.15;
 
         let currentSpeedX = 0;
         let currentSpeedZ = 0;
+
+        // Для анимации ходьбы
+        let walkCycle = 0;
+        let isWalking = false;
+        let armL, armR, legL, legR;
 
         const WALLS = [];
 
@@ -134,6 +138,7 @@
                 WALLS.push({ x: pos.x, z: pos.z, w: pos.w, d: pos.d, h: pos.h });
             });
 
+            // --- ПЕРСОНАЖ (R6) ---
             player = new THREE.Group();
             
             const skinMat = new THREE.MeshStandardMaterial({ color: 0x3a7bd5 });
@@ -150,24 +155,34 @@
             torso.castShadow = true;
             player.add(torso);
 
-            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.25), skinMat2);
+            // Руки и ноги выносим в глобальные переменные для анимации
+            armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.25), skinMat2);
             armL.position.set(-0.5, 1.15, 0);
             armL.castShadow = true;
+            // Точка вращения — верх руки
+            armL.geometry.translate(0, -0.45, 0);
+            armL.position.y = 1.6;
             player.add(armL);
 
-            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.25), skinMat2);
+            armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.25), skinMat2);
             armR.position.set(0.5, 1.15, 0);
             armR.castShadow = true;
+            armR.geometry.translate(0, -0.45, 0);
+            armR.position.y = 1.6;
             player.add(armR);
 
-            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.3), skinMat2);
+            legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.3), skinMat2);
             legL.position.set(-0.2, 0.45, 0);
             legL.castShadow = true;
+            legL.geometry.translate(0, -0.45, 0);
+            legL.position.y = 0.9;
             player.add(legL);
 
-            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.3), skinMat2);
+            legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.3), skinMat2);
             legR.position.set(0.2, 0.45, 0);
             legR.castShadow = true;
+            legR.geometry.translate(0, -0.45, 0);
+            legR.position.y = 0.9;
             player.add(legR);
 
             scene.add(player);
@@ -201,7 +216,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- ДЖОЙСТИК (ПЕРВЫЙ ПАЛЕЦ) ---
         function setupJoystick() {
             const zone = document.getElementById('joystick-zone');
             const knob = document.getElementById('joystick-knob');
@@ -261,15 +275,10 @@
             if (joystickVector.y < -1) joystickVector.y = -1;
         }
 
-        // --- КАМЕРА (ВТОРОЙ ПАЛЕЦ) ---
         function setupCameraControls() {
             document.addEventListener('touchstart', (e) => {
-                // Игнорируем касания по джойстику, прыжку и выходу
                 if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
-                
-                // Если камера уже управляется другим пальцем — игнорируем
                 if (cameraTouchId !== null) return;
-                
                 const touch = e.changedTouches[0];
                 cameraTouchId = touch.identifier;
                 cameraTouchStart = { x: touch.clientX, y: touch.clientY };
@@ -277,7 +286,6 @@
 
             document.addEventListener('touchmove', (e) => {
                 if (cameraTouchId === null) return;
-                
                 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
                 if (!touch) return;
                 
@@ -295,16 +303,12 @@
 
             document.addEventListener('touchend', (e) => {
                 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
-                if (touch) {
-                    cameraTouchId = null;
-                }
+                if (touch) cameraTouchId = null;
             });
 
             document.addEventListener('touchcancel', (e) => {
                 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
-                if (touch) {
-                    cameraTouchId = null;
-                }
+                if (touch) cameraTouchId = null;
             });
         }
 
@@ -336,13 +340,11 @@
             let inputX = 0, inputZ = 0;
             
             if (joystickActive) {
-                // Мёртвая зона
                 let jx = joystickVector.x;
                 let jz = -joystickVector.y;
                 
                 const mag = Math.sqrt(jx*jx + jz*jz);
                 if (mag > DEADZONE) {
-                    // Нормализуем и масштабируем
                     jx = (jx / mag) * Math.min(mag * 2, 1);
                     jz = (jz / mag) * Math.min(mag * 2, 1);
                 } else {
@@ -385,6 +387,46 @@
                 currentSpeedZ = 0;
             }
 
+            // --- ПОВОРОТ ПЕРСОНАЖА ---
+            // Если персонаж движется, поворачиваем его в сторону движения
+            const speedMag = Math.sqrt(currentSpeedX*currentSpeedX + currentSpeedZ*currentSpeedZ);
+            if (speedMag > 0.5) {
+                // Целевой угол поворота
+                const targetAngle = Math.atan2(currentSpeedX, currentSpeedZ);
+                // Плавно поворачиваем
+                const currentAngle = player.rotation.y;
+                let angleDiff = targetAngle - currentAngle;
+                // Нормализуем угол в диапазон -PI..PI
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                player.rotation.y += angleDiff * 15 * delta;
+            }
+
+            // --- АНИМАЦИЯ ХОДЬБЫ ---
+            const isMoving = speedMag > 0.5;
+            if (isMoving && canJump) {
+                // Идём по земле — качаем руками и ногами
+                walkCycle += delta * 10;
+                const swing = Math.sin(walkCycle) * 0.5;
+                armL.rotation.x = swing;
+                armR.rotation.x = -swing;
+                legL.rotation.x = -swing;
+                legR.rotation.x = swing;
+            } else if (!canJump) {
+                // В воздухе — руки вверх, ноги в стороны
+                armL.rotation.x = -0.5;
+                armR.rotation.x = -0.5;
+                legL.rotation.x = 0.3;
+                legR.rotation.x = -0.3;
+            } else {
+                // Стоим — возвращаем в исходное положение
+                armL.rotation.x *= 0.9;
+                armR.rotation.x *= 0.9;
+                legL.rotation.x *= 0.9;
+                legR.rotation.x *= 0.9;
+            }
+
+            // Гравитация
             velocityY += GRAVITY * delta;
             player.position.y += velocityY * delta;
 
