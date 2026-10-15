@@ -80,7 +80,6 @@
         let currentSpeedX = 0;
         let currentSpeedZ = 0;
 
-        // R6-части тела (выносим для анимации)
         let armL, armR, legL, legR;
         let walkCycle = 0;
 
@@ -137,57 +136,52 @@
                 WALLS.push({ x: pos.x, z: pos.z, w: pos.w, d: pos.d, h: pos.h });
             });
 
-            // --- ПЕРСОНАЖ R6 ---
-            // Классические цвета Roblox R6:
-            // Голова — жёлтая (0xffff00 или ближе к 0xffe000)
-            // Торс — синий (0x0000ff или 0x0f5cff)
-            // Руки — жёлтые (как голова)
-            // Ноги — зелёные (0x00ff00 или 0x00aa00)
-            
+            // --- ПЕРСОНАЖ R6 (улучшенный) ---
             player = new THREE.Group();
             
             const yellowMat = new THREE.MeshStandardMaterial({ color: 0xffe000 });
             const blueMat = new THREE.MeshStandardMaterial({ color: 0x0f5cff });
             const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
-            // Голова (R6 — куб)
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), yellowMat);
-            head.position.y = 1.9;
+            // ГОЛОВА — овальная (сфера, чуть сплюснутая)
+            const headGeo = new THREE.SphereGeometry(0.38, 16, 16);
+            const head = new THREE.Mesh(headGeo, yellowMat);
+            head.position.y = 2.0;
+            head.scale.set(1, 1.1, 1); // Чуть вытянута вверх — овал
             head.castShadow = true;
             player.add(head);
 
-            // Туловище (R6 — куб)
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.4), blueMat);
+            // ТУЛОВИЩЕ — куб (как в R6)
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.45), blueMat);
             torso.position.y = 1.2;
             torso.castShadow = true;
             player.add(torso);
 
-            // Левая рука (R6 — цельный блок)
-            // Точка вращения — вверху (плечо)
-            armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), yellowMat);
-            armL.geometry.translate(0, -0.4, 0); // Сдвигаем центр вниз
-            armL.position.set(-0.525, 1.6, 0);   // Плечо
+            // ЛЕВАЯ РУКА — цельный блок, но больше и шире
+            armL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.95, 0.3), yellowMat);
+            armL.geometry.translate(0, -0.475, 0); // Точка вращения вверху
+            armL.position.set(-0.6, 1.65, 0);      // Плечо
             armL.castShadow = true;
             player.add(armL);
 
-            // Правая рука
-            armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), yellowMat);
-            armR.geometry.translate(0, -0.4, 0);
-            armR.position.set(0.525, 1.6, 0);
+            // ПРАВАЯ РУКА
+            armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.95, 0.3), yellowMat);
+            armR.geometry.translate(0, -0.475, 0);
+            armR.position.set(0.6, 1.65, 0);
             armR.castShadow = true;
             player.add(armR);
 
-            // Левая нога (R6 — цельный блок)
-            legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), greenMat);
-            legL.geometry.translate(0, -0.4, 0);
-            legL.position.set(-0.22, 0.8, 0);   // Бедро
+            // ЛЕВАЯ НОГА — цельный блок, длиннее и шире
+            legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.95, 0.35), greenMat);
+            legL.geometry.translate(0, -0.475, 0);
+            legL.position.set(-0.22, 0.95, 0);      // Бедро
             legL.castShadow = true;
             player.add(legL);
 
-            // Правая нога
-            legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), greenMat);
-            legR.geometry.translate(0, -0.4, 0);
-            legR.position.set(0.22, 0.8, 0);
+            // ПРАВАЯ НОГА
+            legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.95, 0.35), greenMat);
+            legR.geometry.translate(0, -0.475, 0);
+            legR.position.set(0.22, 0.95, 0);
             legR.castShadow = true;
             player.add(legR);
 
@@ -206,7 +200,7 @@
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = 2.7;
+            sprite.position.y = 2.8;
             sprite.scale.set(2, 0.5, 1);
             player.add(sprite);
 
@@ -394,7 +388,6 @@
                 currentSpeedZ = 0;
             }
 
-            // Поворот персонажа
             const speedMag = Math.sqrt(currentSpeedX*currentSpeedX + currentSpeedZ*currentSpeedZ);
             if (speedMag > 0.5) {
                 const targetAngle = Math.atan2(currentSpeedX, currentSpeedZ);
@@ -405,32 +398,27 @@
                 player.rotation.y += angleDiff * 15 * delta;
             }
 
-            // --- ЖЁСТКАЯ R6-АНИМАЦИЯ ---
+            // --- R6-АНИМАЦИЯ (жёсткая) ---
             if (canJump && speedMag > 0.5) {
-                // Идём по земле: руки/ноги качаются целиком, как маятники
                 walkCycle += delta * 12;
                 const swing = Math.sin(walkCycle) * 0.7;
                 
-                // R6: руки и ноги двигаются целыми блоками, в противофазе
                 armL.rotation.x = swing;
                 armR.rotation.x = -swing;
                 legL.rotation.x = -swing;
                 legR.rotation.x = swing;
             } else if (!canJump) {
-                // В воздухе: R6-поза прыжка
-                armL.rotation.x = -2.5;  // Руки вверх (жёстко)
+                armL.rotation.x = -2.5;
                 armR.rotation.x = -2.5;
-                legL.rotation.x = 0.4;    // Ноги слегка в стороны
+                legL.rotation.x = 0.4;
                 legR.rotation.x = -0.4;
             } else {
-                // Стоим: резкий возврат в исходное положение
                 armL.rotation.x *= 0.7;
                 armR.rotation.x *= 0.7;
                 legL.rotation.x *= 0.7;
                 legR.rotation.x *= 0.7;
             }
 
-            // Гравитация
             velocityY += GRAVITY * delta;
             player.position.y += velocityY * delta;
 
