@@ -13,10 +13,65 @@ body { background: #000; overflow: hidden; height: 100vh; width: 100vw; font-fam
 position: fixed; top: 15px; right: 15px;
 background: #ff2222; border: 3px solid #fff; color: #fff;
 padding: 15px 25px; border-radius: 8px; font-size: 1rem; font-weight: bold;
-z-index: 9999; cursor: pointer; touch-action: manipulation;
-box-shadow: 0 0 15px rgba(255,0,0,0.8);
+z-index: 9999; cursor: pointer;
 }
-#exit-btn:active { background: #aa0000; transform: scale(0.95); }
+#exit-btn:active { background: #aa0000; }
+
+#menu-btn {
+position: fixed; top: 15px; right: 120px;
+background: rgba(0,0,0,0.7); border: 2px solid #fff; color: #fff;
+width: 50px; height: 50px; border-radius: 8px;
+font-size: 1.6rem; font-weight: bold;
+z-index: 9999; cursor: pointer;
+display: flex; justify-content: center; align-items: center;
+}
+#menu-btn:active { background: #333; }
+
+#players-panel {
+position: fixed; top: 80px; right: 15px;
+background: rgba(0,0,0,0.9); border: 2px solid #555;
+border-radius: 10px; padding: 15px;
+width: 260px; z-index: 9998;
+display: none;
+}
+#players-panel h3 {
+color: #fff; font-size: 1rem; margin-bottom: 10px;
+border-bottom: 1px solid #333; padding-bottom: 8px;
+}
+.player-row {
+display: flex; justify-content: space-between; align-items: center;
+color: #fff; font-size: 0.9rem; padding: 8px 0;
+border-bottom: 1px solid #222;
+}
+.player-row:last-child { border-bottom: none; }
+.player-row button {
+background: #fff; color: #000; border: none;
+padding: 5px 10px; border-radius: 5px; font-size: 0.75rem;
+font-weight: bold; cursor: pointer;
+}
+.player-row button:active { background: #ccc; }
+.player-row button.added { background: #00aa00; color: #fff; }
+
+#friend-notification {
+position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+background: #111; border: 2px solid #fff;
+border-radius: 10px; padding: 15px 20px;
+z-index: 10000; display: none;
+box-shadow: 0 0 30px rgba(255,255,255,0.3);
+min-width: 300px;
+}
+#friend-notification .notif-text {
+color: #fff; font-size: 0.95rem; margin-bottom: 12px; text-align: center;
+}
+#friend-notification .notif-buttons {
+display: flex; gap: 10px; justify-content: center;
+}
+#friend-notification .notif-buttons button {
+padding: 8px 20px; border: none; border-radius: 5px;
+font-weight: bold; cursor: pointer; font-size: 0.9rem;
+}
+#notif-yes { background: #00aa00; color: #fff; }
+#notif-no { background: #ff2222; color: #fff; }
 
 #joystick-zone {
 position: fixed; bottom: 30px; left: 30px; width: 130px; height: 130px;
@@ -34,7 +89,7 @@ width: 90px; height: 90px; background: rgba(255,255,255,0.15);
 border: 2px solid rgba(255,255,255,0.5); border-radius: 50%;
 display: flex; justify-content: center; align-items: center;
 font-size: 2rem; font-weight: bold; color: #fff; z-index: 50;
-cursor: pointer; touch-action: none;
+cursor: pointer;
 }
 #jump-btn:active { background: rgba(255,255,255,0.4); }
 
@@ -46,7 +101,22 @@ background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px;
 </head>
 <body>
 <div id="nick-label">Игрок</div>
-<button id="exit-btn" type="button">ВЫХОД</button>
+
+<button id="menu-btn">𖣔</button>
+<button id="exit-btn">ВЫХОД</button>
+
+<div id="players-panel">
+<h3>Игроки онлайн</h3>
+<div id="players-list"></div>
+</div>
+
+<div id="friend-notification">
+<div class="notif-text" id="notif-text"></div>
+<div class="notif-buttons">
+<button id="notif-yes">Да</button>
+<button id="notif-no">Нет</button>
+</div>
+</div>
 
 <div id="joystick-zone">
 <div id="joystick-knob"></div>
@@ -111,7 +181,23 @@ const PLAYER_HEIGHT = 2.0;
 
 let gameReady = false;
 
+let fakePlayers = [
+{ nick: 'Alex_Pro', id: 'alex' },
+{ nick: 'Masha_2024', id: 'masha' },
+{ nick: 'CoolBoy99', id: 'coolboy' },
+{ nick: 'PlayerX', id: 'playerx' }
+];
+
+let friends = [];
+let pendingRequests = [];
+
 const exitBtn = document.getElementById('exit-btn');
+const menuBtn = document.getElementById('menu-btn');
+const playersPanel = document.getElementById('players-panel');
+const notifBox = document.getElementById('friend-notification');
+const notifText = document.getElementById('notif-text');
+const notifYes = document.getElementById('notif-yes');
+const notifNo = document.getElementById('notif-no');
 
 exitBtn.addEventListener('touchstart', function(e) {
 e.preventDefault();
@@ -119,23 +205,106 @@ e.stopPropagation();
 exitGame();
 }, { passive: false });
 
-exitBtn.addEventListener('touchend', function(e) {
-e.preventDefault();
-e.stopPropagation();
-exitGame();
-}, { passive: false });
-
-exitBtn.addEventListener('mousedown', function(e) {
-e.preventDefault();
-e.stopPropagation();
-exitGame();
-});
-
 exitBtn.addEventListener('click', function(e) {
 e.preventDefault();
 e.stopPropagation();
 exitGame();
 });
+
+menuBtn.addEventListener('touchstart', function(e) {
+e.preventDefault();
+e.stopPropagation();
+togglePlayersPanel();
+}, { passive: false });
+
+menuBtn.addEventListener('click', function(e) {
+e.preventDefault();
+e.stopPropagation();
+togglePlayersPanel();
+});
+
+notifYes.addEventListener('click', function(e) {
+e.stopPropagation();
+acceptFriendRequest();
+});
+
+notifNo.addEventListener('click', function(e) {
+e.stopPropagation();
+declineFriendRequest();
+});
+
+function togglePlayersPanel() {
+if (playersPanel.style.display === 'block') {
+playersPanel.style.display = 'none';
+} else {
+playersPanel.style.display = 'block';
+renderPlayersList();
+}
+}
+
+function renderPlayersList() {
+const list = document.getElementById('players-list');
+list.innerHTML = '';
+
+fakePlayers.forEach(function(p) {
+const row = document.createElement('div');
+row.className = 'player-row';
+
+const nameSpan = document.createElement('span');
+nameSpan.innerText = p.nick;
+row.appendChild(nameSpan);
+
+const btn = document.createElement('button');
+if (friends.indexOf(p.id) !== -1) {
+btn.innerText = 'В друзьях';
+btn.classList.add('added');
+btn.disabled = true;
+} else {
+btn.innerText = 'Добавить';
+btn.onclick = function() {
+sendFriendRequest(p);
+};
+}
+row.appendChild(btn);
+list.appendChild(row);
+});
+
+const meRow = document.createElement('div');
+meRow.className = 'player-row';
+meRow.innerHTML = '<span>' + myNick + ' (Вы)</span><span style="color:#888; font-size:0.75rem;">—</span>';
+list.appendChild(meRow);
+}
+
+function sendFriendRequest(player) {
+pendingRequests.push(player);
+showFriendNotification(player);
+}
+
+function showFriendNotification(player) {
+notifText.innerText = player.nick + ' хочет добавить вас в друзья';
+notifBox.style.display = 'block';
+
+notifBox.dataset.playerId = player.id;
+notifBox.dataset.playerNick = player.nick;
+}
+
+function acceptFriendRequest() {
+const id = notifBox.dataset.playerId;
+const nick = notifBox.dataset.playerNick;
+
+if (id && friends.indexOf(id) === -1) {
+friends.push(id);
+alert(nick + ' принят(а) в друзья!');
+}
+
+notifBox.style.display = 'none';
+renderPlayersList();
+}
+
+function declineFriendRequest() {
+notifBox.style.display = 'none';
+pendingRequests = [];
+}
 
 function exitGame() {
 if (player) {
@@ -441,6 +610,9 @@ document.addEventListener('touchstart', (e) => {
 if (e.target.closest('#joystick-zone')) return;
 if (e.target.closest('#jump-btn')) return;
 if (e.target.closest('#exit-btn')) return;
+if (e.target.closest('#menu-btn')) return;
+if (e.target.closest('#players-panel')) return;
+if (e.target.closest('#friend-notification')) return;
 if (cameraTouchId !== null) return;
 const touch = e.changedTouches[0];
 cameraTouchId = touch.identifier;
@@ -452,6 +624,9 @@ if (cameraTouchId === null) return;
 if (e.target.closest('#joystick-zone')) return;
 if (e.target.closest('#jump-btn')) return;
 if (e.target.closest('#exit-btn')) return;
+if (e.target.closest('#menu-btn')) return;
+if (e.target.closest('#players-panel')) return;
+if (e.target.closest('#friend-notification')) return;
 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
 if (!touch) return;
 
