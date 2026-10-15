@@ -98,12 +98,11 @@
         const LEG_H = 0.8;
         const LEG_D = TORSO_D;
         
-        // ГОЛОВА — выше, сверху круглая
-        const HEAD_W = 0.5;    // Ширина
-        const HEAD_H = 0.5;    // Высота (вернули и даже чуть выше)
-        const HEAD_D = 0.5;    // Глубина
-        const HEAD_ROUND = 0.1; // Скругление углов
-        const HEAD_TOP_R = 0.25; // Радиус верхней полусферы (круглая сверху)
+        // ГОЛОВА — просто квадрат со скруглёнными углами
+        const HEAD_W = 0.5;   // Ширина
+        const HEAD_H = 0.5;   // Высота
+        const HEAD_D = 0.5;   // Глубина
+        const HEAD_ROUND = 0.12; // Радиус скругления углов
 
         init3D();
         animate();
@@ -194,38 +193,20 @@
             const plainMaterial = new THREE.MeshStandardMaterial({ color: 0xffe000 });
 
             const headMats = [
-                plainMaterial,  // +X
-                plainMaterial,  // -X
-                plainMaterial,  // +Y
-                plainMaterial,  // -Y
-                faceMaterial,   // +Z
-                plainMaterial   // -Z
+                plainMaterial,  // +X (правая)
+                plainMaterial,  // -X (левая)
+                plainMaterial,  // +Y (верх)
+                plainMaterial,  // -Y (низ)
+                faceMaterial,   // +Z (перед — лицо)
+                plainMaterial   // -Z (зад)
             ];
 
-            const headBaseY = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
-
-            // Основная часть — куб с закруглёнными углами
-            const headCubeGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 3, HEAD_ROUND);
-            const headCube = new THREE.Mesh(headCubeGeo, headMats);
-            headCube.position.y = headBaseY;
-            headCube.castShadow = true;
-            player.add(headCube);
-
-            // ВЕРХ — полноценная полусфера (круглая сверху)
-            const topSphereGeo = new THREE.SphereGeometry(HEAD_TOP_R, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2);
-            const topSphere = new THREE.Mesh(topSphereGeo, plainMaterial);
-            // Ставим полусферу так, чтобы её основание совпало с верхом куба
-            topSphere.position.y = headBaseY + HEAD_H / 2;
-            topSphere.castShadow = true;
-            player.add(topSphere);
-
-            // НИЗ — полусфера (чуть выпуклая)
-            const bottomSphereGeo = new THREE.SphereGeometry(HEAD_W / 2, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
-            const bottomSphere = new THREE.Mesh(bottomSphereGeo, plainMaterial);
-            bottomSphere.position.y = headBaseY - HEAD_H / 2;
-            bottomSphere.scale.set(1, 0.4, 1);
-            bottomSphere.castShadow = true;
-            player.add(bottomSphere);
+            // ГОЛОВА — просто квадрат со скруглёнными углами (RoundedBox)
+            const headGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 6, HEAD_ROUND);
+            const head = new THREE.Mesh(headGeo, headMats);
+            head.position.y = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
+            head.castShadow = true;
+            player.add(head);
 
             // ТУЛОВИЩЕ
             const torso = new THREE.Mesh(new THREE.BoxGeometry(TORSO_W, TORSO_H, TORSO_D), blueMat);
@@ -277,7 +258,7 @@
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.y = LEG_H + TORSO_H + HEAD_H + HEAD_TOP_R + 0.3;
+            sprite.position.y = LEG_H + TORSO_H + HEAD_H + 0.3;
             sprite.scale.set(2, 0.5, 1);
             player.add(sprite);
 
