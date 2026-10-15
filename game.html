@@ -27,10 +27,11 @@
         }
         #jump-btn {
             position: absolute; bottom: 50px; right: 40px;
-            width: 90px; height: 90px; background: rgba(255,255,255,0.2);
+            width: 90px; height: 90px; background: rgba(255,255,255,0.15);
             border: 2px solid rgba(255,255,255,0.5); border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            font-size: 1.1rem; font-weight: bold; color: #fff; z-index: 50;
+            font-size: 2rem; font-weight: bold; color: #fff; z-index: 50;
+            cursor: pointer;
         }
         #jump-btn:active { background: rgba(255,255,255,0.4); }
 
@@ -47,7 +48,7 @@
     <div id="joystick-zone">
         <div id="joystick-knob"></div>
     </div>
-    <div id="jump-btn" ontouchstart="doJump()" onmousedown="doJump()">ПРЫЖОК</div>
+    <div id="jump-btn" ontouchstart="doJump()" onmousedown="doJump()">▲</div>
 
     <div id="game-canvas"></div>
 
@@ -62,22 +63,19 @@
         let joystickActive = false;
         let joystickVector = { x: 0, y: 0 };
         
-        // Углы камеры (Orbital)
-        let camYaw = 0;    // Влево-вправо
-        let camPitch = 0;  // Вверх-вниз
+        let camYaw = 0;
+        let camPitch = 0;
         
         let touchStart = { x: 0, y: 0 };
         let isCameraDragging = false;
 
-        // Физика (как в Roblox)
         const GRAVITY = -30;
         const JUMP_FORCE = 9;
-        const MAX_WALK_SPEED = 8;      // Максимальная скорость ходьбы
-        const ACCELERATION = 40;       // Ускорение на земле
-        const AIR_CONTROL = 5;         // Контроль в воздухе (слабее)
-        const FRICTION = 15;           // Трение (торможение)
+        const MAX_WALK_SPEED = 8;
+        const ACCELERATION = 40;
+        const AIR_CONTROL = 5;
+        const FRICTION = 15;
 
-        // Текущая скорость персонажа по X и Z
         let currentSpeedX = 0;
         let currentSpeedZ = 0;
 
@@ -106,7 +104,6 @@
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            // Пол
             const floorGeo = new THREE.PlaneGeometry(80, 80);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, side: THREE.DoubleSide });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -114,15 +111,12 @@
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // Стены (лабиринт)
             const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
             const wallPositions = [
-                // Внешние стены
                 { x: 0, z: -15, w: 30, h: 3, d: 2 },
                 { x: 0, z: 15, w: 30, h: 3, d: 2 },
                 { x: -15, z: 0, w: 2, h: 3, d: 30 },
                 { x: 15, z: 0, w: 2, h: 3, d: 30 },
-                // Внутренние препятствия
                 { x: -5, z: -5, w: 2, h: 3, d: 2 },
                 { x: 5, z: -5, w: 2, h: 3, d: 2 },
                 { x: -5, z: 5, w: 2, h: 3, d: 2 },
@@ -138,7 +132,6 @@
                 WALLS.push({ x: pos.x, z: pos.z, w: pos.w, d: pos.d, h: pos.h });
             });
 
-            // --- ПЕРСОНАЖ (R6) ---
             player = new THREE.Group();
             
             const skinMat = new THREE.MeshStandardMaterial({ color: 0x3a7bd5 });
@@ -177,7 +170,6 @@
 
             scene.add(player);
 
-            // Ник
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext('2d');
@@ -207,7 +199,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- ДЖОЙСТИК ---
         function setupJoystick() {
             const zone = document.getElementById('joystick-zone');
             const knob = document.getElementById('joystick-knob');
@@ -264,7 +255,6 @@
             if (joystickVector.y < -1) joystickVector.y = -1;
         }
 
-        // --- КАМЕРА (Orbital + Pitch) ---
         function setupCameraControls() {
             document.addEventListener('touchstart', (e) => {
                 if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
@@ -282,7 +272,6 @@
                 camYaw -= dx * 0.01;
                 camPitch -= dy * 0.01;
                 
-                // Ограничиваем наклон камеры (чтобы не переворачивалась)
                 if (camPitch > 1.2) camPitch = 1.2;
                 if (camPitch < -0.8) camPitch = -0.8;
                 
@@ -301,9 +290,8 @@
             }
         }
 
-        // --- КОЛЛИЗИИ ---
         function checkCollision(newX, newZ) {
-            const r = 0.5; // Радиус персонажа
+            const r = 0.5;
             for (let wall of WALLS) {
                 if (newX + r > wall.x - wall.w/2 &&
                     newX - r < wall.x + wall.w/2 &&
@@ -315,20 +303,17 @@
             return false;
         }
 
-        // --- ИГРОВОЙ ЦИКЛ ---
         function animate() {
             requestAnimationFrame(animate);
 
             const delta = Math.min(clock.getDelta(), 0.05);
 
-            // 1. Определяем желаемое направление
             let inputX = 0, inputZ = 0;
             if (joystickActive) {
                 inputX = joystickVector.x;
                 inputZ = -joystickVector.y;
             }
 
-            // 2. Рассчитываем желаемую скорость относительно камеры
             const forwardX = Math.sin(camYaw);
             const forwardZ = Math.cos(camYaw);
             const rightX = Math.cos(camYaw);
@@ -337,18 +322,15 @@
             let targetSpeedX = (inputX * rightX + inputZ * forwardX) * MAX_WALK_SPEED;
             let targetSpeedZ = (inputX * rightZ + inputZ * forwardZ) * MAX_WALK_SPEED;
 
-            // 3. Применяем ускорение (GroundController)
             const accel = canJump ? ACCELERATION : AIR_CONTROL;
             currentSpeedX += (targetSpeedX - currentSpeedX) * accel * delta;
             currentSpeedZ += (targetSpeedZ - currentSpeedZ) * accel * delta;
 
-            // 4. Трение (если нет ввода)
             if (!joystickActive) {
                 currentSpeedX *= (1 - FRICTION * delta);
                 currentSpeedZ *= (1 - FRICTION * delta);
             }
 
-            // 5. Движение с проверкой коллизий
             let newX = player.position.x + currentSpeedX * delta;
             if (!checkCollision(newX, player.position.z)) {
                 player.position.x = newX;
@@ -363,7 +345,6 @@
                 currentSpeedZ = 0;
             }
 
-            // 6. Гравитация
             velocityY += GRAVITY * delta;
             player.position.y += velocityY * delta;
 
@@ -373,22 +354,18 @@
                 canJump = true;
             }
 
-            // 7. Границы мира
             if (player.position.x > 38) player.position.x = 38;
             if (player.position.x < -38) player.position.x = -38;
             if (player.position.z > 38) player.position.z = 38;
             if (player.position.z < -38) player.position.z = -38;
 
-            // 8. Камера (Orbital + Occlusion)
             const camDist = 8;
             const camHeight = 3;
             
-            // Считаем идеальную позицию камеры
             let idealCamX = player.position.x - Math.sin(camYaw) * camDist * Math.cos(camPitch);
             let idealCamZ = player.position.z - Math.cos(camYaw) * camDist * Math.cos(camPitch);
             let idealCamY = player.position.y + camHeight + Math.sin(camPitch) * camDist;
 
-            // Occlusion: проверяем, не проходит ли камера сквозь стену
             let camDistActual = camDist;
             const steps = 10;
             for (let i = 1; i <= steps; i++) {
@@ -397,7 +374,6 @@
                 const testZ = player.position.z + (idealCamZ - player.position.z) * t;
                 const testY = player.position.y + 1.2 + (idealCamY - (player.position.y + 1.2)) * t;
                 
-                // Проверяем коллизию для камеры (радиус 0.2)
                 let hit = false;
                 for (let wall of WALLS) {
                     if (testX + 0.2 > wall.x - wall.w/2 &&
@@ -416,7 +392,6 @@
                 }
             }
             
-            // Применяем реальную дистанцию камеры
             const realCamX = player.position.x - Math.sin(camYaw) * camDistActual * Math.cos(camPitch);
             const realCamZ = player.position.z - Math.cos(camYaw) * camDistActual * Math.cos(camPitch);
             const realCamY = player.position.y + camHeight + Math.sin(camPitch) * camDistActual;
