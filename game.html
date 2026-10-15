@@ -118,7 +118,7 @@ background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px;
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
 <script>
 const myNick = localStorage.getItem('maxxi_nick') || 'Гость';
-document.getElementById('nick-label').innerText = 'Вы: ' + myNick + ' | v2';
+document.getElementById('nick-label').innerText = 'Вы: ' + myNick + ' | v3';
 
 let scene, camera, renderer, player, clock;
 let velocityY = 0;
@@ -177,6 +177,8 @@ const menuBtn = document.getElementById('menu-btn');
 const menuPanel = document.getElementById('menu-panel');
 const playersPanel = document.getElementById('players-panel');
 const exitBtn = document.getElementById('exit-btn');
+const joystickZone = document.getElementById('joystick-zone');
+const jumpBtn = document.getElementById('jump-btn');
 
 menuBtn.addEventListener('touchstart', function(e) {
 e.preventDefault();
@@ -199,6 +201,39 @@ e.preventDefault();
 e.stopPropagation();
 exitGame();
 });
+
+jumpBtn.addEventListener('touchstart', function(e) {
+e.preventDefault();
+e.stopPropagation();
+doJump();
+}, { passive: false });
+jumpBtn.addEventListener('mousedown', function(e) {
+e.preventDefault();
+e.stopPropagation();
+doJump();
+});
+
+function isInsideJoystick(touch) {
+const rect = joystickZone.getBoundingClientRect();
+return (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+touch.clientY >= rect.top && touch.clientY <= rect.bottom);
+}
+
+function isInsideJumpBtn(touch) {
+const rect = jumpBtn.getBoundingClientRect();
+return (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+touch.clientY >= rect.top && touch.clientY <= rect.bottom);
+}
+
+function isInsideUI(touch) {
+if (isInsideJoystick(touch)) return true;
+if (isInsideJumpBtn(touch)) return true;
+if (touch.target && touch.target.closest && touch.target.closest('#menu-btn')) return true;
+if (touch.target && touch.target.closest && touch.target.closest('#exit-btn')) return true;
+if (touch.target && touch.target.closest && touch.target.closest('#menu-panel')) return true;
+if (touch.target && touch.target.closest && touch.target.closest('#players-panel')) return true;
+return false;
+}
 
 function toggleMenu() {
 if (menuPanel.style.display === 'block') {
@@ -243,18 +278,6 @@ localStorage.setItem('maxxi_cam_yaw', camYaw);
 localStorage.setItem('maxxi_cam_pitch', camPitch);
 window.location.href = 'index.html';
 }
-
-const jumpBtn = document.getElementById('jump-btn');
-jumpBtn.addEventListener('touchstart', function(e) {
-e.preventDefault();
-e.stopPropagation();
-doJump();
-}, { passive: false });
-jumpBtn.addEventListener('mousedown', function(e) {
-e.preventDefault();
-e.stopPropagation();
-doJump();
-});
 
 init3D();
 animate();
@@ -434,26 +457,25 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 let joystickTouchId = null;
 
 function setupJoystick() {
-const zone = document.getElementById('joystick-zone');
 const knob = document.getElementById('joystick-knob');
 
-zone.addEventListener('touchstart', (e) => {
+joystickZone.addEventListener('touchstart', (e) => {
 e.preventDefault();
 e.stopPropagation();
 if (joystickTouchId !== null) return;
 const touch = e.changedTouches[0];
 joystickTouchId = touch.identifier;
 joystickActive = true;
-updateJoystick(touch, zone);
+updateJoystick(touch, joystickZone);
 }, { passive: false });
 
-zone.addEventListener('touchmove', (e) => {
+joystickZone.addEventListener('touchmove', (e) => {
 e.preventDefault();
 e.stopPropagation();
 if (joystickTouchId === null) return;
 const touch = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
 if (!touch) return;
-updateJoystick(touch, zone);
+updateJoystick(touch, joystickZone);
 }, { passive: false });
 
 function endJoystick(e) {
@@ -467,8 +489,8 @@ joystickVector.x = 0;
 joystickVector.y = 0;
 }
 
-zone.addEventListener('touchend', endJoystick);
-zone.addEventListener('touchcancel', endJoystick);
+joystickZone.addEventListener('touchend', endJoystick);
+joystickZone.addEventListener('touchcancel', endJoystick);
 
 document.addEventListener('touchend', function(e) {
 if (joystickTouchId === null) return;
@@ -509,17 +531,13 @@ return Math.sqrt(dx*dx + dy*dy);
 }
 
 function setupCameraControls() {
-const cameraArea = document.body;
-
-cameraArea.addEventListener('touchstart', (e) => {
-if (e.target.closest('#joystick-zone')) return;
-if (e.target.closest('#jump-btn')) return;
-if (e.target.closest('#exit-btn')) return;
-if (e.target.closest('#menu-btn')) return;
-if (e.target.closest('#menu-panel')) return;
-if (e.target.closest('#players-panel')) return;
-
+document.addEventListener('touchstart', (e) => {
 if (e.touches.length === 2) {
+const t1 = e.touches[0];
+const t2 = e.touches[1];
+if (isInsideUI(t1) || isInsideUI(t2)) {
+return;
+}
 pinchActive = true;
 cameraTouchId = null;
 pinchStartDist = getTouchDist(e.touches);
@@ -530,12 +548,13 @@ return;
 if (e.touches.length === 1 && !pinchActive) {
 if (cameraTouchId !== null) return;
 const touch = e.touches[0];
+if (isInsideUI(touch)) return;
 cameraTouchId = touch.identifier;
 cameraTouchStart = { x: touch.clientX, y: touch.clientY };
 }
 }, { passive: false });
 
-cameraArea.addEventListener('touchmove', (e) => {
+document.addEventListener('touchmove', (e) => {
 if (e.touches.length === 2 && pinchActive) {
 e.preventDefault();
 const dist = getTouchDist(e.touches);
@@ -548,16 +567,10 @@ if (camDist > 20) camDist = 20;
 return;
 }
 
-if (e.touches.length === 1 && cameraTouchId !== null && !pinchActive) {
-if (e.target.closest('#joystick-zone')) return;
-if (e.target.closest('#jump-btn')) return;
-if (e.target.closest('#exit-btn')) return;
-if (e.target.closest('#menu-btn')) return;
-if (e.target.closest('#menu-panel')) return;
-if (e.target.closest('#players-panel')) return;
-
+if (cameraTouchId !== null && !pinchActive) {
 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
 if (!touch) return;
+if (isInsideUI(touch)) return;
 
 e.preventDefault();
 const dx = touch.clientX - cameraTouchStart.x;
@@ -579,8 +592,8 @@ const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouc
 if (touch) cameraTouchId = null;
 }
 
-cameraArea.addEventListener('touchend', endCamera);
-cameraArea.addEventListener('touchcancel', endCamera);
+document.addEventListener('touchend', endCamera);
+document.addEventListener('touchcancel', endCamera);
 }
 
 function doJump() {
