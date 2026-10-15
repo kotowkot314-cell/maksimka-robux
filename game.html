@@ -63,7 +63,6 @@
         let joystickVector = { x: 0, y: 0 };
         let cameraAngle = 0;
         let touchStart = { x: 0, y: 0 };
-        let isMoving = false;
 
         const WALLS = [];
         const GRAVITY = -25;
@@ -93,7 +92,6 @@
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            // Пол
             const floorGeo = new THREE.PlaneGeometry(60, 60);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, side: THREE.DoubleSide });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -101,7 +99,6 @@
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // Стены
             const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
             const wallPositions = [
                 { x: -5, z: -5 }, { x: 5, z: -5 }, { x: -5, z: 5 }, { x: 5, z: 5 },
@@ -117,7 +114,6 @@
                 WALLS.push({ x: pos.x, z: pos.z, size: 2, height: 3 });
             });
 
-            // --- ПЕРСОНАЖ (R6) ---
             player = new THREE.Group();
             
             const skinMat = new THREE.MeshStandardMaterial({ color: 0x3a7bd5 });
@@ -156,7 +152,6 @@
 
             scene.add(player);
 
-            // Ник
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext('2d');
@@ -186,7 +181,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- ДЖОЙСТИК ---
         function setupJoystick() {
             const zone = document.getElementById('joystick-zone');
             const knob = document.getElementById('joystick-knob');
@@ -243,7 +237,6 @@
             if (joystickVector.y < -1) joystickVector.y = -1;
         }
 
-        // --- КАМЕРА ---
         function setupCameraControls() {
             document.addEventListener('touchstart', (e) => {
                 if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
@@ -266,7 +259,6 @@
             }
         }
 
-        // --- КОЛЛИЗИИ ---
         function checkCollision(newX, newZ) {
             const r = 0.5;
             for (let wall of WALLS) {
@@ -280,7 +272,6 @@
             return false;
         }
 
-        // --- ИГРОВОЙ ЦИКЛ ---
         function animate() {
             requestAnimationFrame(animate);
 
@@ -289,18 +280,14 @@
             let moveX = 0, moveZ = 0;
             
             if (joystickActive) {
-                const forward = -joystickVector.y;
+                // ИСПРАВЛЕНО: теперь вперёд — это вперёд
+                const forward = joystickVector.y * -1; // Инвертируем, чтобы вверх было вперёд
                 const strafe = joystickVector.x;
                 
                 moveX = (strafe * Math.cos(cameraAngle) - forward * Math.sin(cameraAngle)) * MOVE_SPEED * delta;
                 moveZ = (strafe * Math.sin(cameraAngle) + forward * Math.cos(cameraAngle)) * MOVE_SPEED * delta;
-                
-                isMoving = Math.abs(forward) > 0.1 || Math.abs(strafe) > 0.1;
-            } else {
-                isMoving = false;
             }
 
-            // Движение с проверкой коллизий
             let newX = player.position.x + moveX;
             if (!checkCollision(newX, player.position.z)) {
                 player.position.x = newX;
@@ -311,24 +298,20 @@
                 player.position.z = newZ;
             }
 
-            // Гравитация
             velocityY += GRAVITY * delta;
             player.position.y += velocityY * delta;
 
-            // Приземление
             if (player.position.y <= 0.9) {
                 player.position.y = 0.9;
                 velocityY = 0;
                 canJump = true;
             }
 
-            // Границы мира
             if (player.position.x > 28) player.position.x = 28;
             if (player.position.x < -28) player.position.x = -28;
             if (player.position.z > 28) player.position.z = 28;
             if (player.position.z < -28) player.position.z = -28;
 
-            // Камера
             const camDist = 8;
             const camHeight = 4;
             const targetX = player.position.x + Math.sin(cameraAngle) * camDist;
