@@ -61,13 +61,27 @@
         let canJump = true;
         let joystickActive = false;
         let joystickVector = { x: 0, y: 0 };
-        let cameraAngle = 0;
+        
+        // Углы камеры (Orbital)
+        let camYaw = 0;    // Влево-вправо
+        let camPitch = 0;  // Вверх-вниз
+        
         let touchStart = { x: 0, y: 0 };
+        let isCameraDragging = false;
+
+        // Физика (как в Roblox)
+        const GRAVITY = -30;
+        const JUMP_FORCE = 9;
+        const MAX_WALK_SPEED = 8;      // Максимальная скорость ходьбы
+        const ACCELERATION = 40;       // Ускорение на земле
+        const AIR_CONTROL = 5;         // Контроль в воздухе (слабее)
+        const FRICTION = 15;           // Трение (торможение)
+
+        // Текущая скорость персонажа по X и Z
+        let currentSpeedX = 0;
+        let currentSpeedZ = 0;
 
         const WALLS = [];
-        const GRAVITY = -25;
-        const JUMP_FORCE = 8;
-        const MOVE_SPEED = 8;
 
         init3D();
         animate();
@@ -92,28 +106,39 @@
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            const floorGeo = new THREE.PlaneGeometry(60, 60);
+            // Пол
+            const floorGeo = new THREE.PlaneGeometry(80, 80);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, side: THREE.DoubleSide });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.receiveShadow = true;
             scene.add(floor);
 
+            // Стены (лабиринт)
             const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
             const wallPositions = [
-                { x: -5, z: -5 }, { x: 5, z: -5 }, { x: -5, z: 5 }, { x: 5, z: 5 },
-                { x: 0, z: -10 }, { x: 0, z: 10 }, { x: -10, z: 0 }, { x: 10, z: 0 },
-                { x: -15, z: -15 }, { x: 15, z: -15 }, { x: -15, z: 15 }, { x: 15, z: 15 }
+                // Внешние стены
+                { x: 0, z: -15, w: 30, h: 3, d: 2 },
+                { x: 0, z: 15, w: 30, h: 3, d: 2 },
+                { x: -15, z: 0, w: 2, h: 3, d: 30 },
+                { x: 15, z: 0, w: 2, h: 3, d: 30 },
+                // Внутренние препятствия
+                { x: -5, z: -5, w: 2, h: 3, d: 2 },
+                { x: 5, z: -5, w: 2, h: 3, d: 2 },
+                { x: -5, z: 5, w: 2, h: 3, d: 2 },
+                { x: 5, z: 5, w: 2, h: 3, d: 2 },
+                { x: 0, z: 0, w: 4, h: 3, d: 2 },
             ];
             wallPositions.forEach(pos => {
-                const wall = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), wallMat);
-                wall.position.set(pos.x, 1.5, pos.z);
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(pos.w, pos.h, pos.d), wallMat);
+                wall.position.set(pos.x, pos.h/2, pos.z);
                 wall.castShadow = true;
                 wall.receiveShadow = true;
                 scene.add(wall);
-                WALLS.push({ x: pos.x, z: pos.z, size: 2, height: 3 });
+                WALLS.push({ x: pos.x, z: pos.z, w: pos.w, d: pos.d, h: pos.h });
             });
 
+            // --- ПЕРСОНАЖ (R6) ---
             player = new THREE.Group();
             
             const skinMat = new THREE.MeshStandardMaterial({ color: 0x3a7bd5 });
@@ -152,6 +177,7 @@
 
             scene.add(player);
 
+            // Ник
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext('2d');
@@ -181,6 +207,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
+        // --- ДЖОЙСТИК ---
         function setupJoystick() {
             const zone = document.getElementById('joystick-zone');
             const knob = document.getElementById('joystick-knob');
@@ -237,18 +264,33 @@
             if (joystickVector.y < -1) joystickVector.y = -1;
         }
 
+        // --- КАМЕРА (Orbital + Pitch) ---
         function setupCameraControls() {
             document.addEventListener('touchstart', (e) => {
                 if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
                 touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                isCameraDragging = true;
             });
 
             document.addEventListener('touchmove', (e) => {
+                if (!isCameraDragging) return;
                 if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
                 const touch = e.touches[0];
                 const dx = touch.clientX - touchStart.x;
-                cameraAngle -= dx * 0.01;
+                const dy = touch.clientY - touchStart.y;
+                
+                camYaw -= dx * 0.01;
+                camPitch -= dy * 0.01;
+                
+                // Ограничиваем наклон камеры (чтобы не переворачивалась)
+                if (camPitch > 1.2) camPitch = 1.2;
+                if (camPitch < -0.8) camPitch = -0.8;
+                
                 touchStart = { x: touch.clientX, y: touch.clientY };
+            });
+
+            document.addEventListener('touchend', () => {
+                isCameraDragging = false;
             });
         }
 
@@ -259,45 +301,69 @@
             }
         }
 
+        // --- КОЛЛИЗИИ ---
         function checkCollision(newX, newZ) {
-            const r = 0.5;
+            const r = 0.5; // Радиус персонажа
             for (let wall of WALLS) {
-                if (newX + r > wall.x - wall.size/2 &&
-                    newX - r < wall.x + wall.size/2 &&
-                    newZ + r > wall.z - wall.size/2 &&
-                    newZ - r < wall.z + wall.size/2) {
+                if (newX + r > wall.x - wall.w/2 &&
+                    newX - r < wall.x + wall.w/2 &&
+                    newZ + r > wall.z - wall.d/2 &&
+                    newZ - r < wall.z + wall.d/2) {
                     return true;
                 }
             }
             return false;
         }
 
+        // --- ИГРОВОЙ ЦИКЛ ---
         function animate() {
             requestAnimationFrame(animate);
 
             const delta = Math.min(clock.getDelta(), 0.05);
 
-            let moveX = 0, moveZ = 0;
-            
+            // 1. Определяем желаемое направление
+            let inputX = 0, inputZ = 0;
             if (joystickActive) {
-                // ИСПРАВЛЕНО: теперь вперёд — это вперёд
-                const forward = joystickVector.y * -1; // Инвертируем, чтобы вверх было вперёд
-                const strafe = joystickVector.x;
-                
-                moveX = (strafe * Math.cos(cameraAngle) - forward * Math.sin(cameraAngle)) * MOVE_SPEED * delta;
-                moveZ = (strafe * Math.sin(cameraAngle) + forward * Math.cos(cameraAngle)) * MOVE_SPEED * delta;
+                inputX = joystickVector.x;
+                inputZ = -joystickVector.y;
             }
 
-            let newX = player.position.x + moveX;
+            // 2. Рассчитываем желаемую скорость относительно камеры
+            const forwardX = Math.sin(camYaw);
+            const forwardZ = Math.cos(camYaw);
+            const rightX = Math.cos(camYaw);
+            const rightZ = -Math.sin(camYaw);
+
+            let targetSpeedX = (inputX * rightX + inputZ * forwardX) * MAX_WALK_SPEED;
+            let targetSpeedZ = (inputX * rightZ + inputZ * forwardZ) * MAX_WALK_SPEED;
+
+            // 3. Применяем ускорение (GroundController)
+            const accel = canJump ? ACCELERATION : AIR_CONTROL;
+            currentSpeedX += (targetSpeedX - currentSpeedX) * accel * delta;
+            currentSpeedZ += (targetSpeedZ - currentSpeedZ) * accel * delta;
+
+            // 4. Трение (если нет ввода)
+            if (!joystickActive) {
+                currentSpeedX *= (1 - FRICTION * delta);
+                currentSpeedZ *= (1 - FRICTION * delta);
+            }
+
+            // 5. Движение с проверкой коллизий
+            let newX = player.position.x + currentSpeedX * delta;
             if (!checkCollision(newX, player.position.z)) {
                 player.position.x = newX;
+            } else {
+                currentSpeedX = 0;
             }
             
-            let newZ = player.position.z + moveZ;
+            let newZ = player.position.z + currentSpeedZ * delta;
             if (!checkCollision(player.position.x, newZ)) {
                 player.position.z = newZ;
+            } else {
+                currentSpeedZ = 0;
             }
 
+            // 6. Гравитация
             velocityY += GRAVITY * delta;
             player.position.y += velocityY * delta;
 
@@ -307,18 +373,55 @@
                 canJump = true;
             }
 
-            if (player.position.x > 28) player.position.x = 28;
-            if (player.position.x < -28) player.position.x = -28;
-            if (player.position.z > 28) player.position.z = 28;
-            if (player.position.z < -28) player.position.z = -28;
+            // 7. Границы мира
+            if (player.position.x > 38) player.position.x = 38;
+            if (player.position.x < -38) player.position.x = -38;
+            if (player.position.z > 38) player.position.z = 38;
+            if (player.position.z < -38) player.position.z = -38;
 
+            // 8. Камера (Orbital + Occlusion)
             const camDist = 8;
-            const camHeight = 4;
-            const targetX = player.position.x + Math.sin(cameraAngle) * camDist;
-            const targetZ = player.position.z + Math.cos(cameraAngle) * camDist;
-            const targetY = player.position.y + camHeight;
+            const camHeight = 3;
             
-            camera.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.15);
+            // Считаем идеальную позицию камеры
+            let idealCamX = player.position.x - Math.sin(camYaw) * camDist * Math.cos(camPitch);
+            let idealCamZ = player.position.z - Math.cos(camYaw) * camDist * Math.cos(camPitch);
+            let idealCamY = player.position.y + camHeight + Math.sin(camPitch) * camDist;
+
+            // Occlusion: проверяем, не проходит ли камера сквозь стену
+            let camDistActual = camDist;
+            const steps = 10;
+            for (let i = 1; i <= steps; i++) {
+                const t = i / steps;
+                const testX = player.position.x + (idealCamX - player.position.x) * t;
+                const testZ = player.position.z + (idealCamZ - player.position.z) * t;
+                const testY = player.position.y + 1.2 + (idealCamY - (player.position.y + 1.2)) * t;
+                
+                // Проверяем коллизию для камеры (радиус 0.2)
+                let hit = false;
+                for (let wall of WALLS) {
+                    if (testX + 0.2 > wall.x - wall.w/2 &&
+                        testX - 0.2 < wall.x + wall.w/2 &&
+                        testZ + 0.2 > wall.z - wall.d/2 &&
+                        testZ - 0.2 < wall.z + wall.d/2 &&
+                        testY < wall.h) {
+                        hit = true;
+                        break;
+                    }
+                }
+                
+                if (hit) {
+                    camDistActual = camDist * (i - 1) / steps;
+                    break;
+                }
+            }
+            
+            // Применяем реальную дистанцию камеры
+            const realCamX = player.position.x - Math.sin(camYaw) * camDistActual * Math.cos(camPitch);
+            const realCamZ = player.position.z - Math.cos(camYaw) * camDistActual * Math.cos(camPitch);
+            const realCamY = player.position.y + camHeight + Math.sin(camPitch) * camDistActual;
+
+            camera.position.lerp(new THREE.Vector3(realCamX, realCamY, realCamZ), 0.2);
             camera.lookAt(player.position.x, player.position.y + 1.2, player.position.z);
 
             renderer.render(scene, camera);
@@ -327,22 +430,23 @@
         function exitGame() {
             localStorage.setItem('maxxi_pos_x', player.position.x);
             localStorage.setItem('maxxi_pos_z', player.position.z);
-            localStorage.setItem('maxxi_angle', cameraAngle);
+            localStorage.setItem('maxxi_cam_yaw', camYaw);
+            localStorage.setItem('maxxi_cam_pitch', camPitch);
             window.location.href = 'index.html';
         }
 
         window.addEventListener('load', () => {
             const savedX = localStorage.getItem('maxxi_pos_x');
             const savedZ = localStorage.getItem('maxxi_pos_z');
-            const savedAngle = localStorage.getItem('maxxi_angle');
+            const savedYaw = localStorage.getItem('maxxi_cam_yaw');
+            const savedPitch = localStorage.getItem('maxxi_cam_pitch');
             
             if (savedX && savedZ) {
                 player.position.x = parseFloat(savedX);
                 player.position.z = parseFloat(savedZ);
             }
-            if (savedAngle) {
-                cameraAngle = parseFloat(savedAngle);
-            }
+            if (savedYaw) camYaw = parseFloat(savedYaw);
+            if (savedPitch) camPitch = parseFloat(savedPitch);
         });
     </script>
 </body>
