@@ -1,1 +1,280 @@
-. 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaxxiVerse</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        header {
+            background: #111; border-bottom: 1px solid #333;
+            padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
+            z-index: 10; flex-wrap: wrap;
+        }
+        .logo { font-weight: bold; font-size: 1.2rem; letter-spacing: 2px; }
+        .nav-links { display: flex; gap: 15px; margin-left: 15px; }
+        .nav-links span { cursor: pointer; font-size: 0.9rem; color: #aaa; }
+        .nav-links span:hover, .nav-links span.active { color: #fff; border-bottom: 1px solid #fff; }
+        
+        .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+        .user-info img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #555; object-fit: cover; background: #222; }
+        .login-btn { color: #fff; cursor: pointer; border: 1px solid #555; padding: 5px 15px; border-radius: 5px; background: transparent; }
+        .login-btn:hover { background: #333; }
+
+        .main-container {
+            display: flex; flex-direction: row; flex: 1; overflow-x: auto; overflow-y: hidden;
+            padding: 10px; gap: 10px;
+        }
+        .column {
+            background: #111; border: 1px solid #222; border-radius: 8px;
+            padding: 10px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .col-1 { width: 28%; min-width: 130px; }
+        .col-2 { width: 44%; min-width: 200px; }
+        .col-3 { width: 28%; min-width: 130px; }
+
+        .avatar-large { width: 100%; aspect-ratio: 1/1; border-radius: 50%; border: 2px solid #444; object-fit: cover; background: #222; }
+        .profile-name { text-align: center; font-weight: bold; margin-top: 5px; font-size: 0.9rem; }
+        .section-title { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 10px; }
+        
+        #chat-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; }
+        .chat-msg { font-size: 0.8rem; line-height: 1.4; }
+        .chat-msg b { color: #fff; }
+        .chat-input-area { display: flex; gap: 5px; margin-top: auto; }
+        .chat-input-area input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #1a1a1a; color: #fff; outline: none; font-size: 0.8rem; }
+        .chat-input-area button { padding: 8px 12px; border: none; border-radius: 5px; background: #fff; color: #000; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+
+        .friend-list { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+        .friend-avatar { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #444; object-fit: cover; background: #222; }
+
+        .game-btn {
+            background: #1a1a1a; border: 1px solid #333; border-radius: 6px;
+            padding: 15px 10px; text-align: center; cursor: pointer; margin-bottom: 5px;
+        }
+        .game-btn:hover { background: #333; }
+
+        .not-logged {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100%; color: #666; font-size: 1.1rem; text-align: center; padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-box { background: #111; border: 1px solid #333; border-radius: 10px; padding: 25px; width: 90%; max-width: 350px; }
+        .modal-box h3 { text-align: center; margin-bottom: 20px; font-weight: 300; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #888; }
+        .input-group input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #1a1a1a; color: #fff; outline: none; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; background: #fff; color: #000; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-link { display: block; text-align: center; margin-top: 15px; color: #888; font-size: 0.9rem; cursor: pointer; text-decoration: underline; }
+        .error-text { color: #ff5555; font-size: 0.85rem; text-align: center; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; align-items: center;">
+            <div class="logo">MaxxiVerse</div>
+            <div class="nav-links">
+                <span class="active" onclick="switchTab('home')">Главная</span>
+                <span onclick="switchTab('games')">Игры</span>
+                <span onclick="switchTab('profile')">Профиль</span>
+                <span onclick="switchTab('forum')">Форум</span>
+            </div>
+        </div>
+        <div id="header-user" class="user-info">
+            <button class="login-btn" onclick="openLogin()">Login</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="column col-1">
+            <img id="main-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23555' text-anchor='middle' dy='.3em'%3E?%3C/text%3E%3C/svg%3E" class="avatar-large" alt="Аватар">
+            <div id="main-nick" class="profile-name">Гость</div>
+            <div class="section-title">Друзья</div>
+            <div class="friend-list" id="friend-list">
+                <div style="color:#555; font-size:0.75rem;">Нет друзей</div>
+            </div>
+        </div>
+
+        <div class="column col-2" id="col-chat">
+            <div id="chat-content" style="display: none; flex-direction: column; height: 100%;">
+                <div class="section-title">Чат</div>
+                <div id="chat-box">
+                    <div class="chat-msg"><b>Система:</b> Добро пожаловать в чат!</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Написать сообщение...">
+                    <button onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+            <div class="not-logged" id="chat-not-logged">
+                <div>Вы еще не вошли в игру</div>
+                <div style="font-size:0.8rem; margin-top:10px;">Войдите, чтобы общаться</div>
+            </div>
+        </div>
+
+        <div class="column col-3" id="col-games">
+            <div id="games-content" style="display: none;">
+                <div class="section-title">Игры</div>
+                <div class="game-btn" onclick="window.location.href='game.html'">
+                    <div style="font-size: 1.1rem; margin-bottom: 5px;">Pixel Jump</div>
+                    <div style="font-size: 0.7rem; color: #888;">Ходи и прыгай</div>
+                </div>
+            </div>
+            <div class="not-logged" id="games-not-logged">
+                <div>Вы еще не вошли в игру</div>
+                <div style="font-size:0.8rem; margin-top:10px;">Войдите, чтобы играть</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="login-title">ВХОД</h3>
+            <div id="login-error" class="error-text"></div>
+            
+            <div id="login-fields">
+                <div class="input-group"><label>Никнейм</label><input type="text" id="login-nick" placeholder="Введите ник"></div>
+                <div class="input-group"><label>Пароль</label><input type="password" id="login-pass" placeholder="Введите пароль"></div>
+                <button class="btn" onclick="doLogin()">Войти</button>
+                <div class="btn-link" onclick="showRegister()">Создать аккаунт</div>
+            </div>
+
+            <div id="register-fields" style="display: none;">
+                <div class="input-group"><label>Никнейм</label><input type="text" id="reg-nick" placeholder="Введите ник"></div>
+                <div class="input-group"><label>Пароль</label><input type="password" id="reg-pass" placeholder="Придумайте пароль"></div>
+                <div class="input-group">
+                    <label>Пол</label>
+                    <div style="display: flex; gap: 15px; margin-top: 5px;">
+                        <label style="color: white; font-size: 0.9rem; display: flex; align-items: center;">
+                            <input type="radio" name="gender" value="male" checked style="margin-right: 5px;"> Мужской
+                        </label>
+                        <label style="color: white; font-size: 0.9rem; display: flex; align-items: center;">
+                            <input type="radio" name="gender" value="female" style="margin-right: 5px;"> Женский
+                        </label>
+                    </div>
+                </div>
+                <button class="btn" onclick="doRegister()">Зарегистрироваться</button>
+                <div class="btn-link" onclick="showLogin()">Назад ко входу</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let users = {};
+        let loginAttempts = {};
+        let blockUntil = {};
+
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-links span').forEach(s => s.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function openLogin() { 
+            document.getElementById('login-modal').style.display = 'flex';
+            document.getElementById('login-error').style.display = 'none';
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById('login-title').innerText = 'ВХОД';
+            document.getElementById('login-fields').style.display = 'block';
+            document.getElementById('register-fields').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('login-title').innerText = 'РЕГИСТРАЦИЯ';
+            document.getElementById('login-fields').style.display = 'none';
+            document.getElementById('register-fields').style.display = 'block';
+        }
+
+        function doRegister() {
+            const nick = document.getElementById('reg-nick').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+
+            if (!nick || !pass) { alert("Заполните все поля!"); return; }
+            if (users[nick]) { alert("Такой ник уже занят!"); return; }
+
+            users[nick] = { pass: pass, gender: gender };
+            alert("Аккаунт создан! Теперь войдите.");
+            showLogin();
+        }
+
+        function doLogin() {
+            const nick = document.getElementById('login-nick').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const errorEl = document.getElementById('login-error');
+
+            if (!nick || !pass) { alert("Заполните поля!"); return; }
+
+            if (blockUntil[nick] && Date.now() < blockUntil[nick]) {
+                const remaining = Math.ceil((blockUntil[nick] - Date.now()) / 1000);
+                errorEl.innerText = `Слишком много попыток. Подождите ${remaining} сек.`;
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (!users[nick]) {
+                errorEl.innerText = "Неверный ник или пароль";
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (users[nick].pass !== pass) {
+                loginAttempts[nick] = (loginAttempts[nick] || 0) + 1;
+                
+                if (loginAttempts[nick] >= 5) {
+                    blockUntil[nick] = Date.now() + 5 * 60 * 1000;
+                    errorEl.innerText = "5 неудачных попыток. Вход заблокирован на 5 минут.";
+                    loginAttempts[nick] = 0;
+                } else {
+                    errorEl.innerText = `Неверный пароль. Осталось попыток: ${5 - loginAttempts[nick]}`;
+                }
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            loginAttempts[nick] = 0;
+            errorEl.style.display = 'none';
+            document.getElementById('login-modal').style.display = 'none';
+
+            document.getElementById('header-user').innerHTML = 
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'30\' height=\'30\'%3E%3Crect width=\'30\' height=\'30\' fill=\'%23333\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-size=\'14\' fill=\'%23fff\' text-anchor=\'middle\' dy=\'.3em\'%3E' + nick[0].toUpperCase() + '%3C/text%3E%3C/svg%3E"><span>' + nick + '</span>';
+
+            document.getElementById('main-nick').innerText = nick;
+            document.getElementById('main-avatar').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'%3E" + nick[0].toUpperCase() + "%3C/text%3E%3C/svg%3E";
+
+            document.getElementById('chat-not-logged').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'flex';
+            document.getElementById('games-not-logged').style.display = 'none';
+            document.getElementById('games-content').style.display = 'block';
+
+            // Сохраняем ник в localStorage, чтобы игра знала, кто играет
+            localStorage.setItem('maxxi_nick', nick);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = '<b>' + document.getElementById('main-nick').innerText + ':</b> ' + text;
+            box.appendChild(div);
+            input.value = '';
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html> 
