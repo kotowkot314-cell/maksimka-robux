@@ -13,23 +13,41 @@ body { background: #000; overflow: hidden; height: 100vh; width: 100vw; font-fam
 position: fixed; top: 15px; right: 15px;
 background: #ff2222; border: 3px solid #fff; color: #fff;
 padding: 15px 25px; border-radius: 8px; font-size: 1rem; font-weight: bold;
-z-index: 9999; cursor: pointer;
+z-index: 9999; cursor: pointer; display: none;
 }
 #exit-btn:active { background: #aa0000; }
 
 #menu-btn {
-position: fixed; top: 15px; right: 120px;
+position: fixed; top: 15px; right: 15px;
 background: rgba(0,0,0,0.7); border: 2px solid #fff; color: #fff;
-width: 50px; height: 50px; border-radius: 8px;
-font-size: 1.6rem; font-weight: bold;
+width: 55px; height: 55px; border-radius: 8px;
+font-size: 1.8rem; font-weight: bold;
 z-index: 9999; cursor: pointer;
 display: flex; justify-content: center; align-items: center;
 }
 #menu-btn:active { background: #333; }
 
+#menu-panel {
+position: fixed; top: 80px; right: 15px;
+background: rgba(0,0,0,0.95); border: 2px solid #555;
+border-radius: 10px; padding: 10px;
+width: 220px; z-index: 9998;
+display: none;
+}
+#menu-panel button {
+width: 100%; background: #222; color: #fff;
+border: 1px solid #555; border-radius: 6px;
+padding: 12px; font-size: 0.9rem; font-weight: bold;
+cursor: pointer; margin-bottom: 8px;
+text-align: left;
+}
+#menu-panel button:last-child { margin-bottom: 0; }
+#menu-panel button:active { background: #444; }
+#menu-panel button.exit { background: #ff2222; border-color: #ff2222; }
+
 #players-panel {
 position: fixed; top: 80px; right: 15px;
-background: rgba(0,0,0,0.9); border: 2px solid #555;
+background: rgba(0,0,0,0.95); border: 2px solid #555;
 border-radius: 10px; padding: 15px;
 width: 260px; z-index: 9998;
 display: none;
@@ -37,6 +55,11 @@ display: none;
 #players-panel h3 {
 color: #fff; font-size: 1rem; margin-bottom: 10px;
 border-bottom: 1px solid #333; padding-bottom: 8px;
+}
+#players-panel .close-btn {
+background: #ff2222; color: #fff; border: none;
+padding: 6px 12px; border-radius: 5px; font-size: 0.8rem;
+font-weight: bold; cursor: pointer; margin-bottom: 10px; width: 100%;
 }
 .player-row {
 display: flex; justify-content: space-between; align-items: center;
@@ -49,7 +72,6 @@ background: #fff; color: #000; border: none;
 padding: 5px 10px; border-radius: 5px; font-size: 0.75rem;
 font-weight: bold; cursor: pointer;
 }
-.player-row button:active { background: #ccc; }
 .player-row button.added { background: #00aa00; color: #fff; }
 
 #friend-notification {
@@ -105,7 +127,13 @@ background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px;
 <button id="menu-btn">𖣔</button>
 <button id="exit-btn">ВЫХОД</button>
 
+<div id="menu-panel">
+<button onclick="showPlayersList()">Игроки онлайн</button>
+<button class="exit" onclick="exitGame()">Выход из игры</button>
+</div>
+
 <div id="players-panel">
+<button class="close-btn" onclick="hidePlayersList()">Закрыть</button>
 <h3>Игроки онлайн</h3>
 <div id="players-list"></div>
 </div>
@@ -139,6 +167,8 @@ let joystickVector = { x: 0, y: 0 };
 
 let camYaw = 0;
 let camPitch = 0;
+let camDist = 8;
+let camHeight = 3;
 
 let cameraTouchId = null;
 let cameraTouchStart = { x: 0, y: 0 };
@@ -181,18 +211,16 @@ const PLAYER_HEIGHT = 2.0;
 
 let gameReady = false;
 
-let fakePlayers = [
-{ nick: 'Alex_Pro', id: 'alex' },
-{ nick: 'Masha_2024', id: 'masha' },
-{ nick: 'CoolBoy99', id: 'coolboy' },
-{ nick: 'PlayerX', id: 'playerx' }
-];
+let isClimbing = false;
+let touchingWall = false;
+let wallNormal = null;
 
 let friends = [];
-let pendingRequests = [];
+let pendingRequest = null;
 
 const exitBtn = document.getElementById('exit-btn');
 const menuBtn = document.getElementById('menu-btn');
+const menuPanel = document.getElementById('menu-panel');
 const playersPanel = document.getElementById('players-panel');
 const notifBox = document.getElementById('friend-notification');
 const notifText = document.getElementById('notif-text');
@@ -204,7 +232,6 @@ e.preventDefault();
 e.stopPropagation();
 exitGame();
 }, { passive: false });
-
 exitBtn.addEventListener('click', function(e) {
 e.preventDefault();
 e.stopPropagation();
@@ -214,96 +241,69 @@ exitGame();
 menuBtn.addEventListener('touchstart', function(e) {
 e.preventDefault();
 e.stopPropagation();
-togglePlayersPanel();
+toggleMenu();
 }, { passive: false });
-
 menuBtn.addEventListener('click', function(e) {
 e.preventDefault();
 e.stopPropagation();
-togglePlayersPanel();
+toggleMenu();
 });
 
 notifYes.addEventListener('click', function(e) {
 e.stopPropagation();
 acceptFriendRequest();
 });
-
 notifNo.addEventListener('click', function(e) {
 e.stopPropagation();
 declineFriendRequest();
 });
 
-function togglePlayersPanel() {
-if (playersPanel.style.display === 'block') {
+function toggleMenu() {
+if (menuPanel.style.display === 'block') {
+menuPanel.style.display = 'none';
 playersPanel.style.display = 'none';
+exitBtn.style.display = 'none';
 } else {
+menuPanel.style.display = 'block';
+playersPanel.style.display = 'none';
+exitBtn.style.display = 'none';
+}
+}
+
+function showPlayersList() {
+menuPanel.style.display = 'none';
 playersPanel.style.display = 'block';
 renderPlayersList();
 }
+
+function hidePlayersList() {
+playersPanel.style.display = 'none';
+menuPanel.style.display = 'block';
 }
 
 function renderPlayersList() {
 const list = document.getElementById('players-list');
 list.innerHTML = '';
 
-fakePlayers.forEach(function(p) {
-const row = document.createElement('div');
-row.className = 'player-row';
-
-const nameSpan = document.createElement('span');
-nameSpan.innerText = p.nick;
-row.appendChild(nameSpan);
-
-const btn = document.createElement('button');
-if (friends.indexOf(p.id) !== -1) {
-btn.innerText = 'В друзьях';
-btn.classList.add('added');
-btn.disabled = true;
-} else {
-btn.innerText = 'Добавить';
-btn.onclick = function() {
-sendFriendRequest(p);
-};
-}
-row.appendChild(btn);
-list.appendChild(row);
-});
-
 const meRow = document.createElement('div');
 meRow.className = 'player-row';
 meRow.innerHTML = '<span>' + myNick + ' (Вы)</span><span style="color:#888; font-size:0.75rem;">—</span>';
 list.appendChild(meRow);
-}
 
-function sendFriendRequest(player) {
-pendingRequests.push(player);
-showFriendNotification(player);
-}
-
-function showFriendNotification(player) {
-notifText.innerText = player.nick + ' хочет добавить вас в друзья';
-notifBox.style.display = 'block';
-
-notifBox.dataset.playerId = player.id;
-notifBox.dataset.playerNick = player.nick;
+const emptyRow = document.createElement('div');
+emptyRow.className = 'player-row';
+emptyRow.innerHTML = '<span style="color:#666; font-size:0.8rem;">Другие игроки не найдены</span>';
+list.appendChild(emptyRow);
 }
 
 function acceptFriendRequest() {
-const id = notifBox.dataset.playerId;
-const nick = notifBox.dataset.playerNick;
-
-if (id && friends.indexOf(id) === -1) {
-friends.push(id);
-alert(nick + ' принят(а) в друзья!');
-}
-
 notifBox.style.display = 'none';
-renderPlayersList();
+pendingRequest = null;
 }
 
 function declineFriendRequest() {
 notifBox.style.display = 'none';
-pendingRequests = [];
+pendingRequest = null;
 }
 
 function exitGame() {
@@ -611,22 +611,54 @@ if (e.target.closest('#joystick-zone')) return;
 if (e.target.closest('#jump-btn')) return;
 if (e.target.closest('#exit-btn')) return;
 if (e.target.closest('#menu-btn')) return;
+if (e.target.closest('#menu-panel')) return;
 if (e.target.closest('#players-panel')) return;
 if (e.target.closest('#friend-notification')) return;
+
+if (e.touches.length === 2) {
+cameraTouchId = null;
+pinchStartDist = getTouchDist(e.touches);
+pinchStartCamDist = camDist;
+return;
+}
+
 if (cameraTouchId !== null) return;
 const touch = e.changedTouches[0];
 cameraTouchId = touch.identifier;
 cameraTouchStart = { x: touch.clientX, y: touch.clientY };
 }, { passive: false });
 
+let pinchStartDist = 0;
+let pinchStartCamDist = 8;
+
+function getTouchDist(touches) {
+const dx = touches[0].clientX - touches[1].clientX;
+const dy = touches[0].clientY - touches[1].clientY;
+return Math.sqrt(dx*dx + dy*dy);
+}
+
 document.addEventListener('touchmove', (e) => {
+if (e.touches.length === 2) {
+e.preventDefault();
+const dist = getTouchDist(e.touches);
+if (pinchStartDist > 0) {
+const scale = pinchStartDist / dist;
+camDist = pinchStartCamDist * scale;
+if (camDist < 3) camDist = 3;
+if (camDist > 20) camDist = 20;
+}
+return;
+}
+
 if (cameraTouchId === null) return;
 if (e.target.closest('#joystick-zone')) return;
 if (e.target.closest('#jump-btn')) return;
 if (e.target.closest('#exit-btn')) return;
 if (e.target.closest('#menu-btn')) return;
+if (e.target.closest('#menu-panel')) return;
 if (e.target.closest('#players-panel')) return;
 if (e.target.closest('#friend-notification')) return;
+
 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
 if (!touch) return;
 
@@ -643,6 +675,9 @@ cameraTouchStart = { x: touch.clientX, y: touch.clientY };
 }, { passive: false });
 
 function endCamera(e) {
+if (e.touches.length < 2) {
+pinchStartDist = 0;
+}
 if (cameraTouchId === null) return;
 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
 if (touch) cameraTouchId = null;
@@ -656,6 +691,7 @@ function doJump() {
 if (canJump) {
 velocityY = JUMP_FORCE;
 canJump = false;
+isClimbing = false;
 }
 }
 
@@ -709,6 +745,36 @@ return true;
 return false;
 }
 
+function checkClimbing(px, pz, playerY) {
+const headY = playerY + PLAYER_HEIGHT;
+const feetY = playerY;
+const checkRadius = PLAYER_RADIUS + 0.15;
+
+for (let wall of WALLS) {
+if (headY > wall.bottom && feetY < wall.top) {
+if (px + checkRadius > wall.x - wall.w / 2 &&
+px - checkRadius < wall.x + wall.w / 2 &&
+pz + checkRadius > wall.z - wall.d / 2 &&
+pz - checkRadius < wall.z + wall.d / 2) {
+return true;
+}
+}
+}
+
+for (let plat of PLATFORMS) {
+if (headY > plat.bottom && feetY < plat.top - 0.1) {
+if (px + checkRadius > plat.x - plat.w / 2 &&
+px - checkRadius < plat.x + plat.w / 2 &&
+pz + checkRadius > plat.z - plat.d / 2 &&
+pz - checkRadius < plat.z + plat.d / 2) {
+return true;
+}
+}
+}
+
+return false;
+}
+
 function animate() {
 requestAnimationFrame(animate);
 
@@ -750,6 +816,16 @@ currentSpeedZ += (targetSpeedZ - currentSpeedZ) * accel * delta;
 if (!joystickActive || (inputX === 0 && inputZ === 0)) {
 currentSpeedX *= (1 - FRICTION * delta);
 currentSpeedZ *= (1 - FRICTION * delta);
+}
+
+touchingWall = checkClimbing(player.position.x, player.position.z, player.position.y);
+
+if (touchingWall && !canJump && velocityY < 0) {
+isClimbing = true;
+}
+
+if (isClimbing && !canJump) {
+velocityY = 2;
 }
 
 let newX = player.position.x + currentSpeedX * delta;
@@ -804,6 +880,7 @@ if (player.position.y <= groundY && velocityY <= 0) {
 player.position.y = groundY;
 velocityY = 0;
 canJump = true;
+isClimbing = false;
 }
 
 if (player.position.y < -20) {
@@ -811,6 +888,7 @@ player.position.set(0, 2, 0);
 velocityY = 0;
 currentSpeedX = 0;
 currentSpeedZ = 0;
+isClimbing = false;
 }
 
 if (player.position.x > 48) player.position.x = 48;
@@ -818,7 +896,6 @@ if (player.position.x < -48) player.position.x = -48;
 if (player.position.z > 48) player.position.z = 48;
 if (player.position.z < -48) player.position.z = -48;
 
-const camDist = 8;
 const camHeight = 3;
 
 let idealCamX = player.position.x - Math.sin(camYaw) * camDist * Math.cos(camPitch);
