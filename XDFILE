@@ -4,12 +4,29 @@ local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
 local PlayerGui = LP:WaitForChild("PlayerGui")
 
-local CHECK_RATE = 0.01
-local MAX_LOG = 100
+local CHECK_RATE = 0.005
+local MAX_LOG = 200
 
 local captured = {}
+local seen = {}
 
-local function scanChat()
+local function addEntry(text, isRaw)
+    if not text or #text < 2 then return end
+    if seen[text] then return end
+    seen[text] = true
+
+    table.insert(captured, {
+        text = text,
+        time = os.time(),
+        raw = isRaw,
+    })
+    if #captured > MAX_LOG then
+        table.remove(captured, 1)
+    end
+    print("[CAPTURED]", isRaw and "RAW" or "FILTERED", text)
+end
+
+local function scanOnce()
     local chat = PlayerGui:FindFirstChild("Chat", true)
     if not chat then return end
 
@@ -17,26 +34,8 @@ local function scanChat()
         if label:IsA("TextLabel") then
             local text = label.Text
             if text and #text >= 2 then
-                local already = false
-                for _, entry in ipairs(captured) do
-                    if entry.text == text then
-                        already = true
-                        break
-                    end
-                end
-
-                if not already then
-                    local isRaw = not text:match("^#+$") and not text:match("^%s*$")
-                    table.insert(captured, {
-                        text = text,
-                        time = os.time(),
-                        raw = isRaw,
-                    })
-                    if #captured > MAX_LOG then
-                        table.remove(captured, 1)
-                    end
-                    print("[CAPTURED]", isRaw and "RAW" or "FILTERED", text)
-                end
+                local isRaw = not text:match("^#+$") and not text:match("^%s*$")
+                addEntry(text, isRaw)
             end
         end
     end
@@ -44,7 +43,30 @@ end
 
 task.spawn(function()
     while task.wait(CHECK_RATE) do
-        pcall(scanChat)
+        pcall(scanOnce)
+    end
+end)
+
+local function hookChat(chat)
+    chat.DescendantAdded:Connect(function(obj)
+        if obj:IsA("TextLabel") then
+            task.wait(0.001)
+            local text = obj.Text
+            if text and #text >= 2 then
+                local isRaw = not text:match("^#+$") and not text:match("^%s*$")
+                addEntry(text, isRaw)
+            end
+        end
+    end)
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        local chat = PlayerGui:FindFirstChild("Chat", true)
+        if chat and not chat:GetAttribute("hooked_by_sniper") then
+            chat:SetAttribute("hooked_by_sniper", true)
+            hookChat(chat)
+        end
     end
 end)
 
@@ -69,8 +91,8 @@ OC.CornerRadius = UDim.new(0, 8)
 OC.Parent = OpenBtn
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 340, 0, 400)
-Main.Position = UDim2.new(0, 80, 0.25, 0)
+Main.Size = UDim2.new(0, 340, 0, 420)
+Main.Position = UDim2.new(0, 80, 0.2, 0)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 Main.BorderSizePixel = 0
 Main.Visible = false
@@ -90,7 +112,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 32)
 Title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
 Title.BorderSizePixel = 0
-Title.Text = "Chat Sniper"
+Title.Text = "Chat Sniper v2"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
@@ -174,7 +196,7 @@ local function refresh()
 end
 
 task.spawn(function()
-    while task.wait(0.5) do
+    while task.wait(0.3) do
         if Main.Visible then
             refresh()
         end
@@ -187,4 +209,4 @@ OpenBtn.MouseButton1Click:Connect(function()
     refresh()
 end)
 
-print("[ChatSniper] Загружен. Проверка каждые " .. CHECK_RATE .. " сек")
+print("[ChatSniper v2] Загружен. Проверка каждые " .. CHECK_RATE .. " сек + ChildAdded")
