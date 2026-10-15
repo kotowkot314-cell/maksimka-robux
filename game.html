@@ -66,8 +66,9 @@
         let camYaw = 0;
         let camPitch = 0;
         
-        let touchStart = { x: 0, y: 0 };
-        let isCameraDragging = false;
+        // Для камеры (второй палец)
+        let cameraTouchId = null;
+        let cameraTouchStart = { x: 0, y: 0 };
 
         const GRAVITY = -30;
         const JUMP_FORCE = 9;
@@ -75,6 +76,7 @@
         const ACCELERATION = 40;
         const AIR_CONTROL = 5;
         const FRICTION = 15;
+        const DEADZONE = 0.15; // Мёртвая зона джойстика
 
         let currentSpeedX = 0;
         let currentSpeedZ = 0;
@@ -199,6 +201,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
+        // --- ДЖОЙСТИК (ПЕРВЫЙ ПАЛЕЦ) ---
         function setupJoystick() {
             const zone = document.getElementById('joystick-zone');
             const knob = document.getElementById('joystick-knob');
@@ -206,6 +209,7 @@
 
             zone.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 joystickActive = true;
                 const touch = e.touches[0];
                 touchId = touch.identifier;
@@ -214,6 +218,7 @@
 
             zone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 if (!joystickActive) return;
                 const touch = Array.from(e.touches).find(t => t.identifier === touchId);
                 if (!touch) return;
@@ -222,6 +227,7 @@
 
             const endTouch = (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 joystickActive = false;
                 touchId = null;
                 knob.style.transform = 'translate(0px, 0px)';
@@ -255,32 +261,50 @@
             if (joystickVector.y < -1) joystickVector.y = -1;
         }
 
+        // --- КАМЕРА (ВТОРОЙ ПАЛЕЦ) ---
         function setupCameraControls() {
             document.addEventListener('touchstart', (e) => {
+                // Игнорируем касания по джойстику, прыжку и выходу
                 if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
-                touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                isCameraDragging = true;
+                
+                // Если камера уже управляется другим пальцем — игнорируем
+                if (cameraTouchId !== null) return;
+                
+                const touch = e.changedTouches[0];
+                cameraTouchId = touch.identifier;
+                cameraTouchStart = { x: touch.clientX, y: touch.clientY };
             });
 
             document.addEventListener('touchmove', (e) => {
-                if (!isCameraDragging) return;
-                if (e.target.closest('#joystick-zone') || e.target.closest('#jump-btn') || e.target.closest('#exit-btn')) return;
-                const touch = e.touches[0];
-                const dx = touch.clientX - touchStart.x;
-                const dy = touch.clientY - touchStart.y;
+                if (cameraTouchId === null) return;
+                
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
+                if (!touch) return;
+                
+                const dx = touch.clientX - cameraTouchStart.x;
+                const dy = touch.clientY - cameraTouchStart.y;
                 
                 camYaw -= dx * 0.01;
-                // ИСПРАВЛЕНО: теперь вниз — вниз, вверх — вверх
                 camPitch += dy * 0.01;
                 
                 if (camPitch > 1.2) camPitch = 1.2;
                 if (camPitch < -0.8) camPitch = -0.8;
                 
-                touchStart = { x: touch.clientX, y: touch.clientY };
+                cameraTouchStart = { x: touch.clientX, y: touch.clientY };
             });
 
-            document.addEventListener('touchend', () => {
-                isCameraDragging = false;
+            document.addEventListener('touchend', (e) => {
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
+                if (touch) {
+                    cameraTouchId = null;
+                }
+            });
+
+            document.addEventListener('touchcancel', (e) => {
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
+                if (touch) {
+                    cameraTouchId = null;
+                }
             });
         }
 
@@ -310,10 +334,24 @@
             const delta = Math.min(clock.getDelta(), 0.05);
 
             let inputX = 0, inputZ = 0;
+            
             if (joystickActive) {
-                // ИСПРАВЛЕНО: инвертируем X, чтобы влево было влево
-                inputX = -joystickVector.x;
-                inputZ = -joystickVector.y;
+                // Мёртвая зона
+                let jx = joystickVector.x;
+                let jz = -joystickVector.y;
+                
+                const mag = Math.sqrt(jx*jx + jz*jz);
+                if (mag > DEADZONE) {
+                    // Нормализуем и масштабируем
+                    jx = (jx / mag) * Math.min(mag * 2, 1);
+                    jz = (jz / mag) * Math.min(mag * 2, 1);
+                } else {
+                    jx = 0;
+                    jz = 0;
+                }
+                
+                inputX = -jx;
+                inputZ = jz;
             }
 
             const forwardX = Math.sin(camYaw);
@@ -328,7 +366,7 @@
             currentSpeedX += (targetSpeedX - currentSpeedX) * accel * delta;
             currentSpeedZ += (targetSpeedZ - currentSpeedZ) * accel * delta;
 
-            if (!joystickActive) {
+            if (!joystickActive || (inputX === 0 && inputZ === 0)) {
                 currentSpeedX *= (1 - FRICTION * delta);
                 currentSpeedZ *= (1 - FRICTION * delta);
             }
