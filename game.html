@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
 <title>Pixel Jump 3D</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-body { background: #000; overflow: hidden; height: 100vh; width: 100vw; font-family: sans-serif; }
+body { background: #000; overflow: hidden; height: 100vh; width: 100vw; font-family: sans-serif; touch-action: none; }
 #game-canvas { display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
 #exit-btn {
@@ -15,7 +15,6 @@ background: #ff2222; border: 3px solid #fff; color: #fff;
 padding: 15px 25px; border-radius: 8px; font-size: 1rem; font-weight: bold;
 z-index: 9999; cursor: pointer; display: none;
 }
-#exit-btn:active { background: #aa0000; }
 
 #menu-btn {
 position: fixed; top: 15px; right: 15px;
@@ -25,7 +24,6 @@ font-size: 1.8rem; font-weight: bold;
 z-index: 9999; cursor: pointer;
 display: flex; justify-content: center; align-items: center;
 }
-#menu-btn:active { background: #333; }
 
 #menu-panel {
 position: fixed; top: 80px; right: 15px;
@@ -42,7 +40,6 @@ cursor: pointer; margin-bottom: 8px;
 text-align: left;
 }
 #menu-panel button:last-child { margin-bottom: 0; }
-#menu-panel button:active { background: #444; }
 #menu-panel button.exit { background: #ff2222; border-color: #ff2222; }
 
 #players-panel {
@@ -67,33 +64,6 @@ color: #fff; font-size: 0.9rem; padding: 8px 0;
 border-bottom: 1px solid #222;
 }
 .player-row:last-child { border-bottom: none; }
-.player-row button {
-background: #fff; color: #000; border: none;
-padding: 5px 10px; border-radius: 5px; font-size: 0.75rem;
-font-weight: bold; cursor: pointer;
-}
-.player-row button.added { background: #00aa00; color: #fff; }
-
-#friend-notification {
-position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-background: #111; border: 2px solid #fff;
-border-radius: 10px; padding: 15px 20px;
-z-index: 10000; display: none;
-box-shadow: 0 0 30px rgba(255,255,255,0.3);
-min-width: 300px;
-}
-#friend-notification .notif-text {
-color: #fff; font-size: 0.95rem; margin-bottom: 12px; text-align: center;
-}
-#friend-notification .notif-buttons {
-display: flex; gap: 10px; justify-content: center;
-}
-#friend-notification .notif-buttons button {
-padding: 8px 20px; border: none; border-radius: 5px;
-font-weight: bold; cursor: pointer; font-size: 0.9rem;
-}
-#notif-yes { background: #00aa00; color: #fff; }
-#notif-no { background: #ff2222; color: #fff; }
 
 #joystick-zone {
 position: fixed; bottom: 30px; left: 30px; width: 130px; height: 130px;
@@ -113,7 +83,6 @@ display: flex; justify-content: center; align-items: center;
 font-size: 2rem; font-weight: bold; color: #fff; z-index: 50;
 cursor: pointer;
 }
-#jump-btn:active { background: rgba(255,255,255,0.4); }
 
 #nick-label {
 position: fixed; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; z-index: 50;
@@ -138,14 +107,6 @@ background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px;
 <div id="players-list"></div>
 </div>
 
-<div id="friend-notification">
-<div class="notif-text" id="notif-text"></div>
-<div class="notif-buttons">
-<button id="notif-yes">Да</button>
-<button id="notif-no">Нет</button>
-</div>
-</div>
-
 <div id="joystick-zone">
 <div id="joystick-knob"></div>
 </div>
@@ -157,7 +118,7 @@ background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px;
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
 <script>
 const myNick = localStorage.getItem('maxxi_nick') || 'Гость';
-document.getElementById('nick-label').innerText = 'Вы: ' + myNick;
+document.getElementById('nick-label').innerText = 'Вы: ' + myNick + ' | v2';
 
 let scene, camera, renderer, player, clock;
 let velocityY = 0;
@@ -168,10 +129,14 @@ let joystickVector = { x: 0, y: 0 };
 let camYaw = 0;
 let camPitch = 0;
 let camDist = 8;
-let camHeight = 3;
+const CAM_HEIGHT = 3;
 
 let cameraTouchId = null;
 let cameraTouchStart = { x: 0, y: 0 };
+
+let pinchActive = false;
+let pinchStartDist = 0;
+let pinchStartCamDist = 8;
 
 const GRAVITY = -30;
 const JUMP_FORCE = 9;
@@ -193,50 +158,25 @@ const PLATFORMS = [];
 const TORSO_W = 0.8;
 const TORSO_H = 0.7;
 const TORSO_D = 0.4;
-
 const ARM_H = TORSO_H;
 const ARM_W = TORSO_W / 2;
-
 const LEG_W = TORSO_W / 2 - 0.01;
 const LEG_H = 0.8;
 const LEG_D = TORSO_D;
-
 const HEAD_W = 0.5;
 const HEAD_H = 0.5;
 const HEAD_D = 0.5;
 const HEAD_ROUND = 0.12;
-
 const PLAYER_RADIUS = 0.4;
 const PLAYER_HEIGHT = 2.0;
 
 let gameReady = false;
-
 let isClimbing = false;
-let touchingWall = false;
-let wallNormal = null;
 
-let friends = [];
-let pendingRequest = null;
-
-const exitBtn = document.getElementById('exit-btn');
 const menuBtn = document.getElementById('menu-btn');
 const menuPanel = document.getElementById('menu-panel');
 const playersPanel = document.getElementById('players-panel');
-const notifBox = document.getElementById('friend-notification');
-const notifText = document.getElementById('notif-text');
-const notifYes = document.getElementById('notif-yes');
-const notifNo = document.getElementById('notif-no');
-
-exitBtn.addEventListener('touchstart', function(e) {
-e.preventDefault();
-e.stopPropagation();
-exitGame();
-}, { passive: false });
-exitBtn.addEventListener('click', function(e) {
-e.preventDefault();
-e.stopPropagation();
-exitGame();
-});
+const exitBtn = document.getElementById('exit-btn');
 
 menuBtn.addEventListener('touchstart', function(e) {
 e.preventDefault();
@@ -249,24 +189,24 @@ e.stopPropagation();
 toggleMenu();
 });
 
-notifYes.addEventListener('click', function(e) {
+exitBtn.addEventListener('touchstart', function(e) {
+e.preventDefault();
 e.stopPropagation();
-acceptFriendRequest();
-});
-notifNo.addEventListener('click', function(e) {
+exitGame();
+}, { passive: false });
+exitBtn.addEventListener('click', function(e) {
+e.preventDefault();
 e.stopPropagation();
-declineFriendRequest();
+exitGame();
 });
 
 function toggleMenu() {
 if (menuPanel.style.display === 'block') {
 menuPanel.style.display = 'none';
 playersPanel.style.display = 'none';
-exitBtn.style.display = 'none';
 } else {
 menuPanel.style.display = 'block';
 playersPanel.style.display = 'none';
-exitBtn.style.display = 'none';
 }
 }
 
@@ -284,26 +224,14 @@ menuPanel.style.display = 'block';
 function renderPlayersList() {
 const list = document.getElementById('players-list');
 list.innerHTML = '';
-
 const meRow = document.createElement('div');
 meRow.className = 'player-row';
 meRow.innerHTML = '<span>' + myNick + ' (Вы)</span><span style="color:#888; font-size:0.75rem;">—</span>';
 list.appendChild(meRow);
-
 const emptyRow = document.createElement('div');
 emptyRow.className = 'player-row';
 emptyRow.innerHTML = '<span style="color:#666; font-size:0.8rem;">Другие игроки не найдены</span>';
 list.appendChild(emptyRow);
-}
-
-function acceptFriendRequest() {
-notifBox.style.display = 'none';
-pendingRequest = null;
-}
-
-function declineFriendRequest() {
-notifBox.style.display = 'none';
-pendingRequest = null;
 }
 
 function exitGame() {
@@ -370,12 +298,7 @@ mesh.position.set(x, y, z);
 mesh.castShadow = true;
 mesh.receiveShadow = true;
 scene.add(mesh);
-PLATFORMS.push({
-x: x, y: y, z: z,
-w: w, h: h, d: d,
-top: y + h / 2,
-bottom: y - h / 2
-});
+PLATFORMS.push({ x: x, y: y, z: z, w: w, h: h, d: d, top: y + h / 2, bottom: y - h / 2 });
 }
 
 function createWall(x, y, z, w, h, d) {
@@ -385,37 +308,25 @@ mesh.position.set(x, y, z);
 mesh.castShadow = true;
 mesh.receiveShadow = true;
 scene.add(mesh);
-WALLS.push({
-x: x, y: y, z: z,
-w: w, h: h, d: d,
-top: y + h / 2,
-bottom: y - h / 2
-});
+WALLS.push({ x: x, y: y, z: z, w: w, h: h, d: d, top: y + h / 2, bottom: y - h / 2 });
 }
 
 createPlatform(0, 0.25, 0, 6, 0.5, 6);
-
 createPlatform(3, 0.5, 1, 1.5, 0.4, 1.5);
 createPlatform(5.5, 1.0, 2.5, 1.5, 0.4, 1.5);
 createPlatform(8, 1.5, 1, 1.5, 0.4, 1.5);
 createPlatform(10.5, 2.0, -1, 1.5, 0.4, 1.5);
 createPlatform(13, 2.5, -3, 1.5, 0.4, 1.5);
-
 createPlatform(15.5, 2.8, -5, 5, 0.3, 0.6);
-
 createPlatform(18, 2.8, -8, 2, 0.4, 2);
-
 createPlatform(19, 3.3, -10, 1.5, 0.4, 1.5);
 createPlatform(19, 3.8, -12, 1.5, 0.4, 1.5);
 createPlatform(19, 4.3, -14, 1.5, 0.4, 1.5);
-
 createPlatform(19, 4.8, -17, 4, 0.4, 4, finishMat);
-
 createWall(-6, 1.5, -10, 1, 3, 6);
 createWall(6, 1.5, -10, 1, 3, 6);
 createWall(-6, 1.5, 10, 1, 3, 6);
 createWall(6, 1.5, 10, 1, 3, 6);
-
 createPlatform(-8, 1, 5, 2, 0.4, 2, jumpPadMat);
 createPlatform(-12, 2, 5, 2, 0.4, 2, jumpPadMat);
 
@@ -431,7 +342,6 @@ faceCanvas.height = 256;
 const fctx = faceCanvas.getContext('2d');
 fctx.fillStyle = '#ffe000';
 fctx.fillRect(0, 0, 256, 256);
-
 fctx.fillStyle = '#000000';
 fctx.beginPath();
 fctx.ellipse(85, 110, 14, 20, 0, 0, Math.PI * 2);
@@ -439,7 +349,6 @@ fctx.fill();
 fctx.beginPath();
 fctx.ellipse(171, 110, 14, 20, 0, 0, Math.PI * 2);
 fctx.fill();
-
 fctx.strokeStyle = '#000000';
 fctx.lineWidth = 4;
 fctx.lineCap = 'round';
@@ -448,18 +357,10 @@ fctx.arc(128, 160, 35, 0.2 * Math.PI, 0.8 * Math.PI);
 fctx.stroke();
 
 const faceTexture = new THREE.CanvasTexture(faceCanvas);
-
 const faceMaterial = new THREE.MeshStandardMaterial({ map: faceTexture });
 const plainMaterial = new THREE.MeshStandardMaterial({ color: 0xffe000 });
 
-const headMats = [
-plainMaterial,
-plainMaterial,
-plainMaterial,
-plainMaterial,
-faceMaterial,
-plainMaterial
-];
+const headMats = [plainMaterial, plainMaterial, plainMaterial, plainMaterial, faceMaterial, plainMaterial];
 
 const headGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 6, HEAD_ROUND);
 const head = new THREE.Mesh(headGeo, headMats);
@@ -588,48 +489,18 @@ const centerX = rect.left + rect.width/2;
 const centerY = rect.top + rect.height/2;
 const dx = touch.clientX - centerX;
 const dy = touch.clientY - centerY;
-
 const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
 const angle = Math.atan2(dy, dx);
-
 const kx = Math.cos(angle) * dist;
 const ky = Math.sin(angle) * dist;
 document.getElementById('joystick-knob').style.transform = `translate(${kx}px, ${ky}px)`;
-
 joystickVector.x = dx / 45;
 joystickVector.y = dy / 45;
-
 if (joystickVector.x > 1) joystickVector.x = 1;
 if (joystickVector.x < -1) joystickVector.x = -1;
 if (joystickVector.y > 1) joystickVector.y = 1;
 if (joystickVector.y < -1) joystickVector.y = -1;
 }
-
-function setupCameraControls() {
-document.addEventListener('touchstart', (e) => {
-if (e.target.closest('#joystick-zone')) return;
-if (e.target.closest('#jump-btn')) return;
-if (e.target.closest('#exit-btn')) return;
-if (e.target.closest('#menu-btn')) return;
-if (e.target.closest('#menu-panel')) return;
-if (e.target.closest('#players-panel')) return;
-if (e.target.closest('#friend-notification')) return;
-
-if (e.touches.length === 2) {
-cameraTouchId = null;
-pinchStartDist = getTouchDist(e.touches);
-pinchStartCamDist = camDist;
-return;
-}
-
-if (cameraTouchId !== null) return;
-const touch = e.changedTouches[0];
-cameraTouchId = touch.identifier;
-cameraTouchStart = { x: touch.clientX, y: touch.clientY };
-}, { passive: false });
-
-let pinchStartDist = 0;
-let pinchStartCamDist = 8;
 
 function getTouchDist(touches) {
 const dx = touches[0].clientX - touches[1].clientX;
@@ -637,8 +508,35 @@ const dy = touches[0].clientY - touches[1].clientY;
 return Math.sqrt(dx*dx + dy*dy);
 }
 
-document.addEventListener('touchmove', (e) => {
+function setupCameraControls() {
+const cameraArea = document.body;
+
+cameraArea.addEventListener('touchstart', (e) => {
+if (e.target.closest('#joystick-zone')) return;
+if (e.target.closest('#jump-btn')) return;
+if (e.target.closest('#exit-btn')) return;
+if (e.target.closest('#menu-btn')) return;
+if (e.target.closest('#menu-panel')) return;
+if (e.target.closest('#players-panel')) return;
+
 if (e.touches.length === 2) {
+pinchActive = true;
+cameraTouchId = null;
+pinchStartDist = getTouchDist(e.touches);
+pinchStartCamDist = camDist;
+return;
+}
+
+if (e.touches.length === 1 && !pinchActive) {
+if (cameraTouchId !== null) return;
+const touch = e.touches[0];
+cameraTouchId = touch.identifier;
+cameraTouchStart = { x: touch.clientX, y: touch.clientY };
+}
+}, { passive: false });
+
+cameraArea.addEventListener('touchmove', (e) => {
+if (e.touches.length === 2 && pinchActive) {
 e.preventDefault();
 const dist = getTouchDist(e.touches);
 if (pinchStartDist > 0) {
@@ -650,41 +548,39 @@ if (camDist > 20) camDist = 20;
 return;
 }
 
-if (cameraTouchId === null) return;
+if (e.touches.length === 1 && cameraTouchId !== null && !pinchActive) {
 if (e.target.closest('#joystick-zone')) return;
 if (e.target.closest('#jump-btn')) return;
 if (e.target.closest('#exit-btn')) return;
 if (e.target.closest('#menu-btn')) return;
 if (e.target.closest('#menu-panel')) return;
 if (e.target.closest('#players-panel')) return;
-if (e.target.closest('#friend-notification')) return;
 
 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
 if (!touch) return;
 
+e.preventDefault();
 const dx = touch.clientX - cameraTouchStart.x;
 const dy = touch.clientY - cameraTouchStart.y;
-
 camYaw -= dx * 0.01;
 camPitch += dy * 0.01;
-
 if (camPitch > 1.2) camPitch = 1.2;
 if (camPitch < -0.8) camPitch = -0.8;
-
 cameraTouchStart = { x: touch.clientX, y: touch.clientY };
+}
 }, { passive: false });
 
 function endCamera(e) {
 if (e.touches.length < 2) {
-pinchStartDist = 0;
+pinchActive = false;
 }
 if (cameraTouchId === null) return;
 const touch = Array.from(e.changedTouches).find(t => t.identifier === cameraTouchId);
 if (touch) cameraTouchId = null;
 }
 
-document.addEventListener('touchend', endCamera);
-document.addEventListener('touchcancel', endCamera);
+cameraArea.addEventListener('touchend', endCamera);
+cameraArea.addEventListener('touchcancel', endCamera);
 }
 
 function doJump() {
@@ -705,7 +601,6 @@ pz - r < obj.z + obj.d / 2);
 function getGroundHeight(px, pz, playerY) {
 let maxY = 0;
 const headY = playerY + PLAYER_HEIGHT;
-
 for (let plat of PLATFORMS) {
 if (intersectsHorizontal(px, pz, PLAYER_RADIUS * 0.8, plat)) {
 if (plat.top <= headY + 0.1) {
@@ -719,7 +614,6 @@ return maxY;
 function checkHorizontalCollision(px, pz, playerY, newX, newZ) {
 const headY = playerY + PLAYER_HEIGHT;
 const feetY = playerY;
-
 for (let wall of WALLS) {
 if (headY > wall.bottom && feetY < wall.top) {
 if (newX + PLAYER_RADIUS > wall.x - wall.w / 2 &&
@@ -730,7 +624,6 @@ return true;
 }
 }
 }
-
 for (let plat of PLATFORMS) {
 if (headY > plat.bottom && feetY < plat.top - 0.1) {
 if (newX + PLAYER_RADIUS > plat.x - plat.w / 2 &&
@@ -741,7 +634,6 @@ return true;
 }
 }
 }
-
 return false;
 }
 
@@ -749,7 +641,6 @@ function checkClimbing(px, pz, playerY) {
 const headY = playerY + PLAYER_HEIGHT;
 const feetY = playerY;
 const checkRadius = PLAYER_RADIUS + 0.15;
-
 for (let wall of WALLS) {
 if (headY > wall.bottom && feetY < wall.top) {
 if (px + checkRadius > wall.x - wall.w / 2 &&
@@ -760,7 +651,6 @@ return true;
 }
 }
 }
-
 for (let plat of PLATFORMS) {
 if (headY > plat.bottom && feetY < plat.top - 0.1) {
 if (px + checkRadius > plat.x - plat.w / 2 &&
@@ -771,23 +661,19 @@ return true;
 }
 }
 }
-
 return false;
 }
 
 function animate() {
 requestAnimationFrame(animate);
-
 if (!gameReady) return;
 
 const delta = Math.min(clock.getDelta(), 0.05);
-
 let inputX = 0, inputZ = 0;
 
 if (joystickActive) {
 let jx = joystickVector.x;
 let jz = -joystickVector.y;
-
 const mag = Math.sqrt(jx*jx + jz*jz);
 if (mag > DEADZONE) {
 jx = (jx / mag) * Math.min(mag * 2, 1);
@@ -796,7 +682,6 @@ jz = (jz / mag) * Math.min(mag * 2, 1);
 jx = 0;
 jz = 0;
 }
-
 inputX = -jx;
 inputZ = jz;
 }
@@ -818,12 +703,10 @@ currentSpeedX *= (1 - FRICTION * delta);
 currentSpeedZ *= (1 - FRICTION * delta);
 }
 
-touchingWall = checkClimbing(player.position.x, player.position.z, player.position.y);
-
+const touchingWall = checkClimbing(player.position.x, player.position.z, player.position.y);
 if (touchingWall && !canJump && velocityY < 0) {
 isClimbing = true;
 }
-
 if (isClimbing && !canJump) {
 velocityY = 2;
 }
@@ -855,7 +738,6 @@ player.rotation.y += angleDiff * 15 * delta;
 if (canJump && speedMag > 0.5) {
 walkCycle += delta * 12;
 const swing = Math.sin(walkCycle) * 0.7;
-
 armL.rotation.x = swing;
 armR.rotation.x = -swing;
 legL.rotation.x = -swing;
@@ -896,11 +778,9 @@ if (player.position.x < -48) player.position.x = -48;
 if (player.position.z > 48) player.position.z = 48;
 if (player.position.z < -48) player.position.z = -48;
 
-const camHeight = 3;
-
 let idealCamX = player.position.x - Math.sin(camYaw) * camDist * Math.cos(camPitch);
 let idealCamZ = player.position.z - Math.cos(camYaw) * camDist * Math.cos(camPitch);
-let idealCamY = player.position.y + camHeight + Math.sin(camPitch) * camDist;
+let idealCamY = player.position.y + CAM_HEIGHT + Math.sin(camPitch) * camDist;
 
 let camDistActual = camDist;
 const steps = 10;
@@ -909,7 +789,6 @@ const t = i / steps;
 const testX = player.position.x + (idealCamX - player.position.x) * t;
 const testZ = player.position.z + (idealCamZ - player.position.z) * t;
 const testY = player.position.y + 1.2 + (idealCamY - (player.position.y + 1.2)) * t;
-
 let hit = false;
 for (let wall of WALLS) {
 if (testX + 0.2 > wall.x - wall.w/2 &&
@@ -921,7 +800,6 @@ hit = true;
 break;
 }
 }
-
 if (hit) {
 camDistActual = camDist * (i - 1) / steps;
 break;
@@ -930,7 +808,7 @@ break;
 
 const realCamX = player.position.x - Math.sin(camYaw) * camDistActual * Math.cos(camPitch);
 const realCamZ = player.position.z - Math.cos(camYaw) * camDistActual * Math.cos(camPitch);
-const realCamY = player.position.y + camHeight + Math.sin(camPitch) * camDistActual;
+const realCamY = player.position.y + CAM_HEIGHT + Math.sin(camPitch) * camDistActual;
 
 camera.position.lerp(new THREE.Vector3(realCamX, realCamY, realCamZ), 0.2);
 camera.lookAt(player.position.x, player.position.y + 1.2, player.position.z);
@@ -943,7 +821,6 @@ const savedX = localStorage.getItem('maxxi_pos_x');
 const savedZ = localStorage.getItem('maxxi_pos_z');
 const savedYaw = localStorage.getItem('maxxi_cam_yaw');
 const savedPitch = localStorage.getItem('maxxi_cam_pitch');
-
 if (savedX && savedZ && player) {
 player.position.x = parseFloat(savedX);
 player.position.z = parseFloat(savedZ);
