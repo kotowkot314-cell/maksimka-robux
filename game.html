@@ -98,11 +98,11 @@
         const LEG_H = 0.8;
         const LEG_D = TORSO_D;
         
-        // ГОЛОВА — форма как у Roblox
-        const HEAD_W = 0.55;
-        const HEAD_H = 0.55;
-        const HEAD_D = 0.55;
-        const HEAD_ROUND = 0.18; // Сильное скругление, чтобы голова была округлой
+        // ГОЛОВА — чуть вытянута вверх, чуть уже
+        const HEAD_W = 0.45;   // Уже
+        const HEAD_H = 0.55;   // Выше
+        const HEAD_D = 0.45;   // Уже
+        const HEAD_ROUND = 0.15;
 
         init3D();
         animate();
@@ -162,47 +162,58 @@
             const blueMat = new THREE.MeshStandardMaterial({ color: 0x0f5cff });
             const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
-            // --- ГОЛОВА С ЛИЦОМ (текстура) ---
-            // Создаём текстуру для лица
+            // --- ГОЛОВА С ЛИЦОМ СПЕРЕДИ ---
+            // Создаём текстуру для лица (улыбка как в Roblox, не детская)
             const faceCanvas = document.createElement('canvas');
             faceCanvas.width = 256;
             faceCanvas.height = 256;
             const fctx = faceCanvas.getContext('2d');
 
-            // Фон — жёлтый (цвет головы)
+            // Фон — жёлтый
             fctx.fillStyle = '#ffe000';
             fctx.fillRect(0, 0, 256, 256);
 
-            // Глаза — чёрные овалы
+            // Глаза — чёрные овалы (как в Roblox)
             fctx.fillStyle = '#000000';
             // Левый глаз
             fctx.beginPath();
-            fctx.ellipse(80, 100, 18, 24, 0, 0, Math.PI * 2);
+            fctx.ellipse(85, 100, 15, 22, 0, 0, Math.PI * 2);
             fctx.fill();
             // Правый глаз
             fctx.beginPath();
-            fctx.ellipse(176, 100, 18, 24, 0, 0, Math.PI * 2);
+            fctx.ellipse(171, 100, 15, 22, 0, 0, Math.PI * 2);
             fctx.fill();
 
-            // Улыбка — изогнутая линия
+            // Улыбка — классическая, тонкая, как в Roblox (без «детского» изгиба)
             fctx.strokeStyle = '#000000';
-            fctx.lineWidth = 6;
+            fctx.lineWidth = 4;
             fctx.lineCap = 'round';
             fctx.beginPath();
-            fctx.arc(128, 150, 45, 0.15 * Math.PI, 0.85 * Math.PI);
+            // Плоская улыбка — дуга, но не сильно изогнутая
+            fctx.arc(128, 155, 38, 0.2 * Math.PI, 0.8 * Math.PI);
             fctx.stroke();
 
             const faceTexture = new THREE.CanvasTexture(faceCanvas);
 
-            // Материал головы: жёлтый с текстурой лица
-            // Текстура накладывается на все стороны, но лицо будет видно спереди
-            const headMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffe000,
-                map: faceTexture
-            });
+            // Материалы для головы:
+            // - Передняя грань: текстура с лицом
+            // - Остальные: однотонный жёлтый
+            const faceMaterial = new THREE.MeshStandardMaterial({ map: faceTexture });
+            const plainMaterial = new THREE.MeshStandardMaterial({ color: 0xffe000 });
+
+            // Порядок граней в BoxGeometry: +X, -X, +Y, -Y, +Z, -Z
+            // Лицо должно быть на грани +Z (передняя)
+            const headMats = [
+                plainMaterial,  // +X (правая сторона)
+                plainMaterial,  // -X (левая сторона)
+                plainMaterial,  // +Y (верх)
+                plainMaterial,  // -Y (низ)
+                faceMaterial,   // +Z (перед — лицо)
+                plainMaterial   // -Z (зад)
+            ];
 
             const headGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 6, HEAD_ROUND);
-            const head = new THREE.Mesh(headGeo, headMat);
+            const head = new THREE.Mesh(headGeo, headMats);
             head.position.y = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
             head.castShadow = true;
             player.add(head);
