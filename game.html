@@ -52,7 +52,6 @@
 
     <div id="game-canvas"></div>
 
-    <!-- Three.js и RoundedBoxGeometry -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
     <script>
@@ -88,15 +87,26 @@
         const WALLS = [];
 
         // --- РАЗМЕРЫ ПЕРСОНАЖА ---
-        const TORSO_W = 0.9;
-        const TORSO_H = 0.9;
+        // Тело: 0.8 (ш) x 0.7 (в) x 0.4 (г) — чуть ниже
+        const TORSO_W = 0.8;
+        const TORSO_H = 0.7;
         const TORSO_D = 0.4;
-        const LIMB_W = 0.4;      // Руки/ноги чуть больше
-        const LIMB_H = 0.9;
-        const HEAD_W = 0.5;      // Ширина головы (прямоугольник)
-        const HEAD_H = 0.55;     // Высота головы
-        const HEAD_D = 0.5;      // Глубина головы
-        const HEAD_ROUND = 0.12; // Радиус скругления углов
+        
+        // Руки: длина = половина тела (0.35), ширина = 0.35
+        const ARM_W = 0.35;
+        const ARM_H = TORSO_H / 2;  // Половина тела
+        
+        // Ноги: по объёму как тело (ширина = TORSO_W / 2 почти без зазора)
+        // Две ноги вместе = ширина тела
+        const LEG_W = TORSO_W / 2 - 0.01; // Чуть-чуть меньше половины, чтобы почти без зазора
+        const LEG_H = 0.8; // Высота ног (идут вниз)
+        const LEG_D = TORSO_D; // Глубина как у тела
+        
+        // Голова: прямоугольник со скруглёнными углами
+        const HEAD_W = 0.5;
+        const HEAD_H = 0.5;
+        const HEAD_D = 0.5;
+        const HEAD_ROUND = 0.12;
 
         init3D();
         animate();
@@ -156,10 +166,7 @@
             const blueMat = new THREE.MeshStandardMaterial({ color: 0x0f5cff });
             const greenMat = new THREE.MeshStandardMaterial({ color: 0x00aa00 });
 
-            const LEG_H = LIMB_H;
-
-            // ГОЛОВА — прямоугольник со скруглёнными углами (RoundedBox)
-            // RoundedBoxGeometry(width, height, depth, segments, radius)
+            // ГОЛОВА — прямоугольник со скруглёнными углами
             const headGeo = new THREE.RoundedBoxGeometry(HEAD_W, HEAD_H, HEAD_D, 4, HEAD_ROUND);
             const head = new THREE.Mesh(headGeo, yellowMat);
             head.position.y = LEG_H + TORSO_H + HEAD_H / 2 + 0.02;
@@ -172,45 +179,46 @@
             torso.castShadow = true;
             player.add(torso);
 
-            // ЛЕВАЯ РУКА (чуть больше)
-            armL = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), yellowMat);
-            armL.geometry.translate(0, -LIMB_H/2, 0);
+            // ЛЕВАЯ РУКА — длина = половина тела
+            armL = new THREE.Mesh(new THREE.BoxGeometry(ARM_W, ARM_H, ARM_W), yellowMat);
+            armL.geometry.translate(0, -ARM_H/2, 0);
             armL.position.set(
-                -TORSO_W/2 - LIMB_W/2,
-                LEG_H + TORSO_H,
+                -TORSO_W/2 - ARM_W/2,
+                LEG_H + TORSO_H,   // Плечо на уровне верха торса
                 0
             );
             armL.castShadow = true;
             player.add(armL);
 
             // ПРАВАЯ РУКА
-            armR = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), yellowMat);
-            armR.geometry.translate(0, -LIMB_H/2, 0);
+            armR = new THREE.Mesh(new THREE.BoxGeometry(ARM_W, ARM_H, ARM_W), yellowMat);
+            armR.geometry.translate(0, -ARM_H/2, 0);
             armR.position.set(
-                TORSO_W/2 + LIMB_W/2,
+                TORSO_W/2 + ARM_W/2,
                 LEG_H + TORSO_H,
                 0
             );
             armR.castShadow = true;
             player.add(armR);
 
-            // НОГИ — почти вплотную (маленький зазор)
-            const LEG_GAP = 0.02; // Очень маленький зазор между ногами
+            // НОГИ — почти без раздела, по объёму как тело
+            // Ставим их вплотную
+            const legOffset = LEG_W / 2; // Половина ширины ноги
 
-            legL = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), greenMat);
-            legL.geometry.translate(0, -LIMB_H/2, 0);
+            legL = new THREE.Mesh(new THREE.BoxGeometry(LEG_W, LEG_H, LEG_D), greenMat);
+            legL.geometry.translate(0, -LEG_H/2, 0);
             legL.position.set(
-                -LIMB_W/2 - LEG_GAP/2,
+                -legOffset,
                 LEG_H,
                 0
             );
             legL.castShadow = true;
             player.add(legL);
 
-            legR = new THREE.Mesh(new THREE.BoxGeometry(LIMB_W, LIMB_H, LIMB_W), greenMat);
-            legR.geometry.translate(0, -LIMB_H/2, 0);
+            legR = new THREE.Mesh(new THREE.BoxGeometry(LEG_W, LEG_H, LEG_D), greenMat);
+            legR.geometry.translate(0, -LEG_H/2, 0);
             legR.position.set(
-                LIMB_W/2 + LEG_GAP/2,
+                legOffset,
                 LEG_H,
                 0
             );
