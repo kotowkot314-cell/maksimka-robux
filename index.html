@@ -36,7 +36,6 @@ z-index: 10;
 .nav-links span { cursor: pointer; font-size: 0.9rem; color: #fff; }
 
 .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
-.user-info img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #555; object-fit: cover; background: #222; }
 .login-btn { color: #fff; cursor: pointer; border: 1px solid #555; padding: 5px 15px; border-radius: 5px; background: transparent; }
 .login-btn:hover { background: #333; }
 
@@ -53,7 +52,6 @@ flex-shrink: 0;
 .col-2 { width: 44%; min-width: 200px; }
 .col-3 { width: 28%; min-width: 130px; }
 
-.avatar-large { width: 100%; aspect-ratio: 1/1; border-radius: 50%; border: 2px solid #444; object-fit: cover; background: #222; cursor: pointer; }
 .profile-name { text-align: center; font-weight: bold; margin-top: 5px; font-size: 0.9rem; }
 .section-title { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 10px; }
 
@@ -87,20 +85,6 @@ background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items
 .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; background: #fff; color: #000; font-weight: bold; cursor: pointer; margin-top: 5px; }
 .btn-link { display: block; text-align: center; margin-top: 15px; color: #888; font-size: 0.9rem; cursor: pointer; text-decoration: underline; }
 .error-text { color: #ff5555; font-size: 0.85rem; text-align: center; margin-bottom: 10px; display: none; }
-
-#avatar-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 300; display: none; flex-direction: column; }
-#avatar-editor-header { padding: 15px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-#avatar-editor-header h2 { font-size: 1.2rem; font-weight: 300; }
-#avatar-editor-header button { background: #fff; color: #000; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-#avatar-editor-body { flex: 1; display: flex; overflow: hidden; }
-#avatar-preview { width: 40%; display: flex; justify-content: center; align-items: center; padding: 20px; background: #0a0a0a; }
-#avatar-canvas { width: 100%; max-width: 250px; }
-#body-parts-list { flex: 1; overflow-y: auto; padding: 15px; }
-.body-part { background: #111; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-.body-part h3 { font-size: 0.9rem; margin-bottom: 10px; }
-.color-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.color-swatch { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #333; cursor: pointer; }
-.color-swatch.selected { border-color: #fff; border-width: 3px; }
 </style>
 </head>
 <body>
@@ -126,7 +110,6 @@ background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items
 <div class="main-container">
 
 <div class="column col-1">
-<img id="main-avatar" src="" class="avatar-large" alt="Аватар" onclick="openAvatarEditor()">
 <div id="main-nick" class="profile-name">Гость</div>
 <div class="section-title">Друзья</div>
 <div style="color:#555; font-size:0.75rem; text-align:center;">Нет друзей</div>
@@ -187,41 +170,7 @@ background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items
 </div>
 </div>
 
-<div id="avatar-editor">
-<div id="avatar-editor-header">
-<h2>Редактор аватара</h2>
-<button onclick="closeAvatarEditor()">Готово</button>
-</div>
-<div id="avatar-editor-body">
-<div id="avatar-preview">
-<svg id="avatar-canvas" viewBox="0 0 200 250">
-<rect id="part-legL" x="65" y="180" width="30" height="60" fill="#00aa00" stroke="#000" stroke-width="2"/>
-<rect id="part-legR" x="105" y="180" width="30" height="60" fill="#00aa00" stroke="#000" stroke-width="2"/>
-<rect id="part-torso" x="60" y="100" width="80" height="80" fill="#0f5cff" stroke="#000" stroke-width="2"/>
-<rect id="part-armL" x="20" y="100" width="30" height="80" fill="#ffe000" stroke="#000" stroke-width="2"/>
-<rect id="part-armR" x="150" y="100" width="30" height="80" fill="#ffe000" stroke="#000" stroke-width="2"/>
-<rect id="part-head" x="70" y="40" width="60" height="60" rx="15" fill="#ffe000" stroke="#000" stroke-width="2"/>
-<circle cx="88" cy="65" r="5" fill="#000"/>
-<circle cx="112" cy="65" r="5" fill="#000"/>
-<path d="M 88 82 Q 100 92 112 82" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
-</svg>
-</div>
-<div id="body-parts-list"></div>
-</div>
-</div>
-
 <script>
-var AVATAR_COLORS = ['#000000','#ffffff','#ffe000','#ff5555','#0f5cff','#00aa00','#ff00ff','#00ffff','#ff8800','#aa00ff'];
-var BODY_PARTS = [
-{ id: 'head', name: 'Голова' },
-{ id: 'torso', name: 'Туловище' },
-{ id: 'armL', name: 'Левая рука' },
-{ id: 'armR', name: 'Правая рука' },
-{ id: 'legL', name: 'Левая нога' },
-{ id: 'legR', name: 'Правая нога' }
-];
-var avatarColors = { head: '#ffe000', torso: '#0f5cff', armL: '#ffe000', armR: '#ffe000', legL: '#00aa00', legR: '#00aa00' };
-
 function getUsers() {
 try {
 var raw = localStorage.getItem('maxxi_users');
@@ -240,7 +189,6 @@ window.addEventListener('load', function() {
 setTimeout(function() {
 document.getElementById('splash').classList.add('hidden');
 document.getElementById('main-content').style.display = 'flex';
-loadAvatarColors();
 var savedNick = localStorage.getItem('maxxi_nick');
 if (savedNick) {
 var users = getUsers();
@@ -251,16 +199,6 @@ applyLogin(savedNick);
 }, 2000);
 });
 
-function loadAvatarColors() {
-try {
-var raw = localStorage.getItem('maxxi_avatar_colors');
-if (raw) {
-var obj = JSON.parse(raw);
-if (obj) avatarColors = obj;
-}
-} catch (e) {}
-}
-
 function applyLogin(nick) {
 document.getElementById('main-nick').innerText = nick;
 document.getElementById('chat-not-logged').style.display = 'none';
@@ -268,8 +206,7 @@ document.getElementById('chat-content').style.display = 'flex';
 document.getElementById('games-not-logged').style.display = 'none';
 document.getElementById('games-content').style.display = 'block';
 localStorage.setItem('maxxi_nick', nick);
-loadAvatarColors();
-updateMainAvatar();
+document.getElementById('header-user').innerHTML = '<span>' + nick + '</span>';
 }
 
 function openLogin() {
@@ -345,91 +282,6 @@ return;
 errorEl.style.display = 'none';
 document.getElementById('login-modal').style.display = 'none';
 applyLogin(nick);
-}
-
-function buildAvatarSVG(size) {
-var head = avatarColors.head;
-var torso = avatarColors.torso;
-var armL = avatarColors.armL;
-var armR = avatarColors.armR;
-var legL = avatarColors.legL;
-var legR = avatarColors.legR;
-return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 200 250">' +
-'<rect x="65" y="180" width="30" height="60" fill="' + legL + '" stroke="#000" stroke-width="2"/>' +
-'<rect x="105" y="180" width="30" height="60" fill="' + legR + '" stroke="#000" stroke-width="2"/>' +
-'<rect x="60" y="100" width="80" height="80" fill="' + torso + '" stroke="#000" stroke-width="2"/>' +
-'<rect x="20" y="100" width="30" height="80" fill="' + armL + '" stroke="#000" stroke-width="2"/>' +
-'<rect x="150" y="100" width="30" height="80" fill="' + armR + '" stroke="#000" stroke-width="2"/>' +
-'<rect x="70" y="40" width="60" height="60" rx="15" fill="' + head + '" stroke="#000" stroke-width="2"/>' +
-'<circle cx="88" cy="65" r="5" fill="#000"/>' +
-'<circle cx="112" cy="65" r="5" fill="#000"/>' +
-'<path d="M 88 82 Q 100 92 112 82" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>' +
-'</svg>';
-}
-
-function updateMainAvatar() {
-var nick = localStorage.getItem('maxxi_nick');
-if (!nick) return;
-var svg = buildAvatarSVG(150);
-document.getElementById('main-avatar').src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-var smallSvg = buildAvatarSVG(30);
-document.getElementById('header-user').innerHTML = '<img src="data:image/svg+xml;utf8,' + encodeURIComponent(smallSvg) + '"><span>' + nick + '</span>';
-}
-
-function openAvatarEditor() {
-if (!localStorage.getItem('maxxi_nick')) {
-alert('Сначала войдите в аккаунт');
-return;
-}
-document.getElementById('avatar-editor').style.display = 'flex';
-buildBodyPartsList();
-updateAvatarPreview();
-}
-
-function closeAvatarEditor() {
-document.getElementById('avatar-editor').style.display = 'none';
-}
-
-function buildBodyPartsList() {
-var list = document.getElementById('body-parts-list');
-list.innerHTML = '';
-for (var i = 0; i < BODY_PARTS.length; i++) {
-var part = BODY_PARTS[i];
-var partDiv = document.createElement('div');
-partDiv.className = 'body-part';
-var h3 = document.createElement('h3');
-h3.innerText = part.name;
-partDiv.appendChild(h3);
-var colorRow = document.createElement('div');
-colorRow.className = 'color-row';
-for (var j = 0; j < AVATAR_COLORS.length; j++) {
-(function(color, partId) {
-var swatch = document.createElement('div');
-swatch.className = 'color-swatch';
-swatch.style.background = color;
-if (avatarColors[partId] === color) swatch.classList.add('selected');
-swatch.onclick = function() {
-avatarColors[partId] = color;
-localStorage.setItem('maxxi_avatar_colors', JSON.stringify(avatarColors));
-updateAvatarPreview();
-buildBodyPartsList();
-updateMainAvatar();
-};
-colorRow.appendChild(swatch);
-})(AVATAR_COLORS[j], part.id);
-}
-partDiv.appendChild(colorRow);
-list.appendChild(partDiv);
-}
-}
-
-function updateAvatarPreview() {
-document.getElementById('part-head').setAttribute('fill', avatarColors.head);
-document.getElementById('part-torso').setAttribute('fill', avatarColors.torso);
-document.getElementById('part-armL').setAttribute('fill', avatarColors.armL);
-document.getElementById('part-armR').setAttribute('fill', avatarColors.armR);
-document.getElementById('part-legL').setAttribute('fill', avatarColors.legL);
-document.getElementById('part-legR').setAttribute('fill', avatarColors.legR);
 }
 
 function sendMessage() {
