@@ -1,15 +1,15 @@
 --[[
-Linux_KotowAC v2.2 - Studio Plugin
+Linux_KotowAC v2.0 - Studio Plugin
 Author: Maxxi1mka (kotowkot314-cell)
-Purpose: Linux terminal emulator for Roblox Studio
-Server: maxxi1mka.pythonanywhere.com (owned by author)
+Purpose: Linux terminal emulator for Roblox Studio (developer only)
 ]]
 
 local HttpService = game:GetService("HttpService")
+
 local toolbar = plugin:CreateToolbar("KotowAC")
 local button = toolbar:CreateButton("Terminal", "Open Linux Terminal", "rbxassetid://1234567890")
 
-local SERVER_URL = "https://maxxi1mka.pythonanywhere.com/terminal"
+local SERVER_URL = "https://Maxxi1mka.pythonanywhere.com/terminal"
 
 local widgetInfo = DockWidgetPluginGuiInfo.new(
     Enum.InitialDockState.Float,
