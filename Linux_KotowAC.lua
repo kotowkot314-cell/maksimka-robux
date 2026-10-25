@@ -145,7 +145,6 @@ function Terminal.Start()
             end)
         end
     end)
-#eblan rabotai
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
