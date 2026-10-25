@@ -18,7 +18,7 @@ local function send_command(cmd)
         local data = HttpService:JSONDecode(response)
         return data.output
     else
-        return " Ошибка подключения к серверу: " .. tostring(response)
+        return " Error connecting to server please again: " .. tostring(response)
     end
 end
 
@@ -54,7 +54,7 @@ function Terminal.Start()
     Title.Size = UDim2.new(1, -40, 1, 0)
     Title.Position = UDim2.new(0, 10, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "KotowAC Terminal [Server: Online]"
+    Title.Text = "KotowAC Terminal [Online]"
     Title.TextColor3 = Color3.fromRGB(200, 200, 200)
     Title.Font = Enum.Font.Code
     Title.TextSize = 14
@@ -129,8 +129,8 @@ function Terminal.Start()
         label.Parent = ScrollingFrame
     end
 
-    addLine("KotowAC Terminal v2.0 (Connected to Python Server)", Color3.fromRGB(0, 255, 0))
-    addLine("Try: python print('Hello from Python')", Color3.fromRGB(150, 150, 150))
+    addLine("KotowAC Linux v2.0 (Connected)", Color3.fromRGB(0, 255, 0))
+    addLine("Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
 
     InputBox.FocusLost:Connect(function(enterPressed)
         if enterPressed then
@@ -139,11 +139,18 @@ function Terminal.Start()
             
             addLine("$ " .. cmd, Color3.fromRGB(0, 255, 255))
             
-            task.spawn(function()
-                local response = send_command(cmd)
-                addLine(response, Color3.fromRGB(255, 255, 255))
-                ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
-            end)
+            if cmd == "clear" then
+                for _, child in ipairs(ScrollingFrame:GetChildren()) do
+                    if child:IsA("TextLabel") then child:Destroy() end
+                end
+                addLine("KotowAC Linux v2.0", Color3.fromRGB(0, 255, 0))
+            else
+                task.spawn(function()
+                    local result = send_command(cmd)
+                    addLine(result, Color3.fromRGB(255, 255, 255))
+                    ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
+                end)
+            end
         end
     end)
 
