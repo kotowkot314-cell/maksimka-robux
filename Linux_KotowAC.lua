@@ -5,124 +5,20 @@ local UserInputService = game:GetService("UserInputService")
 local SERVER_URL = "https://maxxi1mka.pythonanywhere.com/terminal"
 
 local Terminal = {}
-
-local FS = {
-    ["/"] = { type = "dir", content = {} },
-    ["/home"] = { type = "dir", content = {} },
-    ["/home/user"] = { type = "dir", content = {} }
-}
-
-local current_path = "/home/user"
 local history = {}
 local history_index = 0
 
-local function resolve_path(path)
-    if path:sub(1, 1) == "/" then return path end
-    if path == ".." then
-        local parts = string.split(current_path, "/")
-        table.remove(parts)
-        return table.concat(parts, "/")
-    end
-    return current_path .. "/" .. path
-end
-
 local function send_command(cmd)
-    return "Offline mode: Server not connected yet. Command: " .. cmd
-end
-
-local commands = {}
-
-commands["ls"] = function(args)
-    local target = resolve_path(args[1] or "")
-    if FS[target] and FS[target].type == "dir" then
-        local out = ""
-        for name, node in pairs(FS[target].content) do out = out .. name .. "  " end
-        return out
-    end
-    return "ls: cannot access '" .. (args[1] or "") .. "': No such file or directory"
-end
-
-commands["pwd"] = function(args) return current_path end
-
-commands["cd"] = function(args)
-    local target = resolve_path(args[1] or "/")
-    if FS[target] and FS[target].type == "dir" then current_path = target return "" end
-    return "cd: no such file or directory: " .. (args[1] or "")
-end
-
-commands["echo"] = function(args) return table.concat(args, " ") end
-
-commands["mkdir"] = function(args)
-    local target = resolve_path(args[1] or "")
-    if not FS[target] then
-        FS[current_path].content[args[1]] = { type = "dir", content = {} }
-        FS[target] = FS[current_path].content[args[1]]
-        return ""
-    end
-    return "mkdir: cannot create directory '" .. args[1] .. "': File exists"
-end
-
-commands["touch"] = function(args)
-    local target = resolve_path(args[1] or "")
-    if not FS[target] then
-        FS[current_path].content[args[1]] = { type = "file", content = "" }
-        FS[target] = FS[current_path].content[args[1]]
-        return ""
-    end
-    return ""
-end
-
-commands["cat"] = function(args)
-    if #args == 0 then return "cat: missing operand" end
-    local target = resolve_path(args[1])
-    if FS[target] and FS[target].type == "file" then return FS[target].content end
-    return "cat: " .. args[1] .. ": No such file or directory"
-end
-
-commands["rm"] = function(args)
-    local target = resolve_path(args[1] or "")
-    if FS[target] then
-        FS[target] = nil
-        local parts = string.split(target, "/")
-        local name = parts[#parts]
-        table.remove(parts)
-        local parent = table.concat(parts, "/")
-        if FS[parent] then FS[parent].content[name] = nil end
-        return ""
-    end
-    return "rm: cannot remove '" .. (args[1] or "") .. "': No such file or directory"
-end
-
-commands["whoami"] = function(args) return "user" end
-commands["uname"] = function(args) return "KotowAC Linux 1.0 (Luau x86_64)" end
-
-commands["history"] = function(args)
-    local out = ""
-    for i, cmd in ipairs(history) do out = out .. i .. "  " .. cmd .. "\n" end
-    return out
-end
-
-commands["help"] = function(args)
-    return "Available: ls, pwd, cd, echo, mkdir, touch, cat, rm, whoami, uname, history, clear, help"
-end
-
-commands["clear"] = function(args) return "CLEAR_SCREEN" end
-
-function Terminal.Execute(cmd_string)
-    if cmd_string == "" then return "" end
-    table.insert(history, cmd_string)
-    history_index = #history + 1
-
-    local args = string.split(cmd_string, " ")
-    local cmd = args[1]
-    table.remove(args, 1)
-
-    if commands[cmd] then
-        local success, result = pcall(commands[cmd], args)
-        if success then return result
-        else return "Error: " .. tostring(result) end
+    local payload = HttpService:JSONEncode({command = cmd})
+    local success, response = pcall(function()
+        return HttpService:PostAsync(SERVER_URL, payload, Enum.HttpContentType.ApplicationJson)
+    end)
+    
+    if success then
+        local data = HttpService:JSONDecode(response)
+        return data.output
     else
-        return send_command(cmd_string)
+        return " Ошибка подключения к серверу: " .. tostring(response)
     end
 end
 
@@ -158,7 +54,7 @@ function Terminal.Start()
     Title.Size = UDim2.new(1, -40, 1, 0)
     Title.Position = UDim2.new(0, 10, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "KotowAC Terminal"
+    Title.Text = "KotowAC Terminal [Server: Online]"
     Title.TextColor3 = Color3.fromRGB(200, 200, 200)
     Title.Font = Enum.Font.Code
     Title.TextSize = 14
@@ -233,28 +129,21 @@ function Terminal.Start()
         label.Parent = ScrollingFrame
     end
 
-    addLine("KotowAC Linux v1.0 (Offline)", Color3.fromRGB(0, 255, 0))
-    addLine("Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
+    addLine("KotowAC Terminal v2.0 (Connected to Python Server)", Color3.fromRGB(0, 255, 0))
+    addLine("Try: python print('Hello from Python')", Color3.fromRGB(150, 150, 150))
 
     InputBox.FocusLost:Connect(function(enterPressed)
         if enterPressed then
             local cmd = InputBox.Text
             InputBox.Text = ""
             
-            addLine(current_path .. " $ " .. cmd, Color3.fromRGB(0, 255, 255))
+            addLine("$ " .. cmd, Color3.fromRGB(0, 255, 255))
             
-            if cmd == "clear" then
-                for _, child in ipairs(ScrollingFrame:GetChildren()) do
-                    if child:IsA("TextLabel") then child:Destroy() end
-                end
-                addLine("KotowAC Linux v1.0", Color3.fromRGB(0, 255, 0))
-            else
-                local result = Terminal.Execute(cmd)
-                if result and result ~= "" then
-                    addLine(result, Color3.fromRGB(255, 255, 255))
-                end
-            end
-            ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
+            task.spawn(function()
+                local response = send_command(cmd)
+                addLine(response, Color3.fromRGB(255, 255, 255))
+                ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
+            end)
         end
     end)
 
