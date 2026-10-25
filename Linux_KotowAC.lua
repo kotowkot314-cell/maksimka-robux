@@ -1,81 +1,37 @@
 --[[
-Linux_KotowAC v2.0 (Client UI)
+Linux_KotowAC v2.2 - Studio Plugin
 Author: Maxxi1mka (kotowkot314-cell)
-Purpose: Linux-like terminal emulator for Roblox
+Purpose: Linux terminal emulator for Roblox Studio
 Server: maxxi1mka.pythonanywhere.com (owned by author)
 ]]
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local toolbar = plugin:CreateToolbar("KotowAC")
+local button = toolbar:CreateButton("Terminal", "Open Linux Terminal", "rbxassetid://1234567890")
 
-local Remote = ReplicatedStorage:WaitForChild("KotowAC_Remote")
-local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+local SERVER_URL = "https://maxxi1mka.pythonanywhere.com/terminal"
 
-local history = {}
-local history_index = 0
+local widgetInfo = DockWidgetPluginGuiInfo.new(
+    Enum.InitialDockState.Float,
+    false,
+    false,
+    600,
+    400,
+    300,
+    200
+)
 
-local function addLine(parent, text, color)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -10, 0, 20)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = color or Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.Code
-    label.TextSize = 15
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextWrapped = true
-    label.Parent = parent
-end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Linux_KotowAC"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
+local widget = plugin:CreateDockWidgetPluginGui("KotowAC_Terminal", widgetInfo)
+widget.Title = "Linux_KotowAC v2.0"
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 600, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+MainFrame.Size = UDim2.new(1, 0, 1, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 6)
-
-local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 30)
-TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-TopBar.Parent = MainFrame
-Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 6)
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -40, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "Linux_KotowAC v2.0"
-Title.TextColor3 = Color3.fromRGB(200, 200, 200)
-Title.Font = Enum.Font.Code
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TopBar
-
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -30, 0, 0)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 100, 100)
-CloseButton.Font = Enum.Font.Code
-CloseButton.TextSize = 16
-CloseButton.Parent = TopBar
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
+MainFrame.Parent = widget
 
 local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Size = UDim2.new(1, 0, 1, -70)
-ScrollingFrame.Position = UDim2.new(0, 0, 0, 30)
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -40)
 ScrollingFrame.BackgroundTransparency = 1
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -113,41 +69,54 @@ InputBox.TextXAlignment = Enum.TextXAlignment.Left
 InputBox.ClearTextOnFocus = false
 InputBox.Parent = InputFrame
 
-addLine(ScrollingFrame, "Linux_KotowAC v2.0", Color3.fromRGB(0, 255, 0))
-addLine(ScrollingFrame, "Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
+local function addLine(text, color)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -10, 0, 20)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.Code
+    label.TextSize = 15
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextWrapped = true
+    label.Parent = ScrollingFrame
+end
+
+addLine("Linux_KotowAC v2.0", Color3.fromRGB(0, 255, 0))
+addLine("Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
+
+local function sendCommand(cmd)
+    local payload = HttpService:JSONEncode({command = cmd})
+    local success, response = pcall(function()
+        return HttpService:PostAsync(SERVER_URL, payload, Enum.HttpContentType.ApplicationJson)
+    end)
+    
+    if success then
+        local ok, data = pcall(function()
+            return HttpService:JSONDecode(response)
+        end)
+        if ok and data and data.output then
+            addLine(data.output, Color3.fromRGB(255, 255, 255))
+        else
+            addLine(response, Color3.fromRGB(255, 255, 255))
+        end
+    else
+        addLine("Connection error: " .. tostring(response), Color3.fromRGB(255, 100, 100))
+    end
+end
 
 InputBox.FocusLost:Connect(function(enterPressed)
     if enterPressed then
         local cmd = InputBox.Text
         if cmd == "" then return end
         InputBox.Text = ""
-        table.insert(history, cmd)
-        history_index = #history + 1
-        addLine(ScrollingFrame, "$ " .. cmd, Color3.fromRGB(0, 255, 255))
-        Remote:FireServer(cmd)
+        addLine("$ " .. cmd, Color3.fromRGB(0, 255, 255))
+        sendCommand(cmd)
+        task.wait()
+        ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
     end
 end)
 
-Remote.OnClientEvent:Connect(function(result)
-    addLine(ScrollingFrame, result, Color3.fromRGB(255, 255, 255))
-    task.wait()
-    ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
-end)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.Up then
-        if history_index > 1 then
-            history_index = history_index - 1
-            InputBox.Text = history[history_index]
-        end
-    elseif input.KeyCode == Enum.KeyCode.Down then
-        if history_index < #history then
-            history_index = history_index + 1
-            InputBox.Text = history[history_index]
-        else
-            history_index = #history + 1
-            InputBox.Text = ""
-        end
-    end
+button.Click:Connect(function()
+    widget.Enabled = not widget.Enabled
 end)
