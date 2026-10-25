@@ -3,6 +3,50 @@ Linux_KotowAC v2.0 - Studio Plugin
 Author: Maxxi1mka (kotowkot314-cell)
 Purpose: Linux terminal emulator for Roblox Studio (developer only)
 ]]
+--[[
+====================================================
+KotowAC Linux Terminal / Терминал KotowAC Linux
+====================================================
+
+ РУССКИЙ:
+Плагин для Roblox Studio (виртуальный Linux).
+Работает ТОЛЬКО в Studio на ПК (не в игре, не на телефоне).
+
+УСТАНОВКА:
+1. Сохрани файл как KotowAC_Terminal.lua
+2. Положи в папку Plugins Roblox Studio:
+   Windows: %LOCALAPPDATA%\Roblox\Plugins
+   Mac: ~/Documents/Roblox/Plugins
+3. Перезапусти Studio.
+
+ИСПОЛЬЗОВАНИЕ:
+1. Вкладка Plugins -> KotowAC -> Terminal
+2. Введи команду (например, help) и нажми Enter.
+
+ВАЖНО: Включи "Enable Studio Access to API Services"
+(Game Settings -> Security).
+
+----------------------------------------------------
+
+ ENGLISH:
+A plugin for Roblox Studio (virtual Linux).
+Works ONLY in Studio on PC (not in-game, not mobile).
+
+INSTALLATION:
+1. Save this file as KotowAC_Terminal.lua
+2. Place it in the Roblox Studio Plugins folder:
+   Windows: %LOCALAPPDATA%\Roblox\Plugins
+   Mac: ~/Documents/Roblox/Plugins
+3. Restart Studio.
+
+USAGE:
+1. Plugins tab -> KotowAC -> Terminal
+2. Type a command (e.g., help) and press Enter.
+
+IMPORTANT: Enable "Enable Studio Access to API Services"
+(Game Settings -> Security).
+====================================================
+]]
 
 local HttpService = game:GetService("HttpService")
 
