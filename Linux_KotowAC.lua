@@ -1,3 +1,10 @@
+--[[
+Linux_KotowAC v2.0
+Author: Maxxi1mka (kotowkot314-cell)
+Purpose: Linux-like terminal emulator for Roblox
+Server: maxxi1mka.pythonanywhere.com (owned by author)
+]]
+
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
