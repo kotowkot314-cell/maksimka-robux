@@ -260,85 +260,6 @@ task.spawn(function()
     end
 end)
 
-local isConnected = false
-
-local function getErrorMessage(code)
-    if code == 400 then return "400 Bad Request - Invalid syntax" end
-    if code == 401 then return "401 Unauthorized - Authentication required" end
-    if code == 403 then return "403 Forbidden - Access denied (firewall/blocked)" end
-    if code == 404 then return "404 Not Found - Endpoint does not exist" end
-    if code == 408 then return "408 Request Timeout - Server timed out" end
-    if code == 429 then return "429 Too Many Requests - Rate limit exceeded" end
-    if code == 500 then return "500 Internal Server Error - Server crashed" end
-    if code == 502 then return "502 Bad Gateway - Proxy error" end
-    if code == 503 then return "503 Service Unavailable - Server overloaded/maintenance" end
-    if code == 504 then return "504 Gateway Timeout - Proxy timeout" end
-    return "Unknown Error - Code: " .. tostring(code)
-end
-
-local defaultCommands = {
-    help = { action = function() 
-        local status = isConnected and "Connected" or "Local"
-        return "Commands: help, clear, players, kick, teleport, ping, cnkt\nStatus: " .. status
-    end },
-    ping = { action = function() 
-        local start = tick()
-        pcall(function()
-            if httpFunc then
-                httpFunc({ Url = "https://roblox.com", Method = "HEAD" })
-            end
-        end)
-        local finish = tick()
-        return "Pong! Latency: " .. math.floor((finish - start) * 1000) .. "ms" 
-    end },
-    clear = { action = function() return "CLEAR" end },
-    players = { action = function() 
-        local list = {}
-        for _, p in ipairs(Players:GetPlayers()) do table.insert(list, p.Name) end
-        return table.concat(list, "\n")
-    end },
-    teleport = { action = function(args)
-        local target = args[1]
-        if not target then return "Usage: teleport <name>" end
-        local t = Players:FindFirstChild(target)
-        if t and t.Character and LocalPlayer.Character then
-            LocalPlayer.Character:SetPrimaryPartCFrame(t.Character.PrimaryPart.CFrame)
-            return "Teleported to " .. target
-        end
-        return "Player not found"
-    end },
-    kick = { action = function(args)
-        local target = args[1]
-        if not target then return "Usage: kick <name>" end
-        local t = Players:FindFirstChild(target)
-        if t then t:Kick("Kicked by xinux") return "Kicked " .. target end
-        return "Player not found"
-    end },
-    cnkt = { action = function()
-        if not httpFunc then return "Error: HTTP not supported by this executor." end
-        
-        local success, response = pcall(function()
-            return httpFunc({
-                Url = "https://roblox.com",
-                Method = "HEAD"
-            })
-        end)
-        
-        if success and response then
-            if response.StatusCode == 200 or response.StatusCode == 301 then
-                isConnected = true
-                return "Connection successful! Server responded."
-            else
-                isConnected = false
-                return "Connection failed: " .. getErrorMessage(response.StatusCode)
-            end
-        else
-            isConnected = false
-            return "Connection failed: Executor/Game blocked the request (nil response)"
-        end
-    end }
-}
-
 InputBox.FocusLost:Connect(function(enterPressed)
     if enterPressed then
         local cmdText = InputBox.Text
@@ -364,19 +285,13 @@ InputBox.FocusLost:Connect(function(enterPressed)
             task.spawn(function()
                 local success, result = pcall(customCommands[cmdName].action, args)
                 if success then
-                    addLine(tostring(result), Color3.fromRGB(255, 255, 255))
-                else
-                    addLine("Error: " .. tostring(result), Color3.fromRGB(255, 100, 100))
-                end
-            end)
-            return
-        end
-        
-        if defaultCommands[cmdName] then
-            task.spawn(function()
-                local success, result = pcall(defaultCommands[cmdName].action, args)
-                if success then
-                    addLine(tostring(result), Color3.fromRGB(255, 255, 255))
+                    if result == "CLEAR" then
+                        for _, child in ipairs(ScrollingFrame:GetChildren()) do
+                            if child:IsA("TextLabel") then child:Destroy() end
+                        end
+                    else
+                        addLine(tostring(result), Color3.fromRGB(255, 255, 255))
+                    end
                 else
                     addLine("Error: " .. tostring(result), Color3.fromRGB(255, 100, 100))
                 end
