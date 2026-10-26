@@ -193,6 +193,20 @@ local function addLine(text, color)
     label.Parent = ScrollingFrame
 end
 
+local function processOutput(text)
+    if text:sub(1, 8) == "SUCCESS|" then
+        addLine(text:sub(9), Color3.fromRGB(0, 255, 100))
+    elseif text:sub(1, 6) == "ERROR|" then
+        addLine(text:sub(7), Color3.fromRGB(255, 100, 100))
+    elseif text == "CLEAR" then
+        for _, child in ipairs(ScrollingFrame:GetChildren()) do
+            if child:IsA("TextLabel") then child:Destroy() end
+        end
+    else
+        addLine(text, Color3.fromRGB(255, 255, 255))
+    end
+end
+
 local penguinArt = [[
        .--.       
       |o_o |      
@@ -285,21 +299,15 @@ InputBox.FocusLost:Connect(function(enterPressed)
             task.spawn(function()
                 local success, result = pcall(customCommands[cmdName].action, args)
                 if success then
-                    if result == "CLEAR" then
-                        for _, child in ipairs(ScrollingFrame:GetChildren()) do
-                            if child:IsA("TextLabel") then child:Destroy() end
-                        end
-                    else
-                        addLine(tostring(result), Color3.fromRGB(255, 255, 255))
-                    end
+                    processOutput(tostring(result))
                 else
-                    addLine("Error: " .. tostring(result), Color3.fromRGB(255, 100, 100))
+                    processOutput("ERROR|" .. tostring(result))
                 end
             end)
             return
         end
         
-        addLine(cmdName .. ": command not found", Color3.fromRGB(255, 100, 100))
+        processOutput("ERROR|" .. cmdName .. ": command not found")
         
         task.wait()
         ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
