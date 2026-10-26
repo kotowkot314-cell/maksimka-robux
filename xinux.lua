@@ -1,9 +1,6 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local HttpService = game:GetService("HttpService")
-
-local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
 
 local executorName = "Unknown"
 local httpFunc = nil
@@ -38,8 +35,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
 local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Size = UDim2.new(0, 400, 0, 150)
-LoadingFrame.Position = UDim2.new(0.5, -200, 0.5, -75)
+LoadingFrame.Size = UDim2.new(0, 100, 0, 100)
+LoadingFrame.Position = UDim2.new(0.5, -50, 0.5, -50)
 LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 LoadingFrame.BorderSizePixel = 0
 LoadingFrame.Parent = ScreenGui
@@ -50,15 +47,38 @@ LoadStroke.Color = Color3.fromRGB(0, 255, 100)
 LoadStroke.Thickness = 2
 LoadStroke.Parent = LoadingFrame
 
-local LoadText = Instance.new("TextLabel")
-LoadText.Size = UDim2.new(1, 0, 1, 0)
-LoadText.BackgroundTransparency = 1
-LoadText.Text = "Загрузка xinux..."
-LoadText.TextColor3 = Color3.fromRGB(0, 255, 100)
-LoadText.Font = Enum.Font.Code
-LoadText.TextSize = 18
-LoadText.TextWrapped = true
-LoadText.Parent = LoadingFrame
+local Spinner = Instance.new("Frame")
+Spinner.Size = UDim2.new(0, 40, 0, 40)
+Spinner.Position = UDim2.new(0.5, -20, 0.5, -20)
+Spinner.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+Spinner.BorderSizePixel = 0
+Spinner.Parent = LoadingFrame
+Instance.new("UICorner", Spinner).CornerRadius = UDim.new(1, 0)
+
+local SpinnerHole = Instance.new("Frame")
+SpinnerHole.Size = UDim2.new(0, 30, 0, 30)
+SpinnerHole.Position = UDim2.new(0.5, -15, 0.5, -15)
+SpinnerHole.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+SpinnerHole.BorderSizePixel = 0
+SpinnerHole.Parent = LoadingFrame
+Instance.new("UICorner", SpinnerHole).CornerRadius = UDim.new(1, 0)
+
+local SpinnerPiece = Instance.new("Frame")
+SpinnerPiece.Size = UDim2.new(0, 40, 0, 20)
+SpinnerPiece.Position = UDim2.new(0.5, -20, 0.5, -20)
+SpinnerPiece.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+SpinnerPiece.BorderSizePixel = 0
+SpinnerPiece.Parent = LoadingFrame
+
+task.spawn(function()
+    while LoadingFrame.Parent do
+        for i = 1, 360, 10 do
+            if not LoadingFrame.Parent then break end
+            SpinnerPiece.Rotation = i
+            task.wait(0.02)
+        end
+    end
+end)
 
 task.wait(3)
 LoadingFrame:Destroy()
@@ -191,11 +211,37 @@ addLine("Executor: " .. executorName, Color3.fromRGB(0, 255, 100))
 addLine("Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
 addLine("")
 
-local customCommands = {}
+local isConnected = false
+
+local function getErrorMessage(code)
+    if code == 400 then return "400 Bad Request - Invalid syntax" end
+    if code == 401 then return "401 Unauthorized - Authentication required" end
+    if code == 403 then return "403 Forbidden - Access denied (firewall/blocked)" end
+    if code == 404 then return "404 Not Found - Endpoint does not exist" end
+    if code == 408 then return "408 Request Timeout - Server timed out" end
+    if code == 429 then return "429 Too Many Requests - Rate limit exceeded" end
+    if code == 500 then return "500 Internal Server Error - Server crashed" end
+    if code == 502 then return "502 Bad Gateway - Proxy error" end
+    if code == 503 then return "503 Service Unavailable - Server overloaded/maintenance" end
+    if code == 504 then return "504 Gateway Timeout - Proxy timeout" end
+    return "Unknown Error - Code: " .. tostring(code)
+end
 
 local defaultCommands = {
-    help = { action = function() return "Доступные команды: help, clear, players, kick, teleport, ping" end },
-    ping = { action = function() return "Pong! xinux отвечает." end },
+    help = { action = function() 
+        local status = isConnected and "Connected" or "Local"
+        return "Commands: help, clear, players, kick, teleport, ping, cnkt\nStatus: " .. status
+    end },
+    ping = { action = function() 
+        local start = tick()
+        pcall(function()
+            if httpFunc then
+                httpFunc({ Url = "https://roblox.com", Method = "HEAD" })
+            end
+        end)
+        local finish = tick()
+        return "Pong! Latency: " .. math.floor((finish - start) * 1000) .. "ms" 
+    end },
     clear = { action = function() return "CLEAR" end },
     players = { action = function() 
         local list = {}
@@ -204,53 +250,45 @@ local defaultCommands = {
     end },
     teleport = { action = function(args)
         local target = args[1]
-        if not target then return "Укажите имя" end
+        if not target then return "Usage: teleport <name>" end
         local t = Players:FindFirstChild(target)
         if t and t.Character and LocalPlayer.Character then
             LocalPlayer.Character:SetPrimaryPartCFrame(t.Character.PrimaryPart.CFrame)
-            return "Телепорт к " .. target
+            return "Teleported to " .. target
         end
-        return "Игрок не найден"
+        return "Player not found"
     end },
     kick = { action = function(args)
         local target = args[1]
-        if not target then return "Укажите имя" end
+        if not target then return "Usage: kick <name>" end
         local t = Players:FindFirstChild(target)
-        if t then t:Kick("Kicked by xinux") return "Кикнут " .. target end
-        return "Игрок не найден"
+        if t then t:Kick("Kicked by xinux") return "Kicked " .. target end
+        return "Player not found"
+    end },
+    cnkt = { action = function()
+        if not httpFunc then return "Error: HTTP not supported by this executor." end
+        
+        local success, response = pcall(function()
+            return httpFunc({
+                Url = "https://roblox.com",
+                Method = "HEAD"
+            })
+        end)
+        
+        if success and response then
+            if response.StatusCode == 200 or response.StatusCode == 301 then
+                isConnected = true
+                return "Connection successful! Server responded."
+            else
+                isConnected = false
+                return "Connection failed: " .. getErrorMessage(response.StatusCode)
+            end
+        else
+            isConnected = false
+            return "Connection failed: Executor/Game blocked the request (nil response)"
+        end
     end }
 }
-
-task.spawn(function()
-    if not httpFunc then 
-        addLine("[WARN] Нет HTTP для загрузки внешних команд", Color3.fromRGB(255, 200, 0))
-        return 
-    end
-    
-    local success, response = pcall(function()
-        return httpFunc({ Url = COMMANDS_URL, Method = "GET" })
-    end)
-    
-    if success and response and response.Body then
-        local func, err = loadstring(response.Body)
-        if not func then
-            addLine("[ERR] Синтаксис в commands.x.lua: " .. tostring(err), Color3.fromRGB(255, 100, 100))
-            return
-        end
-        
-        local ok, result = pcall(func)
-        if ok and type(result) == "table" then
-            customCommands = result
-            local count = 0
-            for _ in pairs(customCommands) do count = count + 1 end
-            addLine("[OK] Загружено кастомных команд: " .. tostring(count), Color3.fromRGB(0, 255, 100))
-        else
-            addLine("[ERR] commands.x.lua вернул не таблицу", Color3.fromRGB(255, 100, 100))
-        end
-    else
-        addLine("[WARN] Не удалось скачать commands.x.lua", Color3.fromRGB(255, 200, 0))
-    end
-end)
 
 InputBox.FocusLost:Connect(function(enterPressed)
     if enterPressed then
@@ -270,18 +308,6 @@ InputBox.FocusLost:Connect(function(enterPressed)
             for _, child in ipairs(ScrollingFrame:GetChildren()) do
                 if child:IsA("TextLabel") then child:Destroy() end
             end
-            return
-        end
-        
-        if customCommands[cmdName] then
-            task.spawn(function()
-                local success, result = pcall(customCommands[cmdName].action, args)
-                if success then
-                    addLine(tostring(result), Color3.fromRGB(255, 255, 255))
-                else
-                    addLine("Error: " .. tostring(result), Color3.fromRGB(255, 100, 100))
-                end
-            end)
             return
         end
         
