@@ -2,7 +2,7 @@ local activeLoops = {}
 local serverRemote = nil
 
 for _, v in ipairs(game:GetDescendants()) do
-    if v:IsA("RemoteEvent") and (v.Name:lower():find("chat") or v.Name:lower():find("message") or v.Name:lower():find("admin")) then
+    if v:IsA("RemoteEvent") and (v.Name:lower():find("admin") or v.Name:lower():find("command") or v.Name:lower():find("chat")) then
         serverRemote = v
         break
     end
@@ -44,26 +44,26 @@ return {
     teleport = {
         action = function(args)
             local target = args[1]
-            if not target then return "Usage: teleport <name>" end
+            if not target then return "ERROR|Usage: teleport <name>" end
             local lp = game.Players.LocalPlayer
             local t = game.Players:FindFirstChild(target)
             if t and t.Character and lp.Character then
                 lp.Character:SetPrimaryPartCFrame(t.Character.PrimaryPart.CFrame)
-                return "Teleported to " .. target
+                return "SUCCESS|Teleported to " .. target
             end
-            return "Player not found"
+            return "ERROR|Player not found"
         end
     },
     kick = {
         action = function(args)
             local target = args[1]
-            if not target then return "Usage: kick <name>" end
+            if not target then return "ERROR|Usage: kick <name>" end
             local t = game.Players:FindFirstChild(target)
             if t then 
                 t:Kick("Kicked by xinux") 
-                return "Kicked " .. target 
+                return "SUCCESS|Kicked " .. target 
             end
-            return "Player not found"
+            return "ERROR|Player not found"
         end
     },
     con = {
@@ -149,7 +149,7 @@ return {
     admin = {
         action = function(args)
             if not serverRemote then
-                return "ERROR|No server connection. Cannot activate admin."
+                return "ERROR|No server connection. Cannot open admin panel."
             end
             
             local testSuccess = pcall(function()
@@ -161,35 +161,91 @@ return {
             end
             
             if activeLoops.admin then
-                return "ERROR|Admin is already active in this session."
+                return "ERROR|Admin panel is already open."
             end
             
             activeLoops.admin = true
             
-            game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-                if gameProcessed then return end
-                if not activeLoops.admin then return end
-                
-                local lp = game.Players.LocalPlayer
-                if input.KeyCode == Enum.KeyCode.G then
-                    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-                        lp.Character.Humanoid.MaxHealth = math.huge
-                        lp.Character.Humanoid.Health = math.huge
-                    end
-                elseif input.KeyCode == Enum.KeyCode.H then
-                    for _, p in ipairs(game.Players:GetPlayers()) do
-                        if p ~= lp then p:Kick("Admin Panel") end
-                    end
-                elseif input.KeyCode == Enum.KeyCode.J then
-                    for _, p in ipairs(game.Players:GetPlayers()) do
-                        if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and lp.Character then
-                            p.Character.HumanoidRootPart.CFrame = lp.Character.HumanoidRootPart.CFrame + Vector3.new(0, 0, 5)
-                        end
-                    end
-                end
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "xinux_Admin_Panel"
+            gui.ResetOnSpawn = false
+            gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+            
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(0, 250, 0, 320)
+            frame.Position = UDim2.new(0.5, -125, 0.5, -160)
+            frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+            frame.BorderSizePixel = 0
+            frame.Active = true
+            frame.Draggable = true
+            frame.Parent = gui
+            
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 8)
+            corner.Parent = frame
+            
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, 0, 0, 30)
+            title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+            title.Text = "xinux | ADMIN"
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            title.Font = Enum.Font.Code
+            title.Parent = frame
+            
+            local close = Instance.new("TextButton")
+            close.Size = UDim2.new(0, 25, 0, 25)
+            close.Position = UDim2.new(1, -25, 0, 0)
+            close.BackgroundTransparency = 1
+            close.Text = "X"
+            close.TextColor3 = Color3.fromRGB(255, 100, 100)
+            close.Parent = title
+            close.MouseButton1Click:Connect(function()
+                gui:Destroy()
+                activeLoops.admin = false
             end)
             
-            return "SUCCESS|Admin interface activated silently. Press G (God), H (Kick All), J (Pull All)."
+            local function makeBtn(text, y, callback)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1, -20, 0, 35)
+                btn.Position = UDim2.new(0, 10, 0, y)
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+                btn.Text = text
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                btn.Font = Enum.Font.Code
+                btn.Parent = frame
+                local c = Instance.new("UICorner")
+                c.CornerRadius = UDim.new(0, 4)
+                c.Parent = btn
+                btn.MouseButton1Click:Connect(callback)
+                return btn
+            end
+            
+            makeBtn("Kick All (Server)", 40, function()
+                serverRemote:FireServer("kick_all")
+            end)
+            
+            makeBtn("Teleport All to Me", 85, function()
+                serverRemote:FireServer("tp_all", game.Players.LocalPlayer.Name)
+            end)
+            
+            makeBtn("Give God Mode", 130, function()
+                serverRemote:FireServer("god", game.Players.LocalPlayer.Name)
+            end)
+            
+            makeBtn("Delete Server", 175, function()
+                serverRemote:FireServer("crash")
+            end)
+            
+            makeBtn("Restart Server", 220, function()
+                serverRemote:FireServer("restart")
+            end)
+            
+            makeBtn("Close Panel", 265, function()
+                gui:Destroy()
+                activeLoops.admin = false
+            end)
+            
+            return "SUCCESS|Admin panel opened. Buttons send real commands to server."
         end
     },
     accheck = {
@@ -221,7 +277,7 @@ return {
     say = {
         action = function(args)
             local msg = table.concat(args, " ")
-            if msg == "" then return "Usage: say <message>" end
+            if msg == "" then return "ERROR|Usage: say <message>" end
             if not serverRemote then return "ERROR|No chat remote found." end
             
             local success = pcall(function()
@@ -413,7 +469,7 @@ return {
     stp = {
         action = function(args)
             local target = args[1]
-            if not target then return "ERROR|Usage: stp <command_name> (e.g., stp fly)" end
+            if not target then return "ERROR|Usage: stp <command_name>" end
             
             if target == "fly" and activeLoops.fly then
                 activeLoops.fly:Disconnect()
@@ -447,7 +503,9 @@ return {
             
             if target == "admin" and activeLoops.admin then
                 activeLoops.admin = false
-                return "SUCCESS|Admin deactivated."
+                local gui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("xinux_Admin_Panel")
+                if gui then gui:Destroy() end
+                return "SUCCESS|Admin panel closed."
             end
             
             return "ERROR|Command not running or not found: " .. tostring(target)
