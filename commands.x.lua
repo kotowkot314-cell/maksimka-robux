@@ -3,7 +3,7 @@ local activeLoops = {}
 return {
     help = {
         action = function(args)
-            return "Commands: help, clear, players, teleport, ping, cnkt, fly, brk, bld, f3x, infopipl, antf, anfl, stp"
+            return "Commands: help, clear, players, teleport, ping, cnkt, fly, brk, bld, f3x, infopipl, antf, anfl, con, stp"
         end
     },
     ping = {
@@ -55,6 +55,35 @@ return {
             local success, response = pcall(function() return game:HttpGet("https://roblox.com", true) end)
             if not success then return "Connection failed: blocked by game." end
             return "Connection successful! Server responded."
+        end
+    },
+    con = {
+        action = function(args)
+            local foundRemote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    foundRemote = v
+                    break
+                end
+            end
+            
+            if not foundRemote then
+                return "Server connection failed: No RemoteEvents found in this game."
+            end
+            
+            local success, err = pcall(function()
+                if foundRemote:IsA("RemoteEvent") then
+                    foundRemote:FireServer("xinux_ping")
+                else
+                    foundRemote:InvokeServer("xinux_ping")
+                end
+            end)
+            
+            if success then
+                return "Server connection successful! Game allows client calls."
+            else
+                return "Server connection failed: Game/Anticheat blocked the request."
+            end
         end
     },
     fly = {
