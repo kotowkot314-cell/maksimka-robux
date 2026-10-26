@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local HttpService = game:GetService("HttpService")
 
 local SERVER_URL = "https://Maxxi1mka.pythonanywhere.com/terminal"
 local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
@@ -9,21 +8,28 @@ local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimk
 local executorName = "Unknown"
 local httpFunc = nil
 
+if identifyexecutor then
+    local ok, name = pcall(identifyexecutor)
+    if ok then executorName = name end
+elseif getexecutorname then
+    local ok, name = pcall(getexecutorname)
+    if ok then executorName = name end
+end
+
 if syn and syn.request then
-    executorName = "Synapse / Delta"
     httpFunc = syn.request
 elseif http and http.request then
-    executorName = "Krnl / Fluxus"
     httpFunc = http.request
 elseif fluxus and fluxus.request then
-    executorName = "Fluxus"
     httpFunc = fluxus.request
 elseif request then
-    executorName = "Wave / Solara / R7 / Xeno"
     httpFunc = request
 elseif http_request then
-    executorName = "Old Executor"
     httpFunc = http_request
+end
+
+if executorName == "Unknown" and httpFunc then
+    executorName = "Supported Executor"
 end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -165,7 +171,6 @@ local function addLine(text, color)
     label.Parent = ScrollingFrame
 end
 
-
 local penguinArt = [[
        .--.       
       |o_o |      
@@ -187,60 +192,57 @@ addLine("Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
 addLine("")
 
 local customCommands = {}
-local isCustomLoaded = false
 
--- Загрузка команд с GitHub
 task.spawn(function()
-    if not httpFunc then return end
+    if not httpFunc then 
+        addLine("[ERR] HTTP не поддерживается", Color3.fromRGB(255, 100, 100))
+        return 
+    end
+    
     local success, response = pcall(function()
-        return httpFunc({
-            Url = COMMANDS_URL,
-            Method = "GET"
-        })
+        return httpFunc({ Url = COMMANDS_URL, Method = "GET" })
     end)
     
     if success and response and response.Body then
         local func, err = loadstring(response.Body)
-        if func then
-            local ok, result = pcall(func)
-            if ok and type(result) == "table" then
-                customCommands = result
-                isCustomLoaded = true
-                addLine("[OK] Загружено команд с GitHub: " .. tostring(#customCommands), Color3.fromRGB(0, 255, 100))
-            else
-                addLine("[ERR] Ошибка выполнения команд", Color3.fromRGB(255, 100, 100))
-            end
+        if not func then
+            addLine("[ERR] Ошибка синтаксиса в commands.x.lua: " .. tostring(err), Color3.fromRGB(255, 100, 100))
+            return
+        end
+        
+        local ok, result = pcall(func)
+        if ok and type(result) == "table" then
+            customCommands = result
+            local count = 0
+            for _ in pairs(customCommands) do count = count + 1 end
+            addLine("[OK] Загружено команд: " .. tostring(count), Color3.fromRGB(0, 255, 100))
         else
-            addLine("[ERR] Ошибка синтаксиса в commands.x.lua", Color3.fromRGB(255, 100, 100))
+            addLine("[ERR] commands.x.lua вернул не таблицу", Color3.fromRGB(255, 100, 100))
         end
     else
-        addLine("[ERR] Не удалось загрузить команды с GitHub", Color3.fromRGB(255, 100, 100))
+        addLine("[ERR] Не удалось скачать commands.x.lua", Color3.fromRGB(255, 100, 100))
     end
 end)
 
 local function sendRequest(cmd)
     local payload = '{"command": "' .. cmd .. '"}'
-    if httpFunc then
-        local success, response = pcall(function()
-            return httpFunc({
-                Url = SERVER_URL,
-                Method = "POST",
-                Headers = { ["Content-Type"] = "application/json" },
-                Body = payload
-            })
-        end)
-        if success and response and response.Body then
-            local output = response.Body:match('"output"%s*:%s*"(.-)"')
-            if output then
-                output = output:gsub("\\n", "\n"):gsub('\\"', '"')
-                return output
-            end
-            return response.Body
-        else
-            return nil, tostring(response)
+    local success, response = pcall(function()
+        return httpFunc({
+            Url = SERVER_URL,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = payload
+        })
+    end)
+    if success and response and response.Body then
+        local output = response.Body:match('"output"%s*:%s*"(.-)"')
+        if output then
+            output = output:gsub("\\n", "\n"):gsub('\\"', '"')
+            return output
         end
+        return response.Body
     else
-        return nil, "No HTTP method available"
+        return nil, tostring(response)
     end
 end
 
@@ -252,12 +254,12 @@ InputBox.FocusLost:Connect(function(enterPressed)
         
         addLine("[bash-5.3]$ " .. cmdText, Color3.fromRGB(0, 255, 100))
         
-        local parts = cmdText:split(" ")
+        local parts = {}
+        for word in cmdText:gmatch("%S+") do table.insert(parts, word) end
         local cmdName = parts[1]
         table.remove(parts, 1)
         local args = parts
         
-        -- Проверка кастомных команд (с GitHub)
         if customCommands[cmdName] then
             task.spawn(function()
                 local success, result = pcall(customCommands[cmdName].action, args)
@@ -270,7 +272,6 @@ InputBox.FocusLost:Connect(function(enterPressed)
             return
         end
         
-        -- Если команда не найдена локально, шлем на сервер
         task.spawn(function()
             local result, err = sendRequest(cmdText)
             if result then
