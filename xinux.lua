@@ -2,6 +2,8 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
+
 local executorName = "Unknown"
 local httpFunc = nil
 
@@ -208,8 +210,55 @@ end
 addLine("OS: xinux (Roblox Client)", Color3.fromRGB(255, 255, 255))
 addLine("Kernel: roblox-luau", Color3.fromRGB(255, 255, 255))
 addLine("Executor: " .. executorName, Color3.fromRGB(0, 255, 100))
-addLine("Type 'help' for commands.", Color3.fromRGB(150, 150, 150))
+addLine("Loading external commands...", Color3.fromRGB(150, 150, 150))
 addLine("")
+
+local customCommands = {}
+
+task.spawn(function()
+    local fetched = false
+    if httpFunc then
+        local success, response = pcall(function()
+            return httpFunc({ Url = COMMANDS_URL, Method = "GET" })
+        end)
+        if success and response and response.Body then
+            local func, err = loadstring(response.Body)
+            if func then
+                local ok, result = pcall(func)
+                if ok and type(result) == "table" then
+                    customCommands = result
+                    local count = 0
+                    for _ in pairs(customCommands) do count = count + 1 end
+                    addLine("[OK] Loaded " .. tostring(count) .. " external commands", Color3.fromRGB(0, 255, 100))
+                    fetched = true
+                end
+            end
+        end
+    end
+    
+    if not fetched then
+        local success, response = pcall(function()
+            return game:HttpGet(COMMANDS_URL)
+        end)
+        if success and response then
+            local func = loadstring(response)
+            if func then
+                local ok, result = pcall(func)
+                if ok and type(result) == "table" then
+                    customCommands = result
+                    local count = 0
+                    for _ in pairs(customCommands) do count = count + 1 end
+                    addLine("[OK] Loaded " .. tostring(count) .. " external commands (HttpGet)", Color3.fromRGB(0, 255, 100))
+                    fetched = true
+                end
+            end
+        end
+    end
+    
+    if not fetched then
+        addLine("[ERR] Failed to load external commands", Color3.fromRGB(255, 100, 100))
+    end
+end)
 
 local isConnected = false
 
@@ -308,6 +357,18 @@ InputBox.FocusLost:Connect(function(enterPressed)
             for _, child in ipairs(ScrollingFrame:GetChildren()) do
                 if child:IsA("TextLabel") then child:Destroy() end
             end
+            return
+        end
+        
+        if customCommands[cmdName] then
+            task.spawn(function()
+                local success, result = pcall(customCommands[cmdName].action, args)
+                if success then
+                    addLine(tostring(result), Color3.fromRGB(255, 255, 255))
+                else
+                    addLine("Error: " .. tostring(result), Color3.fromRGB(255, 100, 100))
+                end
+            end)
             return
         end
         
