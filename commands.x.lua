@@ -1,29 +1,25 @@
+local activeLoops = {}
+
 return {
     help = {
         action = function(args)
-            return "Commands: help, clear, players, kick, teleport, ping, cnkt, fly, brk, bld"
+            return "Commands: help, clear, players, teleport, ping, cnkt, fly, brk, bld, f3x, infopipl, antf, anfl, stp"
         end
     },
     ping = {
         action = function(args)
             local start = tick()
-            pcall(function()
-                game:HttpGet("https://roblox.com")
-            end)
-            local finish = tick()
-            return "Pong! Latency: " .. math.floor((finish - start) * 1000) .. "ms"
+            pcall(function() game:HttpGet("https://roblox.com") end)
+            return "Pong! Latency: " .. math.floor((tick() - start) * 1000) .. "ms"
         end
     },
     clear = {
-        action = function(args)
-            return "CLEAR"
-        end
+        action = function(args) return "CLEAR" end
     },
     players = {
         action = function(args)
-            local Players = game:GetService("Players")
             local list = {}
-            for _, p in ipairs(Players:GetPlayers()) do 
+            for _, p in ipairs(game.Players:GetPlayers()) do 
                 table.insert(list, p.Name .. " (" .. p.UserId .. ")") 
             end
             return table.concat(list, "\n")
@@ -33,9 +29,8 @@ return {
         action = function(args)
             local target = args[1]
             if not target then return "Usage: teleport <name>" end
-            local Players = game:GetService("Players")
-            local lp = Players.LocalPlayer
-            local t = Players:FindFirstChild(target)
+            local lp = game.Players.LocalPlayer
+            local t = game.Players:FindFirstChild(target)
             if t and t.Character and lp.Character then
                 lp.Character:SetPrimaryPartCFrame(t.Character.PrimaryPart.CFrame)
                 return "Teleported to " .. target
@@ -47,8 +42,7 @@ return {
         action = function(args)
             local target = args[1]
             if not target then return "Usage: kick <name>" end
-            local Players = game:GetService("Players")
-            local t = Players:FindFirstChild(target)
+            local t = game.Players:FindFirstChild(target)
             if t then 
                 t:Kick("Kicked by xinux") 
                 return "Kicked " .. target 
@@ -58,29 +52,16 @@ return {
     },
     cnkt = {
         action = function(args)
-            local success, response = pcall(function()
-                return game:HttpGet("https://roblox.com", true)
-            end)
-            if not success then
-                return "Connection failed: HTTP request failed (blocked by game/executor)."
-            end
-            if not response or response == "" then
-                return "Connection failed: No response from server (nil)."
-            end
+            local success, response = pcall(function() return game:HttpGet("https://roblox.com", true) end)
+            if not success then return "Connection failed: blocked by game." end
             return "Connection successful! Server responded."
         end
     },
     fly = {
         action = function(args)
-            local Players = game:GetService("Players")
-            local RunService = game:GetService("RunService")
-            local UIS = game:GetService("UserInputService")
-            local lp = Players.LocalPlayer
+            local lp = game.Players.LocalPlayer
             local char = lp.Character
-            
-            if not char or not char:FindFirstChild("HumanoidRootPart") then
-                return "Character not found"
-            end
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return "Character not found" end
             
             local hrp = char.HumanoidRootPart
             local bv = Instance.new("BodyVelocity")
@@ -89,10 +70,7 @@ return {
             bv.Velocity = Vector3.new(0, 0, 0)
             bv.Parent = hrp
             
-            local flying = true
-            
-            UIS.InputBegan:Connect(function(input, gameProcessed)
-                if not flying then return end
+            activeLoops.fly = game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
                 if input.KeyCode == Enum.KeyCode.Space then
                     bv.Velocity = Vector3.new(0, 50, 0)
                 elseif input.KeyCode == Enum.KeyCode.LeftShift then
@@ -100,29 +78,21 @@ return {
                 end
             end)
             
-            UIS.InputEnded:Connect(function(input, gameProcessed)
-                if not flying then return end
-                if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.LeftShift then
-                    bv.Velocity = Vector3.new(0, 0, 0)
-                end
-            end)
-            
             task.spawn(function()
-                while flying and bv.Parent do
-                    if not UIS:IsKeyDown(Enum.KeyCode.Space) and not UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
+                while bv.Parent and activeLoops.fly do
+                    if not game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) and not game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then
                         bv.Velocity = Vector3.new(0, 0, 0)
                     end
                     task.wait()
                 end
             end)
             
-            return "Fly enabled! Hold Space to go UP, Left Shift to go DOWN."
+            return "Fly enabled! (Space = Up, Shift = Down)"
         end
     },
     brk = {
         action = function(args)
-            local mouse = game.Players.LocalPlayer:GetMouse()
-            local target = mouse.Target
+            local target = game.Players.LocalPlayer:GetMouse().Target
             if target then
                 target:Destroy()
                 return "Destroyed: " .. target.Name
@@ -133,13 +103,164 @@ return {
     bld = {
         action = function(args)
             local mouse = game.Players.LocalPlayer:GetMouse()
-            local pos = mouse.Hit.p
             local p = Instance.new("Part")
             p.Size = Vector3.new(4, 4, 4)
-            p.Position = pos
+            p.Position = mouse.Hit.p
             p.Anchored = true
             p.Parent = workspace
             return "Built block at mouse position"
+        end
+    },
+    f3x = {
+        action = function(args)
+            if activeLoops.f3x then
+                return "F3X is already running. Use 'stp f3x' to stop."
+            end
+            
+            local lp = game.Players.LocalPlayer
+            local mouse = lp:GetMouse()
+            local selected = nil
+            local dragging = false
+            local dragPos = nil
+            
+            activeLoops.f3x = true
+            
+            mouse.Button1Down:Connect(function()
+                if not activeLoops.f3x then return end
+                local target = mouse.Target
+                if target and target ~= selected then
+                    selected = target
+                    dragPos = mouse.Hit.p
+                elseif target == selected then
+                    dragging = true
+                end
+            end)
+            
+            mouse.Button1Up:Connect(function()
+                dragging = false
+            end)
+            
+            game:GetService("RunService").RenderStepped:Connect(function()
+                if not activeLoops.f3x then return end
+                if dragging and selected and dragPos then
+                    local delta = mouse.Hit.p - dragPos
+                    if selected.Anchored then
+                        selected.CFrame = selected.CFrame + delta
+                    else
+                        selected.Position = selected.Position + delta
+                    end
+                    dragPos = mouse.Hit.p
+                end
+            end)
+            
+            return "F3X enabled! Click and drag parts. Use 'stp f3x' to stop."
+        end
+    },
+    infopipl = {
+        action = function(args)
+            local info = {}
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                local char = p.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                
+                local health = hum and math.floor(hum.Health) or "?"
+                local pos = hrp and string.format("X: %d, Y: %d, Z: %d", hrp.Position.X, hrp.Position.Y, hrp.Position.Z) or "No Position"
+                local team = p.Team and p.Team.Name or "None"
+                
+                table.insert(info, string.format("%s (ID: %d)\n  Health: %s | Team: %s\n  Pos: %s", p.Name, p.UserId, health, team, pos))
+            end
+            return table.concat(info, "\n\n")
+        end
+    },
+    antf = {
+        action = function(args)
+            local lp = game.Players.LocalPlayer
+            if lp.Character then
+                for _, v in ipairs(lp.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.LocalTransparencyModifier = 1
+                        v.Transparency = 1
+                    end
+                end
+                return "Antf enabled: Your character is now invisible."
+            end
+            return "Character not found"
+        end
+    },
+    anfl = {
+        action = function(args)
+            if activeLoops.anfl then
+                return "Anfl is already running. Use 'stp anfl' to stop."
+            end
+            
+            local lp = game.Players.LocalPlayer
+            local runService = game:GetService("RunService")
+            
+            activeLoops.anfl = runService.Stepped:Connect(function()
+                local char = lp.Character
+                if char then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local playerNearby = false
+                        for _, p in ipairs(game.Players:GetPlayers()) do
+                            if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                                local dist = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                                if dist <= 10 then
+                                    playerNearby = true
+                                    break
+                                end
+                            end
+                        end
+                        
+                        for _, v in ipairs(char:GetDescendants()) do
+                            if v:IsA("BasePart") then
+                                v.CanCollide = not playerNearby
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return "Anfl enabled! (Active only when players are within 10 studs)"
+        end
+    },
+    stp = {
+        action = function(args)
+            local target = args[1]
+            if not target then return "Usage: stp <command_name> (e.g., stp fly)" end
+            
+            if target == "fly" and activeLoops.fly then
+                activeLoops.fly:Disconnect()
+                activeLoops.fly = nil
+                local lp = game.Players.LocalPlayer
+                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    local bv = lp.Character.HumanoidRootPart:FindFirstChild("xinuxFly")
+                    if bv then bv:Destroy() end
+                end
+                return "Fly stopped."
+            end
+            
+            if target == "f3x" and activeLoops.f3x then
+                activeLoops.f3x = false
+                return "F3X stopped."
+            end
+
+            if target == "anfl" and activeLoops.anfl then
+                activeLoops.anfl:Disconnect()
+                activeLoops.anfl = nil
+                local lp = game.Players.LocalPlayer
+                if lp.Character then
+                    for _, v in ipairs(lp.Character:GetDescendants()) do
+                        if v:IsA("BasePart") then
+                            v.CanCollide = true
+                        end
+                    end
+                end
+                return "Anfl stopped. Collision restored."
+            end
+            
+            return "Command not running or not found: " .. tostring(target)
         end
     }
 }
