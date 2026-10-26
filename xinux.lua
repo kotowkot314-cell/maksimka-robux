@@ -1,8 +1,8 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local HttpService = game:GetService("HttpService")
 
-local SERVER_URL = "https://Maxxi1mka.pythonanywhere.com/terminal"
 local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
 
 local executorName = "Unknown"
@@ -193,9 +193,37 @@ addLine("")
 
 local customCommands = {}
 
+local defaultCommands = {
+    help = { action = function() return "Доступные команды: help, clear, players, kick, teleport, ping" end },
+    ping = { action = function() return "Pong! xinux отвечает." end },
+    clear = { action = function() return "CLEAR" end },
+    players = { action = function() 
+        local list = {}
+        for _, p in ipairs(Players:GetPlayers()) do table.insert(list, p.Name) end
+        return table.concat(list, "\n")
+    end },
+    teleport = { action = function(args)
+        local target = args[1]
+        if not target then return "Укажите имя" end
+        local t = Players:FindFirstChild(target)
+        if t and t.Character and LocalPlayer.Character then
+            LocalPlayer.Character:SetPrimaryPartCFrame(t.Character.PrimaryPart.CFrame)
+            return "Телепорт к " .. target
+        end
+        return "Игрок не найден"
+    end },
+    kick = { action = function(args)
+        local target = args[1]
+        if not target then return "Укажите имя" end
+        local t = Players:FindFirstChild(target)
+        if t then t:Kick("Kicked by xinux") return "Кикнут " .. target end
+        return "Игрок не найден"
+    end }
+}
+
 task.spawn(function()
     if not httpFunc then 
-        addLine("[ERR] HTTP не поддерживается", Color3.fromRGB(255, 100, 100))
+        addLine("[WARN] Нет HTTP для загрузки внешних команд", Color3.fromRGB(255, 200, 0))
         return 
     end
     
@@ -206,7 +234,7 @@ task.spawn(function()
     if success and response and response.Body then
         local func, err = loadstring(response.Body)
         if not func then
-            addLine("[ERR] Ошибка синтаксиса в commands.x.lua: " .. tostring(err), Color3.fromRGB(255, 100, 100))
+            addLine("[ERR] Синтаксис в commands.x.lua: " .. tostring(err), Color3.fromRGB(255, 100, 100))
             return
         end
         
@@ -215,36 +243,14 @@ task.spawn(function()
             customCommands = result
             local count = 0
             for _ in pairs(customCommands) do count = count + 1 end
-            addLine("[OK] Загружено команд: " .. tostring(count), Color3.fromRGB(0, 255, 100))
+            addLine("[OK] Загружено кастомных команд: " .. tostring(count), Color3.fromRGB(0, 255, 100))
         else
             addLine("[ERR] commands.x.lua вернул не таблицу", Color3.fromRGB(255, 100, 100))
         end
     else
-        addLine("[ERR] Не удалось скачать commands.x.lua", Color3.fromRGB(255, 100, 100))
+        addLine("[WARN] Не удалось скачать commands.x.lua", Color3.fromRGB(255, 200, 0))
     end
 end)
-
-local function sendRequest(cmd)
-    local payload = '{"command": "' .. cmd .. '"}'
-    local success, response = pcall(function()
-        return httpFunc({
-            Url = SERVER_URL,
-            Method = "POST",
-            Headers = { ["Content-Type"] = "application/json" },
-            Body = payload
-        })
-    end)
-    if success and response and response.Body then
-        local output = response.Body:match('"output"%s*:%s*"(.-)"')
-        if output then
-            output = output:gsub("\\n", "\n"):gsub('\\"', '"')
-            return output
-        end
-        return response.Body
-    else
-        return nil, tostring(response)
-    end
-end
 
 InputBox.FocusLost:Connect(function(enterPressed)
     if enterPressed then
@@ -260,6 +266,13 @@ InputBox.FocusLost:Connect(function(enterPressed)
         table.remove(parts, 1)
         local args = parts
         
+        if cmdName == "clear" then
+            for _, child in ipairs(ScrollingFrame:GetChildren()) do
+                if child:IsA("TextLabel") then child:Destroy() end
+            end
+            return
+        end
+        
         if customCommands[cmdName] then
             task.spawn(function()
                 local success, result = pcall(customCommands[cmdName].action, args)
@@ -272,21 +285,21 @@ InputBox.FocusLost:Connect(function(enterPressed)
             return
         end
         
-        task.spawn(function()
-            local result, err = sendRequest(cmdText)
-            if result then
-                if result == "CLEAR" then
-                    for _, child in ipairs(ScrollingFrame:GetChildren()) do
-                        if child:IsA("TextLabel") then child:Destroy() end
-                    end
+        if defaultCommands[cmdName] then
+            task.spawn(function()
+                local success, result = pcall(defaultCommands[cmdName].action, args)
+                if success then
+                    addLine(tostring(result), Color3.fromRGB(255, 255, 255))
                 else
-                    addLine(result, Color3.fromRGB(255, 255, 255))
+                    addLine("Error: " .. tostring(result), Color3.fromRGB(255, 100, 100))
                 end
-            else
-                addLine("Error: " .. tostring(err), Color3.fromRGB(255, 100, 100))
-            end
-            task.wait()
-            ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
-        end)
+            end)
+            return
+        end
+        
+        addLine(cmdName .. ": command not found", Color3.fromRGB(255, 100, 100))
+        
+        task.wait()
+        ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
     end
 end)
