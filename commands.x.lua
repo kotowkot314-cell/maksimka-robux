@@ -68,21 +68,30 @@ return {
     },
     con = {
         action = function(args)
-            if not serverRemote then
-                return "ERROR|No RemoteEvents found in this game."
-            end
-            local success, err = pcall(function()
-                if serverRemote:IsA("RemoteEvent") then
-                    serverRemote:FireServer("xinux_ping")
-                else
-                    serverRemote:InvokeServer("xinux_ping")
+            local foundRemotes = {}
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    table.insert(foundRemotes, v)
                 end
-            end)
-            if success then
-                return "SUCCESS|Server connection successful! Game allows client calls."
-            else
-                return "ERROR|Server connection failed: " .. tostring(err)
             end
+            
+            if #foundRemotes == 0 then
+                return "ERROR|No RemoteEvents/RemoteFunctions found in this game."
+            end
+            
+            local successCount = 0
+            for _, remote in ipairs(foundRemotes) do
+                local ok = pcall(function()
+                    if remote:IsA("RemoteEvent") then
+                        remote:FireServer("ping")
+                    else
+                        remote:InvokeServer("ping")
+                    end
+                end)
+                if ok then successCount = successCount + 1 end
+            end
+            
+            return "SUCCESS|Pinged " .. successCount .. " remotes. If admin didn't work, server has an anticheat."
         end
     },
     sendfile = {
@@ -148,22 +157,7 @@ return {
     },
     admin = {
         action = function(args)
-            if not serverRemote then
-                return "ERROR|No server connection. Cannot open admin panel."
-            end
-            
-            local testSuccess = pcall(function()
-                serverRemote:FireServer("xinux_admin_check")
-            end)
-            
-            if not testSuccess then
-                return "ERROR|Server rejected the request. Anticheat is active."
-            end
-            
-            if activeLoops.admin then
-                return "ERROR|Admin panel is already open."
-            end
-            
+            if activeLoops.admin then return "ERROR|Admin panel is already open." end
             activeLoops.admin = true
             
             local gui = Instance.new("ScreenGui")
@@ -172,29 +166,24 @@ return {
             gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
             
             local frame = Instance.new("Frame")
-            frame.Size = UDim2.new(0, 250, 0, 320)
-            frame.Position = UDim2.new(0.5, -125, 0.5, -160)
+            frame.Size = UDim2.new(0, 300, 0, 400)
+            frame.Position = UDim2.new(0.5, -150, 0.5, -200)
             frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-            frame.BorderSizePixel = 0
             frame.Active = true
             frame.Draggable = true
             frame.Parent = gui
             
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 8)
-            corner.Parent = frame
-            
             local title = Instance.new("TextLabel")
             title.Size = UDim2.new(1, 0, 0, 30)
             title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-            title.Text = "xinux | ADMIN"
+            title.Text = "xinux | ADMIN (Bypass Mode)"
             title.TextColor3 = Color3.fromRGB(255, 255, 255)
             title.Font = Enum.Font.Code
             title.Parent = frame
             
             local close = Instance.new("TextButton")
-            close.Size = UDim2.new(0, 25, 0, 25)
-            close.Position = UDim2.new(1, -25, 0, 0)
+            close.Size = UDim2.new(0, 30, 0, 30)
+            close.Position = UDim2.new(1, -30, 0, 0)
             close.BackgroundTransparency = 1
             close.Text = "X"
             close.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -204,7 +193,37 @@ return {
                 activeLoops.admin = false
             end)
             
-            local function makeBtn(text, y, callback)
+            local function sendCmd(cmdName)
+                local targetRemote = nil
+                for _, v in ipairs(game:GetDescendants()) do
+                    if v:IsA("RemoteEvent") and (v.Name:lower():find("admin") or v.Name:lower():find("cmd") or v.Name:lower():find("command")) then
+                        targetRemote = v
+                        break
+                    end
+                end
+                
+                if not targetRemote then
+                    game.StarterGui:SetCore("SendNotification", {Title = "xinux", Text = "No admin RemoteEvent found!"})
+                    return
+                end
+                
+                local formats = {
+                    {cmdName}, 
+                    {cmdName, game.Players.LocalPlayer.Name}, 
+                    {{Command = cmdName, Target = game.Players.LocalPlayer.Name}},
+                    {game.Players.LocalPlayer, cmdName}
+                }
+                
+                for _, fmt in ipairs(formats) do
+                    pcall(function()
+                        targetRemote:FireServer(unpack(fmt))
+                    end)
+                end
+                
+                game.StarterGui:SetCore("SendNotification", {Title = "xinux", Text = "Sent: " .. cmdName})
+            end
+            
+            local function makeBtn(text, y, cmd)
                 local btn = Instance.new("TextButton")
                 btn.Size = UDim2.new(1, -20, 0, 35)
                 btn.Position = UDim2.new(0, 10, 0, y)
@@ -213,39 +232,19 @@ return {
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 btn.Font = Enum.Font.Code
                 btn.Parent = frame
-                local c = Instance.new("UICorner")
-                c.CornerRadius = UDim.new(0, 4)
-                c.Parent = btn
-                btn.MouseButton1Click:Connect(callback)
-                return btn
+                btn.MouseButton1Click:Connect(function()
+                    sendCmd(cmd)
+                end)
             end
             
-            makeBtn("Kick All (Server)", 40, function()
-                serverRemote:FireServer("kick_all")
-            end)
+            makeBtn("Kick All", 40, "kick_all")
+            makeBtn("God Mode", 85, "god")
+            makeBtn("Crash Server", 130, "crash")
+            makeBtn("Teleport All", 175, "tp_all")
+            makeBtn("Unban Me", 220, "unban")
+            makeBtn("Close", 265, function() gui:Destroy() activeLoops.admin = false end)
             
-            makeBtn("Teleport All to Me", 85, function()
-                serverRemote:FireServer("tp_all", game.Players.LocalPlayer.Name)
-            end)
-            
-            makeBtn("Give God Mode", 130, function()
-                serverRemote:FireServer("god", game.Players.LocalPlayer.Name)
-            end)
-            
-            makeBtn("Delete Server", 175, function()
-                serverRemote:FireServer("crash")
-            end)
-            
-            makeBtn("Restart Server", 220, function()
-                serverRemote:FireServer("restart")
-            end)
-            
-            makeBtn("Close Panel", 265, function()
-                gui:Destroy()
-                activeLoops.admin = false
-            end)
-            
-            return "SUCCESS|Admin panel opened. Buttons send real commands to server."
+            return "SUCCESS|Admin panel opened in Bypass Mode. Check notifications for logs."
         end
     },
     accheck = {
