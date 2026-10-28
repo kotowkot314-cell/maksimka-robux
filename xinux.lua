@@ -1,19 +1,34 @@
+-- xinux v2 | Terminal + Real Filesystem + Exploits
+-- Compatible with Delta, Wave, Solara, Fluxus, Synapse and others
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
 
 local executorName = "Unknown"
 local httpFunc = nil
+local FS = {
+    writefile = nil,
+    readfile = nil,
+    listfiles = nil,
+    isfile = nil,
+    isfolder = nil,
+    makefolder = nil,
+    delfile = nil,
+    delfolder = nil,
+}
 
-if identifyexecutor then
-    local ok, name = pcall(identifyexecutor)
-    if ok then executorName = name end
-elseif getexecutorname then
-    local ok, name = pcall(getexecutorname)
-    if ok then executorName = name end
-end
+pcall(function()
+    if identifyexecutor then
+        executorName = identifyexecutor()
+    elseif getexecutorname then
+        executorName = getexecutorname()
+    end
+end)
 
 if syn and syn.request then
     httpFunc = syn.request
@@ -27,289 +42,301 @@ elseif http_request then
     httpFunc = http_request
 end
 
-if executorName == "Unknown" and httpFunc then
-    executorName = "Supported Executor"
+local function tryGet(name, ...)
+    local candidates = {name, ...}
+    for _, n in ipairs(candidates) do
+        local ok, fn = pcall(function() return getfenv()[n] or _G[n] end)
+        if ok and type(fn) == "function" then return fn end
+    end
+    return nil
+end
+
+FS.writefile  = tryGet("writefile", "writefileasync")
+FS.readfile   = tryGet("readfile")
+FS.listfiles  = tryGet("listfiles")
+FS.isfile     = tryGet("isfile")
+FS.isfolder   = tryGet("isfolder")
+FS.makefolder = tryGet("makefolder", "makedir")
+FS.delfile    = tryGet("delfile", "deletefile")
+FS.delfolder  = tryGet("delfolder", "deletedir")
+
+local hasFS = FS.writefile and FS.readfile and FS.listfiles and FS.makefolder
+
+local ROOT = "xinux/"
+local cwd = ROOT
+
+local function ensureRoot()
+    if not hasFS then return false end
+    if not FS.isfolder(ROOT) then
+        FS.makefolder(ROOT)
+    end
+    if not FS.isfile(ROOT .. "welcome.txt") then
+        FS.writefile(ROOT .. "welcome.txt", [[Welcome to xinux!
+This is a real terminal with filesystem support.
+
+Type "help" to see all commands.
+Type "ls" to list files.
+
+Enjoy.]])
+    end
+    return true
 end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "xinux_Terminal"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
-local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Size = UDim2.new(0, 100, 0, 100)
-LoadingFrame.Position = UDim2.new(0.5, -50, 0.5, -50)
-LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-LoadingFrame.BorderSizePixel = 0
-LoadingFrame.Parent = ScreenGui
-Instance.new("UICorner", LoadingFrame).CornerRadius = UDim.new(0, 8)
-
-local LoadStroke = Instance.new("UIStroke")
-LoadStroke.Color = Color3.fromRGB(0, 255, 100)
-LoadStroke.Thickness = 2
-LoadStroke.Parent = LoadingFrame
-
-local Spinner = Instance.new("Frame")
-Spinner.Size = UDim2.new(0, 40, 0, 40)
-Spinner.Position = UDim2.new(0.5, -20, 0.5, -20)
-Spinner.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-Spinner.BorderSizePixel = 0
-Spinner.Parent = LoadingFrame
-Instance.new("UICorner", Spinner).CornerRadius = UDim.new(1, 0)
-
-local SpinnerHole = Instance.new("Frame")
-SpinnerHole.Size = UDim2.new(0, 30, 0, 30)
-SpinnerHole.Position = UDim2.new(0.5, -15, 0.5, -15)
-SpinnerHole.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-SpinnerHole.BorderSizePixel = 0
-SpinnerHole.Parent = LoadingFrame
-Instance.new("UICorner", SpinnerHole).CornerRadius = UDim.new(1, 0)
-
-local SpinnerPiece = Instance.new("Frame")
-SpinnerPiece.Size = UDim2.new(0, 40, 0, 20)
-SpinnerPiece.Position = UDim2.new(0.5, -20, 0.5, -20)
-SpinnerPiece.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-SpinnerPiece.BorderSizePixel = 0
-SpinnerPiece.Parent = LoadingFrame
-
-task.spawn(function()
-    while LoadingFrame.Parent do
-        for i = 1, 360, 10 do
-            if not LoadingFrame.Parent then break end
-            SpinnerPiece.Rotation = i
-            task.wait(0.02)
-        end
-    end
-end)
-
-task.wait(3)
-LoadingFrame:Destroy()
-
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 600, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+MainFrame.Size = UDim2.new(0, 620, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 6)
 
 local Stroke = Instance.new("UIStroke")
-Stroke.Color = Color3.fromRGB(60, 60, 80)
+Stroke.Color = Color3.fromRGB(50, 50, 70)
 Stroke.Thickness = 1
 Stroke.Parent = MainFrame
 
 local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 25)
-TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+TopBar.Size = UDim2.new(1, 0, 0, 28)
+TopBar.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
 TopBar.BorderSizePixel = 0
-TopBar.ZIndex = 10
 TopBar.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "xinux"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Text = "xinux  |  " .. executorName
+Title.TextColor3 = Color3.fromRGB(220, 220, 230)
 Title.Font = Enum.Font.Code
-Title.TextSize = 13
-Title.TextXAlignment = Enum.TextXAlignment.Center
-Title.ZIndex = 11
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
 local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 25, 0, 25)
-CloseButton.Position = UDim2.new(1, -25, 0, 0)
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(1, -28, 0, 0)
 CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+CloseButton.Text = "×"
+CloseButton.TextColor3 = Color3.fromRGB(255, 90, 90)
 CloseButton.Font = Enum.Font.Code
-CloseButton.TextSize = 14
-CloseButton.ZIndex = 11
+CloseButton.TextSize = 18
 CloseButton.Parent = TopBar
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
 local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Size = UDim2.new(1, -10, 1, -65)
-ScrollingFrame.Position = UDim2.new(0, 5, 0, 30)
+ScrollingFrame.Size = UDim2.new(1, -12, 1, -68)
+ScrollingFrame.Position = UDim2.new(0, 6, 0, 34)
 ScrollingFrame.BackgroundTransparency = 1
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ScrollingFrame.ScrollBarThickness = 4
-ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
-ScrollingFrame.ZIndex = 10
+ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
 ScrollingFrame.Parent = MainFrame
-Instance.new("UIListLayout", ScrollingFrame).Padding = UDim.new(0, 2)
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 1)
+ListLayout.Parent = ScrollingFrame
 
 local InputFrame = Instance.new("Frame")
-InputFrame.Size = UDim2.new(1, 0, 0, 30)
-InputFrame.Position = UDim2.new(0, 0, 1, -30)
-InputFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+InputFrame.Size = UDim2.new(1, 0, 0, 32)
+InputFrame.Position = UDim2.new(0, 0, 1, -32)
+InputFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 InputFrame.BorderSizePixel = 0
-InputFrame.ZIndex = 10
 InputFrame.Parent = MainFrame
 
 local Prompt = Instance.new("TextLabel")
-Prompt.Size = UDim2.new(0, 90, 1, 0)
-Prompt.Position = UDim2.new(0, 5, 0, 0)
+Prompt.Size = UDim2.new(0, 140, 1, 0)
+Prompt.Position = UDim2.new(0, 8, 0, 0)
 Prompt.BackgroundTransparency = 1
-Prompt.Text = "[bash-5.3]$"
-Prompt.TextColor3 = Color3.fromRGB(0, 255, 100)
+Prompt.Text = "[xinux]$"
+Prompt.TextColor3 = Color3.fromRGB(0, 220, 120)
 Prompt.Font = Enum.Font.Code
 Prompt.TextSize = 14
 Prompt.TextXAlignment = Enum.TextXAlignment.Left
-Prompt.ZIndex = 11
 Prompt.Parent = InputFrame
 
 local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -100, 1, 0)
-InputBox.Position = UDim2.new(0, 95, 0, 0)
+InputBox.Size = UDim2.new(1, -155, 1, 0)
+InputBox.Position = UDim2.new(0, 145, 0, 0)
 InputBox.BackgroundTransparency = 1
 InputBox.Text = ""
-InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.TextColor3 = Color3.fromRGB(240, 240, 245)
 InputBox.Font = Enum.Font.Code
 InputBox.TextSize = 14
 InputBox.TextXAlignment = Enum.TextXAlignment.Left
 InputBox.ClearTextOnFocus = false
-InputBox.ZIndex = 11
 InputBox.Parent = InputFrame
+
+local history = {}
+local historyIndex = 0
+local customCommands = {}
 
 local function addLine(text, color)
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -10, 0, 16)
+    label.Size = UDim2.new(1, -8, 0, 16)
     label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = color or Color3.fromRGB(220, 220, 220)
+    label.Text = tostring(text)
+    label.TextColor3 = color or Color3.fromRGB(210, 210, 220)
     label.Font = Enum.Font.Code
     label.TextSize = 13
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextWrapped = true
-    label.ZIndex = 10
     label.Parent = ScrollingFrame
 end
 
 local function processOutput(text)
+    if type(text) ~= "string" then text = tostring(text) end
     if text:sub(1, 8) == "SUCCESS|" then
-        addLine(text:sub(9), Color3.fromRGB(0, 255, 100))
+        addLine(text:sub(9), Color3.fromRGB(0, 220, 120))
     elseif text:sub(1, 6) == "ERROR|" then
-        addLine(text:sub(7), Color3.fromRGB(255, 100, 100))
+        addLine(text:sub(7), Color3.fromRGB(255, 90, 90))
     elseif text == "CLEAR" then
         for _, child in ipairs(ScrollingFrame:GetChildren()) do
             if child:IsA("TextLabel") then child:Destroy() end
         end
     else
-        addLine(text, Color3.fromRGB(255, 255, 255))
+        for line in text:gmatch("[^\r\n]+") do
+            addLine(line)
+        end
     end
 end
 
-local penguinArt = [[
-       .--.       
-      |o_o |      
-      |:_/ |      
-     //   \ \     
-    (|     | )    
-   /'\_   _/`\    
-   \___)=(___/    
-]]
-
-for line in penguinArt:gmatch("[^\r\n]+") do
-    addLine(line, Color3.fromRGB(255, 255, 255))
+local function updatePrompt()
+    local short = cwd:gsub("^xinux/", ""):gsub("/$", "")
+    if short == "" then short = "~" end
+    Prompt.Text = "[xinux:" .. short .. "]$"
 end
-
-addLine("OS: xinux (Roblox Client)", Color3.fromRGB(255, 255, 255))
-addLine("Kernel: roblox-luau", Color3.fromRGB(255, 255, 255))
-addLine("Executor: " .. executorName, Color3.fromRGB(0, 255, 100))
-addLine("Loading external commands...", Color3.fromRGB(150, 150, 150))
-addLine("")
-
-local customCommands = {}
 
 task.spawn(function()
-    local fetched = false
+    ensureRoot()
+
+    addLine("xinux v2  |  Executor: " .. executorName, Color3.fromRGB(0, 220, 120))
+    if hasFS then
+        addLine("Filesystem: ONLINE  (root = xinux/)", Color3.fromRGB(0, 200, 100))
+    else
+        addLine("Filesystem: OFFLINE  (executor does not support file API)", Color3.fromRGB(255, 160, 50))
+    end
+    addLine("")
+
+    local loaded = false
+
     if httpFunc then
-        local success, response = pcall(function()
-            return httpFunc({ Url = COMMANDS_URL, Method = "GET" })
+        local ok, resp = pcall(function()
+            return httpFunc({Url = COMMANDS_URL, Method = "GET"})
         end)
-        if success and response and response.Body then
-            local func, err = loadstring(response.Body)
-            if func then
-                local ok, result = pcall(func)
-                if ok and type(result) == "table" then
+        if ok and resp and resp.Body then
+            local fn, err = loadstring(resp.Body)
+            if fn then
+                local success, result = pcall(fn)
+                if success and type(result) == "table" then
                     customCommands = result
-                    local count = 0
-                    for _ in pairs(customCommands) do count = count + 1 end
-                    addLine("[OK] Loaded " .. tostring(count) .. " external commands", Color3.fromRGB(0, 255, 100))
-                    fetched = true
+                    loaded = true
+                    addLine("[OK] Commands loaded from GitHub", Color3.fromRGB(0, 220, 120))
                 end
             end
         end
     end
-    
-    if not fetched then
-        local success, response = pcall(function()
-            return game:HttpGet(COMMANDS_URL)
-        end)
-        if success and response then
-            local func = loadstring(response)
-            if func then
-                local ok, result = pcall(func)
-                if ok and type(result) == "table" then
+
+    if not loaded then
+        local ok, body = pcall(function() return game:HttpGet(COMMANDS_URL) end)
+        if ok and body then
+            local fn = loadstring(body)
+            if fn then
+                local success, result = pcall(fn)
+                if success and type(result) == "table" then
                     customCommands = result
-                    local count = 0
-                    for _ in pairs(customCommands) do count = count + 1 end
-                    addLine("[OK] Loaded " .. tostring(count) .. " external commands (HttpGet)", Color3.fromRGB(0, 255, 100))
-                    fetched = true
+                    loaded = true
+                    addLine("[OK] Commands loaded via HttpGet", Color3.fromRGB(0, 220, 120))
                 end
             end
         end
     end
-    
-    if not fetched then
-        addLine("[ERR] Failed to load external commands", Color3.fromRGB(255, 100, 100))
+
+    if not loaded then
+        addLine("[ERR] Failed to load external commands", Color3.fromRGB(255, 90, 90))
+    end
+
+    addLine("Type 'help' for list of commands")
+    addLine("")
+    updatePrompt()
+end)
+
+InputBox.FocusLost:Connect(function(enter)
+    if not enter then return end
+    local text = InputBox.Text
+    if text == "" then return end
+
+    InputBox.Text = ""
+    table.insert(history, text)
+    historyIndex = #history + 1
+
+    addLine(Prompt.Text .. " " .. text, Color3.fromRGB(0, 200, 120))
+
+    local parts = {}
+    for word in text:gmatch("%S+") do
+        table.insert(parts, word)
+    end
+    local cmd = parts[1] and parts[1]:lower()
+    table.remove(parts, 1)
+    local args = parts
+
+    if cmd == "clear" or cmd == "cls" then
+        processOutput("CLEAR")
+        return
+    end
+
+    if customCommands[cmd] then
+        task.spawn(function()
+            local ok, result = pcall(function()
+                return customCommands[cmd].action(args, {
+                    FS = FS,
+                    hasFS = hasFS,
+                    cwd = cwd,
+                    setCwd = function(new) cwd = new end,
+                    ROOT = ROOT,
+                    addLine = addLine,
+                    processOutput = processOutput
+                })
+            end)
+            if ok then
+                processOutput(tostring(result or ""))
+            else
+                processOutput("ERROR|" .. tostring(result))
+            end
+            updatePrompt()
+            task.wait()
+            ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
+        end)
+    else
+        processOutput("ERROR|" .. tostring(cmd) .. ": command not found")
     end
 end)
 
-InputBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local cmdText = InputBox.Text
-        if cmdText == "" then return end
-        InputBox.Text = ""
-        
-        addLine("[bash-5.3]$ " .. cmdText, Color3.fromRGB(0, 255, 100))
-        
-        local parts = {}
-        for word in cmdText:gmatch("%S+") do table.insert(parts, word) end
-        local cmdName = parts[1]
-        table.remove(parts, 1)
-        local args = parts
-        
-        if cmdName == "clear" then
-            for _, child in ipairs(ScrollingFrame:GetChildren()) do
-                if child:IsA("TextLabel") then child:Destroy() end
-            end
-            return
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Up and InputBox:IsFocused() then
+        if historyIndex > 1 then
+            historyIndex = historyIndex - 1
+            InputBox.Text = history[historyIndex] or ""
+            InputBox.CursorPosition = #InputBox.Text + 1
         end
-        
-        if customCommands[cmdName] then
-            task.spawn(function()
-                local success, result = pcall(customCommands[cmdName].action, args)
-                if success then
-                    processOutput(tostring(result))
-                else
-                    processOutput("ERROR|" .. tostring(result))
-                end
-            end)
-            return
+    elseif input.KeyCode == Enum.KeyCode.Down and InputBox:IsFocused() then
+        if historyIndex < #history then
+            historyIndex = historyIndex + 1
+            InputBox.Text = history[historyIndex] or ""
+        else
+            historyIndex = #history + 1
+            InputBox.Text = ""
         end
-        
-        processOutput("ERROR|" .. cmdName .. ": command not found")
-        
-        task.wait()
-        ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.AbsoluteCanvasSize.Y)
     end
 end)
