@@ -1,314 +1,222 @@
 local activeLoops = {}
-local serverRemote = nil
-
-for _, v in ipairs(game:GetDescendants()) do
-    if v:IsA("RemoteEvent") and (v.Name:lower():find("admin") or v.Name:lower():find("command") or v.Name:lower():find("chat")) then
-        serverRemote = v
-        break
-    end
-end
-if not serverRemote then
-    for _, v in ipairs(game:GetDescendants()) do
-        if v:IsA("RemoteEvent") then
-            serverRemote = v
-            break
-        end
-    end
-end
 
 return {
     help = {
-        action = function(args)
-            return "Commands: help, clear, players, teleport, ping, cnkt, fly, brk, bld, f3x, infopipl, antf, anfl, con, sendfile, bsod, admin, accheck, say, stp, scan, crash"
+        action = function(args, ctx)
+            return [[Commands:
+ls, cd, pwd, cat, echo, mkdir, rm, touch, clear
+players, teleport, ping, fly, brk, bld, f3x, antf, anfl
+infopipl, scan, crash, stp, accheck, con, say, admin, exec
+help]]
         end
     },
+
+    clear = {
+        action = function() return "CLEAR" end
+    },
+
+    pwd = {
+        action = function(args, ctx)
+            return ctx.cwd
+        end
+    },
+
+    ls = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            local path = ctx.cwd
+            if args[1] then
+                if args[1]:sub(1,1) == "/" then
+                    path = ctx.ROOT .. args[1]:sub(2)
+                else
+                    path = ctx.cwd .. args[1]
+                end
+            end
+            if not path:match("/$") then path = path .. "/" end
+            local ok, files = pcall(ctx.FS.listfiles, path)
+            if not ok or not files then return "ERROR|Cannot list directory" end
+            if #files == 0 then return "(empty)" end
+            local result = {}
+            for _, f in ipairs(files) do
+                local name = f:match("([^/]+)$") or f
+                if ctx.FS.isfolder(f) then
+                    table.insert(result, name .. "/")
+                else
+                    table.insert(result, name)
+                end
+            end
+            table.sort(result)
+            return table.concat(result, "\n")
+        end
+    },
+
+    cd = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            local target = args[1]
+            if not target or target == "\~" or target == "/" then
+                ctx.setCwd(ctx.ROOT)
+                return "SUCCESS|" .. ctx.ROOT
+            end
+            local newPath
+            if target == ".." then
+                newPath = ctx.cwd:match("(.*/).*/") or ctx.ROOT
+            elseif target:sub(1,1) == "/" then
+                newPath = ctx.ROOT .. target:sub(2)
+            else
+                newPath = ctx.cwd .. target
+            end
+            if not newPath:match("/$") then newPath = newPath .. "/" end
+            if not newPath:find(ctx.ROOT, 1, true) then
+                return "ERROR|Access denied (outside xinux/)"
+            end
+            if ctx.FS.isfolder(newPath) then
+                ctx.setCwd(newPath)
+                return "SUCCESS|" .. newPath
+            else
+                return "ERROR|No such directory"
+            end
+        end
+    },
+
+    cat = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            if not args[1] then return "ERROR|Usage: cat <file>" end
+            local path
+            if args[1]:sub(1,1) == "/" then
+                path = ctx.ROOT .. args[1]:sub(2)
+            else
+                path = ctx.cwd .. args[1]
+            end
+            if not ctx.FS.isfile(path) then return "ERROR|File not found" end
+            local ok, content = pcall(ctx.FS.readfile, path)
+            if ok then return content else return "ERROR|Cannot read file" end
+        end
+    },
+
+    echo = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            if #args < 2 or args[#args-1] \~= ">" then
+                return table.concat(args, " ")
+            end
+            local filename = args[#args]
+            local content = table.concat(args, " ", 1, #args-2)
+            local path = ctx.cwd .. filename
+            local ok = pcall(ctx.FS.writefile, path, content)
+            if ok then return "SUCCESS|Written to " .. filename else return "ERROR|Write failed" end
+        end
+    },
+
+    mkdir = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            if not args[1] then return "ERROR|Usage: mkdir <name>" end
+            local path = ctx.cwd .. args[1]
+            if ctx.FS.isfolder(path) then return "ERROR|Already exists" end
+            local ok = pcall(ctx.FS.makefolder, path)
+            if ok then return "SUCCESS|Created " .. args[1] else return "ERROR|Failed to create folder" end
+        end
+    },
+
+    rm = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            if not args[1] then return "ERROR|Usage: rm <file/folder>" end
+            local path = ctx.cwd .. args[1]
+            if ctx.FS.isfile(path) then
+                local ok = pcall(ctx.FS.delfile, path)
+                if ok then return "SUCCESS|Deleted file " .. args[1] else return "ERROR|Delete failed" end
+            elseif ctx.FS.isfolder(path) then
+                local ok = pcall(ctx.FS.delfolder, path)
+                if ok then return "SUCCESS|Deleted folder " .. args[1] else return "ERROR|Delete failed" end
+            else
+                return "ERROR|Not found"
+            end
+        end
+    },
+
+    touch = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            if not args[1] then return "ERROR|Usage: touch <file>" end
+            local path = ctx.cwd .. args[1]
+            local ok = pcall(ctx.FS.writefile, path, "")
+            if ok then return "SUCCESS|Created " .. args[1] else return "ERROR|Failed" end
+        end
+    },
+
+    exec = {
+        action = function(args, ctx)
+            if not ctx.hasFS then return "ERROR|Filesystem not available" end
+            if not args[1] then return "ERROR|Usage: exec <file.lua>" end
+            local path = ctx.cwd .. args[1]
+            if not ctx.FS.isfile(path) then return "ERROR|File not found" end
+            local ok, content = pcall(ctx.FS.readfile, path)
+            if not ok then return "ERROR|Cannot read file" end
+            local fn, err = loadstring(content)
+            if not fn then return "ERROR|Syntax error: " .. tostring(err) end
+            local success, result = pcall(fn)
+            if success then
+                return "SUCCESS|Executed " .. args[1] .. (result and ("\n" .. tostring(result)) or "")
+            else
+                return "ERROR|" .. tostring(result)
+            end
+        end
+    },
+
     ping = {
-        action = function(args)
+        action = function()
             local start = tick()
             pcall(function() game:HttpGet("https://roblox.com") end)
-            return "Pong! Latency: " .. math.floor((tick() - start) * 1000) .. "ms"
+            return "Pong! " .. math.floor((tick() - start) * 1000) .. "ms"
         end
     },
-    clear = {
-        action = function(args) return "CLEAR" end
-    },
+
     players = {
-        action = function(args)
+        action = function()
             local list = {}
-            for _, p in ipairs(game.Players:GetPlayers()) do 
-                table.insert(list, p.Name .. " (" .. p.UserId .. ")") 
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                table.insert(list, p.Name .. " (" .. p.UserId .. ")")
             end
             return table.concat(list, "\n")
         end
     },
+
     teleport = {
         action = function(args)
             local target = args[1]
             if not target then return "ERROR|Usage: teleport <name>" end
             local lp = game.Players.LocalPlayer
             local t = game.Players:FindFirstChild(target)
-            if t and t.Character and lp.Character then
+            if t and t.Character and lp.Character and lp.Character.PrimaryPart and t.Character.PrimaryPart then
                 lp.Character:SetPrimaryPartCFrame(t.Character.PrimaryPart.CFrame)
                 return "SUCCESS|Teleported to " .. target
             end
             return "ERROR|Player not found"
         end
     },
-    kick = {
-        action = function(args)
-            local target = args[1]
-            if not target then return "ERROR|Usage: kick <name>" end
-            local t = game.Players:FindFirstChild(target)
-            if t then 
-                t:Kick("Kicked by xinux") 
-                return "SUCCESS|Kicked " .. target 
-            end
-            return "ERROR|Player not found"
-        end
-    },
-    con = {
-        action = function(args)
-            if not serverRemote then
-                return "ERROR|No RemoteEvents found in this game."
-            end
-            local success, err = pcall(function()
-                if serverRemote:IsA("RemoteEvent") then
-                    serverRemote:FireServer("xinux_ping")
-                else
-                    serverRemote:InvokeServer("xinux_ping")
-                end
-            end)
-            if success then
-                return "SUCCESS|Server connection successful! Game allows client calls."
-            else
-                return "ERROR|Server connection failed: " .. tostring(err)
-            end
-        end
-    },
-    sendfile = {
-        action = function(args)
-            local filename = args[1] or "xinux_data.txt"
-            local content = args[2] or "xinux_log"
-            local dataToSend = filename .. "::" .. content
-            
-            if not serverRemote then
-                return "ERROR|No server connection. Cannot send file."
-            end
-            
-            local success, err = pcall(function()
-                serverRemote:FireServer("file_upload", dataToSend)
-            end)
-            
-            if success then
-                return "SUCCESS|File created and sent to server: " .. filename
-            else
-                return "ERROR|Failed to send file: " .. tostring(err)
-            end
-        end
-    },
-    bsod = {
-        action = function(args)
-            if not serverRemote then
-                return "ERROR|No server connection. BSOD requires a RemoteEvent."
-            end
-            
-            local success = pcall(function()
-                serverRemote:FireServer("bsod", "BLUE SCREEN OF DEATH")
-            end)
-            
-            if success then
-                local gui = Instance.new("ScreenGui")
-                gui.Name = "xinux_BSOD"
-                gui.IgnoreGuiInset = true
-                gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-                
-                local frame = Instance.new("Frame")
-                frame.Size = UDim2.new(1, 0, 1, 0)
-                frame.BackgroundColor3 = Color3.fromRGB(0, 0, 170)
-                frame.BorderSizePixel = 0
-                frame.Parent = gui
-                
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, -40, 1, -40)
-                label.Position = UDim2.new(0, 20, 0, 20)
-                label.BackgroundTransparency = 1
-                label.Text = "xinux :(\n\nYour PC ran into a problem and needs to restart.\n\n0% complete"
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.Font = Enum.Font.Code
-                label.TextSize = 24
-                label.TextWrapped = true
-                label.TextXAlignment = Enum.TextXAlignment.Left
-                label.Parent = frame
-                
-                return "SUCCESS|BSOD triggered locally and sent to server."
-            else
-                return "ERROR|Failed to trigger BSOD via server."
-            end
-        end
-    },
-    admin = {
-        action = function(args)
-            if activeLoops.admin then return "ERROR|Admin panel is already open." end
-            activeLoops.admin = true
-            
-            local gui = Instance.new("ScreenGui")
-            gui.Name = "xinux_Admin_Panel"
-            gui.ResetOnSpawn = false
-            gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-            
-            local frame = Instance.new("Frame")
-            frame.Size = UDim2.new(0, 300, 0, 400)
-            frame.Position = UDim2.new(0.5, -150, 0.5, -200)
-            frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-            frame.Active = true
-            frame.Draggable = true
-            frame.Parent = gui
-            
-            local title = Instance.new("TextLabel")
-            title.Size = UDim2.new(1, 0, 0, 30)
-            title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-            title.Text = "xinux | ADMIN (Bypass Mode)"
-            title.TextColor3 = Color3.fromRGB(255, 255, 255)
-            title.Font = Enum.Font.Code
-            title.Parent = frame
-            
-            local close = Instance.new("TextButton")
-            close.Size = UDim2.new(0, 30, 0, 30)
-            close.Position = UDim2.new(1, -30, 0, 0)
-            close.BackgroundTransparency = 1
-            close.Text = "X"
-            close.TextColor3 = Color3.fromRGB(255, 100, 100)
-            close.Parent = title
-            close.MouseButton1Click:Connect(function()
-                gui:Destroy()
-                activeLoops.admin = false
-            end)
-            
-            local function sendCmd(cmdName)
-                local targetRemote = nil
-                for _, v in ipairs(game:GetDescendants()) do
-                    if v:IsA("RemoteEvent") and (v.Name:lower():find("admin") or v.Name:lower():find("cmd") or v.Name:lower():find("command")) then
-                        targetRemote = v
-                        break
-                    end
-                end
-                
-                if not targetRemote then
-                    game.StarterGui:SetCore("SendNotification", {Title = "xinux", Text = "No admin RemoteEvent found!"})
-                    return
-                end
-                
-                local formats = {
-                    {cmdName}, 
-                    {cmdName, game.Players.LocalPlayer.Name}, 
-                    {{Command = cmdName, Target = game.Players.LocalPlayer.Name}},
-                    {game.Players.LocalPlayer, cmdName}
-                }
-                
-                for _, fmt in ipairs(formats) do
-                    pcall(function()
-                        targetRemote:FireServer(unpack(fmt))
-                    end)
-                end
-                
-                game.StarterGui:SetCore("SendNotification", {Title = "xinux", Text = "Sent: " .. cmdName})
-            end
-            
-            local function makeBtn(text, y, cmd)
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.new(1, -20, 0, 35)
-                btn.Position = UDim2.new(0, 10, 0, y)
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-                btn.Text = text
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                btn.Font = Enum.Font.Code
-                btn.Parent = frame
-                btn.MouseButton1Click:Connect(function()
-                    sendCmd(cmd)
-                end)
-            end
-            
-            makeBtn("Kick All", 40, "kick_all")
-            makeBtn("God Mode", 85, "god")
-            makeBtn("Crash Server", 130, "crash")
-            makeBtn("Teleport All", 175, "tp_all")
-            makeBtn("Unban Me", 220, "unban")
-            makeBtn("Close", 265, function() gui:Destroy() activeLoops.admin = false end)
-            
-            return "SUCCESS|Admin panel opened in Bypass Mode. Check notifications for logs."
-        end
-    },
-    accheck = {
-        action = function(args)
-            local detected = {}
-            
-            if game:GetService("Players").LocalPlayer:GetAttribute("Anticheat") or game.Workspace:FindFirstChild("Anticheat") or game.ServerScriptService:FindFirstChild("Anticheat") then
-                table.insert(detected, "Anticheat script found in Workspace/ServerScriptService")
-            end
-            
-            local rCount = 0
-            for _, v in ipairs(game:GetDescendants()) do
-                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                    rCount = rCount + 1
-                end
-            end
-            
-            if rCount > 50 then
-                table.insert(detected, "Many RemoteEvents (" .. rCount .. "), server-side validation likely")
-            end
-            
-            if #detected > 0 then
-                return "SUCCESS|Anticheat detected:\n- " .. table.concat(detected, "\n- ")
-            else
-                return "SUCCESS|No obvious anticheat found. Game may be vulnerable."
-            end
-        end
-    },
-    say = {
-        action = function(args)
-            local msg = table.concat(args, " ")
-            if msg == "" then return "ERROR|Usage: say <message>" end
-            if not serverRemote then return "ERROR|No chat remote found." end
-            
-            local success = pcall(function()
-                serverRemote:FireServer("chat", msg)
-            end)
-            
-            if success then
-                return "SUCCESS|Message sent to server: " .. msg
-            else
-                return "ERROR|Failed to send message."
-            end
-        end
-    },
-    cnkt = {
-        action = function(args)
-            local success, response = pcall(function() return game:HttpGet("https://roblox.com", true) end)
-            if not success then return "ERROR|Connection failed: blocked by game." end
-            return "SUCCESS|Connection successful! Server responded."
-        end
-    },
+
     fly = {
-        action = function(args)
+        action = function(args, ctx)
             local lp = game.Players.LocalPlayer
             local char = lp.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return "ERROR|Character not found" end
-            
+            if activeLoops.fly then return "ERROR|Fly already enabled. Use stp fly" end
             local hrp = char.HumanoidRootPart
             local bv = Instance.new("BodyVelocity")
             bv.Name = "xinuxFly"
             bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
             bv.Velocity = Vector3.new(0, 0, 0)
             bv.Parent = hrp
-            
-            activeLoops.fly = game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+            activeLoops.fly = game:GetService("UserInputService").InputBegan:Connect(function(input)
                 if input.KeyCode == Enum.KeyCode.Space then
                     bv.Velocity = Vector3.new(0, 50, 0)
                 elseif input.KeyCode == Enum.KeyCode.LeftShift then
                     bv.Velocity = Vector3.new(0, -50, 0)
                 end
             end)
-            
             task.spawn(function()
                 while bv.Parent and activeLoops.fly do
                     if not game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) and not game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then
@@ -317,247 +225,322 @@ return {
                     task.wait()
                 end
             end)
-            
-            return "SUCCESS|Fly enabled! (Space = Up, Shift = Down)"
+            return "SUCCESS|Fly enabled (Space = up, Shift = down)"
         end
     },
+
     brk = {
-        action = function(args)
+        action = function()
             local target = game.Players.LocalPlayer:GetMouse().Target
             if target then
                 target:Destroy()
                 return "SUCCESS|Destroyed: " .. target.Name
             end
-            return "ERROR|Look at a part to break it"
+            return "ERROR|Look at a part"
         end
     },
+
     bld = {
-        action = function(args)
+        action = function()
             local mouse = game.Players.LocalPlayer:GetMouse()
             local p = Instance.new("Part")
             p.Size = Vector3.new(4, 4, 4)
-            p.Position = mouse.Hit.p
+            p.Position = mouse.Hit.Position
             p.Anchored = true
             p.Parent = workspace
-            return "SUCCESS|Built block at mouse position"
+            return "SUCCESS|Built block"
         end
     },
+
     f3x = {
-        action = function(args)
-            if activeLoops.f3x then
-                return "ERROR|F3X is already running. Use 'stp f3x' to stop."
-            end
-            
+        action = function()
+            if activeLoops.f3x then return "ERROR|F3X already running. Use stp f3x" end
             local lp = game.Players.LocalPlayer
             local mouse = lp:GetMouse()
-            local selected = nil
-            local dragging = false
-            local dragPos = nil
-            
+            local selected, dragging, dragPos = nil, false, nil
             activeLoops.f3x = true
-            
             mouse.Button1Down:Connect(function()
                 if not activeLoops.f3x then return end
                 local target = mouse.Target
-                if target and target ~= selected then
+                if target and target \~= selected then
                     selected = target
-                    dragPos = mouse.Hit.p
+                    dragPos = mouse.Hit.Position
                 elseif target == selected then
                     dragging = true
                 end
             end)
-            
-            mouse.Button1Up:Connect(function()
-                dragging = false
-            end)
-            
+            mouse.Button1Up:Connect(function() dragging = false end)
             game:GetService("RunService").RenderStepped:Connect(function()
                 if not activeLoops.f3x then return end
                 if dragging and selected and dragPos then
-                    local delta = mouse.Hit.p - dragPos
-                    if selected.Anchored then
-                        selected.CFrame = selected.CFrame + delta
-                    else
-                        selected.Position = selected.Position + delta
+                    local delta = mouse.Hit.Position - dragPos
+                    if selected:IsA("BasePart") then
+                        if selected.Anchored then
+                            selected.CFrame = selected.CFrame + delta
+                        else
+                            selected.Position = selected.Position + delta
+                        end
                     end
-                    dragPos = mouse.Hit.p
+                    dragPos = mouse.Hit.Position
                 end
             end)
-            
-            return "SUCCESS|F3X enabled! Click and drag parts. Use 'stp f3x' to stop."
+            return "SUCCESS|F3X enabled. Click and drag parts. stp f3x to stop"
         end
     },
+
+    antf = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            if not lp.Character then return "ERROR|Character not found" end
+            for _, v in ipairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.LocalTransparencyModifier = 1
+                    v.Transparency = 1
+                end
+            end
+            return "SUCCESS|Invisible enabled"
+        end
+    },
+
+    anfl = {
+        action = function()
+            if activeLoops.anfl then return "ERROR|Already running. Use stp anfl" end
+            local lp = game.Players.LocalPlayer
+            activeLoops.anfl = game:GetService("RunService").Stepped:Connect(function()
+                local char = lp.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                local nearby = false
+                for _, p in ipairs(game.Players:GetPlayers()) do
+                    if p \~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        if (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude <= 10 then
+                            nearby = true
+                            break
+                        end
+                    end
+                end
+                for _, v in ipairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = not nearby
+                    end
+                end
+            end)
+            return "SUCCESS|Anfl enabled (noclip near players)"
+        end
+    },
+
     infopipl = {
-        action = function(args)
+        action = function()
             local info = {}
             for _, p in ipairs(game.Players:GetPlayers()) do
                 local char = p.Character
-                local hum = char and char:FindFirstChild("Humanoid")
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                
                 local health = hum and math.floor(hum.Health) or "?"
-                local pos = hrp and string.format("X: %d, Y: %d, Z: %d", hrp.Position.X, hrp.Position.Y, hrp.Position.Z) or "No Position"
-                local team = p.Team and p.Team.Name or "None"
-                
-                table.insert(info, string.format("%s (ID: %d)\n  Health: %s | Team: %s\n  Pos: %s", p.Name, p.UserId, health, team, pos))
+                local pos = hrp and string.format("%.0f %.0f %.0f", hrp.Position.X, hrp.Position.Y, hrp.Position.Z) or "none"
+                table.insert(info, string.format("%s | HP: %s | Pos: %s", p.Name, health, pos))
             end
-            return "SUCCESS|\n" .. table.concat(info, "\n\n")
+            return table.concat(info, "\n")
         end
     },
-    antf = {
-        action = function(args)
-            local lp = game.Players.LocalPlayer
-            if lp.Character then
-                for _, v in ipairs(lp.Character:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.LocalTransparencyModifier = 1
-                        v.Transparency = 1
-                    end
-                end
-                return "SUCCESS|Antf enabled: Your character is now invisible."
-            end
-            return "ERROR|Character not found"
-        end
-    },
-    anfl = {
-        action = function(args)
-            if activeLoops.anfl then
-                return "ERROR|Anfl is already running. Use 'stp anfl' to stop."
-            end
-            
-            local lp = game.Players.LocalPlayer
-            local runService = game:GetService("RunService")
-            
-            activeLoops.anfl = runService.Stepped:Connect(function()
-                local char = lp.Character
-                if char then
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        local playerNearby = false
-                        for _, p in ipairs(game.Players:GetPlayers()) do
-                            if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                                local dist = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                                if dist <= 10 then
-                                    playerNearby = true
-                                    break
-                                end
-                            end
-                        end
-                        
-                        for _, v in ipairs(char:GetDescendants()) do
-                            if v:IsA("BasePart") then
-                                v.CanCollide = not playerNearby
-                            end
-                        end
-                    end
-                end
-            end)
-            
-            return "SUCCESS|Anfl enabled! (Active only when players are within 10 studs)"
-        end
-    },
+
     scan = {
-        action = function(args)
+        action = function()
             local found = {}
             for _, v in ipairs(game:GetDescendants()) do
-                if v:IsA("RemoteEvent") then
-                    table.insert(found, v.Name .. " [" .. v:GetFullName() .. "]")
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    table.insert(found, v:GetFullName())
                 end
             end
-            if #found == 0 then
-                return "ERROR|No RemoteEvents found in this game."
-            end
-            return "SUCCESS|Found " .. #found .. " RemoteEvents:\n" .. table.concat(found, "\n")
+            if #found == 0 then return "ERROR|No remotes found" end
+            return "Found " .. #found .. " remotes:\n" .. table.concat(found, "\n")
         end
     },
+
     crash = {
-        action = function(args)
-            if activeLoops.crash then
-                return "ERROR|Crash already running!"
-            end
-            
+        action = function()
+            if activeLoops.crash then return "ERROR|Already running" end
             local targets = {}
             for _, v in ipairs(game:GetDescendants()) do
                 if v:IsA("RemoteEvent") then
                     table.insert(targets, v)
                 end
             end
-            
-            if #targets == 0 then return "ERROR|No RemoteEvents found." end
-            
+            if #targets == 0 then return "ERROR|No RemoteEvents" end
             activeLoops.crash = true
-            local sentCount = 0
-            
-            for i = 1, 50 do
+            for i = 1, 40 do
                 task.spawn(function()
                     while activeLoops.crash do
                         for _, remote in ipairs(targets) do
-                            if not activeLoops.crash then break end
-                            pcall(function()
-                                remote:FireServer("lag")
-                            end)
-                            sentCount = sentCount + 1
+                            pcall(function() remote:FireServer("lag") end)
                         end
                         task.wait()
                     end
                 end)
             end
-            
-            task.delay(10, function()
-                activeLoops.crash = false
-            end)
-            
-            return "SUCCESS|ULTRA CRASH started (50 threads). Auto-stops in 10s. Sent: " .. sentCount
+            task.delay(8, function() activeLoops.crash = false end)
+            return "SUCCESS|Crash started (auto-stop 8s)"
         end
     },
+
+    accheck = {
+        action = function()
+            local detected = {}
+            local rCount = 0
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    rCount = rCount + 1
+                end
+            end
+            if rCount > 40 then
+                table.insert(detected, "Many remotes (" .. rCount .. ")")
+            end
+            if game:GetService("Players").LocalPlayer:GetAttribute("Anticheat") then
+                table.insert(detected, "Anticheat attribute found")
+            end
+            if #detected > 0 then
+                return "Possible anticheat:\n- " .. table.concat(detected, "\n- ")
+            end
+            return "No obvious anticheat detected"
+        end
+    },
+
+    con = {
+        action = function()
+            local remote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") then
+                    remote = v
+                    break
+                end
+            end
+            if not remote then return "ERROR|No RemoteEvent found" end
+            local ok = pcall(function() remote:FireServer("xinux_ping") end)
+            if ok then return "SUCCESS|Remote responded" else return "ERROR|Failed to fire remote" end
+        end
+    },
+
+    say = {
+        action = function(args)
+            local msg = table.concat(args, " ")
+            if msg == "" then return "ERROR|Usage: say <message>" end
+            local remote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name:lower():find("chat") or v.Name:lower():find("message")) then
+                    remote = v
+                    break
+                end
+            end
+            if not remote then return "ERROR|No chat remote found" end
+            local ok = pcall(function() remote:FireServer(msg) end)
+            if ok then return "SUCCESS|Sent" else return "ERROR|Failed" end
+        end
+    },
+
+    admin = {
+        action = function()
+            if activeLoops.admin then return "ERROR|Already open" end
+            activeLoops.admin = true
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "xinux_Admin"
+            gui.ResetOnSpawn = false
+            gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(0, 280, 0, 320)
+            frame.Position = UDim2.new(0.5, -140, 0.5, -160)
+            frame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+            frame.Active = true
+            frame.Draggable = true
+            frame.Parent = gui
+            Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, 0, 0, 30)
+            title.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+            title.Text = "xinux admin"
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            title.Font = Enum.Font.Code
+            title.Parent = frame
+            local close = Instance.new("TextButton")
+            close.Size = UDim2.new(0, 30, 0, 30)
+            close.Position = UDim2.new(1, -30, 0, 0)
+            close.BackgroundTransparency = 1
+            close.Text = "X"
+            close.TextColor3 = Color3.fromRGB(255, 90, 90)
+            close.Parent = title
+            close.MouseButton1Click:Connect(function()
+                gui:Destroy()
+                activeLoops.admin = false
+            end)
+            local function tryFire(cmd)
+                for _, v in ipairs(game:GetDescendants()) do
+                    if v:IsA("RemoteEvent") and (v.Name:lower():find("admin") or v.Name:lower():find("cmd") or v.Name:lower():find("command")) then
+                        pcall(function() v:FireServer(cmd) end)
+                        pcall(function() v:FireServer(cmd, game.Players.LocalPlayer.Name) end)
+                        pcall(function() v:FireServer({Command = cmd}) end)
+                    end
+                end
+            end
+            local function btn(text, y, cmd)
+                local b = Instance.new("TextButton")
+                b.Size = UDim2.new(1, -20, 0, 32)
+                b.Position = UDim2.new(0, 10, 0, y)
+                b.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+                b.Text = text
+                b.TextColor3 = Color3.fromRGB(255, 255, 255)
+                b.Font = Enum.Font.Code
+                b.Parent = frame
+                b.MouseButton1Click:Connect(function() tryFire(cmd) end)
+            end
+            btn("Kick All", 40, "kick_all")
+            btn("Godmode", 80, "god")
+            btn("Crash", 120, "crash")
+            btn("TP All", 160, "tp_all")
+            btn("Unban", 200, "unban")
+            return "SUCCESS|Admin panel opened"
+        end
+    },
+
     stp = {
         action = function(args)
             local target = args[1]
-            if not target then return "ERROR|Usage: stp <command_name>" end
-            
+            if not target then return "ERROR|Usage: stp <name>" end
             if target == "fly" and activeLoops.fly then
                 activeLoops.fly:Disconnect()
                 activeLoops.fly = nil
-                local lp = game.Players.LocalPlayer
-                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                    local bv = lp.Character.HumanoidRootPart:FindFirstChild("xinuxFly")
+                local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local bv = hrp:FindFirstChild("xinuxFly")
                     if bv then bv:Destroy() end
                 end
-                return "SUCCESS|Fly stopped."
+                return "SUCCESS|Fly stopped"
             end
-            
-            if target == "f3x" and activeLoops.f3x then
+            if target == "f3x" then
                 activeLoops.f3x = false
-                return "SUCCESS|F3X stopped."
+                return "SUCCESS|F3X stopped"
             end
-
             if target == "anfl" and activeLoops.anfl then
                 activeLoops.anfl:Disconnect()
                 activeLoops.anfl = nil
-                local lp = game.Players.LocalPlayer
-                if lp.Character then
-                    for _, v in ipairs(lp.Character:GetDescendants()) do
-                        if v:IsA("BasePart") then
-                            v.CanCollide = true
-                        end
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, v in ipairs(char:GetDescendants()) do
+                        if v:IsA("BasePart") then v.CanCollide = true end
                     end
                 end
-                return "SUCCESS|Anfl stopped. Collision restored."
+                return "SUCCESS|Anfl stopped"
             end
-            
-            if target == "admin" and activeLoops.admin then
-                activeLoops.admin = false
-                local gui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("xinux_Admin_Panel")
-                if gui then gui:Destroy() end
-                return "SUCCESS|Admin panel closed."
-            end
-            
-            if target == "crash" and activeLoops.crash then
+            if target == "crash" then
                 activeLoops.crash = false
-                return "SUCCESS|Crash sequence stopped."
+                return "SUCCESS|Crash stopped"
             end
-            
-            return "ERROR|Command not running or not found: " .. tostring(target)
+            if target == "admin" then
+                activeLoops.admin = false
+                local gui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("xinux_Admin")
+                if gui then gui:Destroy() end
+                return "SUCCESS|Admin closed"
+            end
+            return "ERROR|Not running: " .. target
         end
     }
 }
