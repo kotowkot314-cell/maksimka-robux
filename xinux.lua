@@ -1,13 +1,9 @@
--- xinux v2 | Terminal + Real Filesystem + Exploits
--- Compatible with Delta, Wave, Solara, Fluxus, Synapse and others
-
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
-local COMMANDS "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
+local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
 
 local executorName = "Unknown"
 local httpFunc = nil
@@ -71,13 +67,7 @@ local function ensureRoot()
         FS.makefolder(ROOT)
     end
     if not FS.isfile(ROOT .. "welcome.txt") then
-        FS.writefile(ROOT .. "welcome.txt", [[Welcome to xinux!
-This is a real terminal with filesystem support.
-
-Type "help" to see all commands.
-Type "ls" to list files.
-
-Enjoy.]])
+        FS.writefile(ROOT .. "welcome.txt", "Welcome to xinux!\nType help to see commands.")
     end
     return true
 end
@@ -113,7 +103,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "xinux  |  " .. executorName
+Title.Text = "xinux"
 Title.TextColor3 = Color3.fromRGB(220, 220, 230)
 Title.Font = Enum.Font.Code
 Title.TextSize = 14
@@ -195,7 +185,7 @@ local function addLine(text, color)
 end
 
 local function processOutput(text)
-    if type(text) ~= "string" then text = tostring(text) end
+    if type(text) \~= "string" then text = tostring(text) end
     if text:sub(1, 8) == "SUCCESS|" then
         addLine(text:sub(9), Color3.fromRGB(0, 220, 120))
     elseif text:sub(1, 6) == "ERROR|" then
@@ -213,18 +203,18 @@ end
 
 local function updatePrompt()
     local short = cwd:gsub("^xinux/", ""):gsub("/$", "")
-    if short == "" then short = "~" end
+    if short == "" then short = "\~" end
     Prompt.Text = "[xinux:" .. short .. "]$"
 end
 
 task.spawn(function()
     ensureRoot()
 
-    addLine("xinux v2  |  Executor: " .. executorName, Color3.fromRGB(0, 220, 120))
+    addLine("xinux v2", Color3.fromRGB(0, 220, 120))
     if hasFS then
         addLine("Filesystem: ONLINE  (root = xinux/)", Color3.fromRGB(0, 200, 100))
     else
-        addLine("Filesystem: OFFLINE  (executor does not support file API)", Color3.fromRGB(255, 160, 50))
+        addLine("Filesystem: OFFLINE", Color3.fromRGB(255, 160, 50))
     end
     addLine("")
 
@@ -241,7 +231,7 @@ task.spawn(function()
                 if success and type(result) == "table" then
                     customCommands = result
                     loaded = true
-                    addLine("[OK] Commands loaded from GitHub", Color3.fromRGB(0, 220, 120))
+                    addLine("[OK] Commands loaded", Color3.fromRGB(0, 220, 120))
                 end
             end
         end
@@ -256,7 +246,22 @@ task.spawn(function()
                 if success and type(result) == "table" then
                     customCommands = result
                     loaded = true
-                    addLine("[OK] Commands loaded via HttpGet", Color3.fromRGB(0, 220, 120))
+                    addLine("[OK] Commands loaded", Color3.fromRGB(0, 220, 120))
+                end
+            end
+        end
+    end
+
+    if not loaded and hasFS and FS.isfile(ROOT .. "commands.x.lua") then
+        local ok, body = pcall(FS.readfile, ROOT .. "commands.x.lua")
+        if ok and body then
+            local fn = loadstring(body)
+            if fn then
+                local success, result = pcall(fn)
+                if success and type(result) == "table" then
+                    customCommands = result
+                    loaded = true
+                    addLine("[OK] Commands loaded from local file", Color3.fromRGB(0, 220, 120))
                 end
             end
         end
@@ -264,6 +269,7 @@ task.spawn(function()
 
     if not loaded then
         addLine("[ERR] Failed to load external commands", Color3.fromRGB(255, 90, 90))
+        addLine("Upload commands.x.lua to GitHub or put it in xinux/ folder", Color3.fromRGB(255, 160, 50))
     end
 
     addLine("Type 'help' for list of commands")
