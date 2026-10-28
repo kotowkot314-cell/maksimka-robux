@@ -4,6 +4,8 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 
 local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
+local EXTRA_URL_1 = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/comaOTnarkoza.lua"
+local EXTRA_URL_2 = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/ogo.nolya"
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "xinux_Terminal"
@@ -11,7 +13,6 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
--- ОСНОВНОЕ ОКНО
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 720, 0, 420)
 MainFrame.Position = UDim2.new(0.5, -360, 0.5, -210)
@@ -27,7 +28,6 @@ Stroke.Color = Color3.fromRGB(50, 50, 70)
 Stroke.Thickness = 1
 Stroke.Parent = MainFrame
 
--- ВЕРХНЯЯ ПАНЕЛЬ
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 28)
 TopBar.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
@@ -45,7 +45,6 @@ Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
--- КНОПКА СВОРАЧИВАНИЯ
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Size = UDim2.new(0, 28, 0, 28)
 MinimizeButton.Position = UDim2.new(1, -56, 0, 0)
@@ -56,7 +55,6 @@ MinimizeButton.Font = Enum.Font.Code
 MinimizeButton.TextSize = 18
 MinimizeButton.Parent = TopBar
 
--- КНОПКА ЗАКРЫТИЯ
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0, 28, 0, 28)
 CloseButton.Position = UDim2.new(1, -28, 0, 0)
@@ -67,7 +65,6 @@ CloseButton.Font = Enum.Font.Code
 CloseButton.TextSize = 18
 CloseButton.Parent = TopBar
 
--- МАЛЕНЬКАЯ КНОПКА (появляется при сворачивании)
 local MiniButton = Instance.new("TextButton")
 MiniButton.Size = UDim2.new(0, 50, 0, 50)
 MiniButton.Position = UDim2.new(0, 10, 0, 10)
@@ -84,7 +81,6 @@ MiniStroke.Color = Color3.fromRGB(50, 50, 70)
 MiniStroke.Thickness = 1
 MiniStroke.Parent = MiniButton
 
--- ЛОГИКА СВОРАЧИВАНИЯ
 MinimizeButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     MiniButton.Visible = true
@@ -99,7 +95,6 @@ CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- БОКОВАЯ ПАНЕЛЬ (С ПИНГВИНОМ)
 local SidePanel = Instance.new("Frame")
 SidePanel.Size = UDim2.new(0, 110, 1, -28)
 SidePanel.Position = UDim2.new(0, 0, 0, 28)
@@ -136,7 +131,6 @@ SideInfo.TextSize = 13
 SideInfo.TextXAlignment = Enum.TextXAlignment.Center
 SideInfo.Parent = SidePanel
 
--- ОБЛАСТЬ ВЫВОДА
 local ScrollingFrame = Instance.new("ScrollingFrame")
 ScrollingFrame.Size = UDim2.new(1, -122, 1, -68)
 ScrollingFrame.Position = UDim2.new(0, 116, 0, 34)
@@ -151,7 +145,6 @@ local ListLayout = Instance.new("UIListLayout")
 ListLayout.Padding = UDim.new(0, 1)
 ListLayout.Parent = ScrollingFrame
 
--- СТРОКА ВВОДА
 local InputFrame = Instance.new("Frame")
 InputFrame.Size = UDim2.new(1, -110, 0, 32)
 InputFrame.Position = UDim2.new(0, 110, 1, -32)
@@ -183,33 +176,33 @@ InputBox.ClearTextOnFocus = false
 InputBox.Parent = InputFrame
 
 local function addLine(text, color)
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, -8, 0, 16)
-	label.BackgroundTransparency = 1
-	label.Text = tostring(text)
-	label.TextColor3 = color or Color3.fromRGB(210, 210, 220)
-	label.Font = Enum.Font.Code
-	label.TextSize = 13
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.TextWrapped = true
-	label.Parent = ScrollingFrame
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -8, 0, 16)
+        label.BackgroundTransparency = 1
+        label.Text = tostring(text)
+        label.TextColor3 = color or Color3.fromRGB(210, 210, 220)
+        label.Font = Enum.Font.Code
+        label.TextSize = 13
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.TextWrapped = true
+        label.Parent = ScrollingFrame
 end
 
 local function processOutput(text)
-	if type(text) ~= "string" then text = tostring(text) end
-	if text:sub(1, 8) == "SUCCESS|" then
-		addLine(text:sub(9), Color3.fromRGB(0, 220, 120))
-	elseif text:sub(1, 6) == "ERROR|" then
-		addLine(text:sub(7), Color3.fromRGB(255, 90, 90))
-	elseif text == "CLEAR" then
-		for _, child in ipairs(ScrollingFrame:GetChildren()) do
-			if child:IsA("TextLabel") then child:Destroy() end
-		end
-	else
-		for line in text:gmatch("[^\r\n]+") do
-			addLine(line)
-		end
-	end
+        if type(text) ~= "string" then text = tostring(text) end
+        if text:sub(1, 8) == "SUCCESS|" then
+                addLine(text:sub(9), Color3.fromRGB(0, 220, 120))
+        elseif text:sub(1, 6) == "ERROR|" then
+                addLine(text:sub(7), Color3.fromRGB(255, 90, 90))
+        elseif text == "CLEAR" then
+                for _, child in ipairs(ScrollingFrame:GetChildren()) do
+                        if child:IsA("TextLabel") then child:Destroy() end
+                end
+        else
+                for line in text:gmatch("[^\r\n]+") do
+                        addLine(line)
+                end
+        end
 end
 
 local FS = {}
@@ -228,146 +221,212 @@ local ROOT = "xinux/"
 local cwd = ROOT
 
 local function ensureRoot()
-	if not hasFS then return end
-	pcall(function()
-		if not FS.isfolder(ROOT) then
-			FS.makefolder(ROOT)
-		end
-	end)
+        if not hasFS then return end
+        pcall(function()
+                if not FS.isfolder(ROOT) then
+                        FS.makefolder(ROOT)
+                end
+        end)
 end
 
 local function updatePrompt()
-	local short = cwd:gsub("^xinux/", ""):gsub("/$", "")
-	if short == "" then short = "~" end
-	Prompt.Text = "[xinux:" .. short .. "]$"
+        local short = cwd:gsub("^xinux/", ""):gsub("/$", "")
+        if short == "" then short = "~" end
+        Prompt.Text = "[xinux:" .. short .. "]$"
 end
 
 local customCommands = {}
+local extraModules = {}
 local history = {}
 local historyIndex = 0
 
+local function mergeCommands(base, extra)
+        if type(extra) ~= "table" then return base end
+        for k, v in pairs(extra) do
+                if type(v) == "table" and type(v.action) == "function" then
+                        base[k] = v
+                elseif type(v) == "function" then
+                        base[k] = { action = v }
+                end
+        end
+        return base
+end
+
+local function safeHttp(url)
+        local ok, body = pcall(function() return game:HttpGet(url) end)
+        if ok and type(body) == "string" and #body > 10 then return body end
+        return nil
+end
+
+local function safeLoad(body)
+        if not body then return nil end
+        local fn, err = loadstring(body)
+        if not fn then return nil, err end
+        local ok, result = pcall(fn)
+        if ok then return result end
+        return nil, result
+end
+
 spawn(function()
-	ensureRoot()
+        ensureRoot()
 
-	addLine("xinux v2", Color3.fromRGB(0, 220, 120))
-	if hasFS then
-		addLine("Filesystem: ONLINE", Color3.fromRGB(0, 200, 100))
-	else
-		addLine("Filesystem: OFFLINE", Color3.fromRGB(255, 160, 50))
-	end
-	addLine("")
+        addLine("xinux v2", Color3.fromRGB(0, 220, 120))
+        if hasFS then
+                addLine("Filesystem: ONLINE", Color3.fromRGB(0, 200, 100))
+        else
+                addLine("Filesystem: OFFLINE", Color3.fromRGB(255, 160, 50))
+        end
+        addLine("")
 
-	local loaded = false
-	local body
-	local success = pcall(function()
-		body = game:HttpGet(COMMANDS_URL)
-	end)
+        local loaded = false
 
-	if success and body and #body > 50 then
-		local fn = loadstring(body)
-		if fn then
-			local ok, result = pcall(fn)
-			if ok and type(result) == "table" then
-				customCommands = result
-				loaded = true
-				addLine("[OK] Commands loaded from GitHub", Color3.fromRGB(0, 220, 120))
-			end
-		end
-	end
+        local body = safeHttp(COMMANDS_URL)
+        if body then
+                local result, err = safeLoad(body)
+                if type(result) == "table" then
+                        customCommands = mergeCommands(customCommands, result)
+                        loaded = true
+                        addLine("[OK] commands.x.lua loaded from GitHub", Color3.fromRGB(0, 220, 120))
+                else
+                        addLine("[ERR] commands.x.lua load error: " .. tostring(err), Color3.fromRGB(255, 160, 50))
+                end
+        end
 
-	if not loaded and hasFS then
-		local ok, localBody = pcall(function()
-			return FS.readfile(ROOT .. "commands.x.lua")
-		end)
-		if ok and localBody then
-			local fn = loadstring(localBody)
-			if fn then
-				local success2, result = pcall(fn)
-				if success2 and type(result) == "table" then
-					customCommands = result
-					loaded = true
-					addLine("[OK] Commands loaded from local file", Color3.fromRGB(0, 220, 120))
-				end
-			end
-		end
-	end
+        if not loaded and hasFS then
+                local ok, localBody = pcall(function() return FS.readfile(ROOT .. "commands.x.lua") end)
+                if ok and localBody then
+                        local result, err = safeLoad(localBody)
+                        if type(result) == "table" then
+                                customCommands = mergeCommands(customCommands, result)
+                                loaded = true
+                                addLine("[OK] commands.x.lua loaded from local file", Color3.fromRGB(0, 220, 120))
+                        else
+                                addLine("[ERR] local commands.x.lua: " .. tostring(err), Color3.fromRGB(255, 160, 50))
+                        end
+                end
+        end
 
-	if not loaded then
-		addLine("[ERR] Failed to load commands", Color3.fromRGB(255, 90, 90))
-		addLine("Put commands.x.lua in xinux/ folder or on GitHub", Color3.fromRGB(255, 160, 50))
-	end
+        if not loaded then
+                addLine("[ERR] Failed to load commands.x.lua", Color3.fromRGB(255, 90, 90))
+                addLine("Put commands.x.lua in xinux/ folder or on GitHub", Color3.fromRGB(255, 160, 50))
+        end
 
-	addLine("Type 'help' for list of commands")
-	addLine("")
-	updatePrompt()
+        local extraList = {
+                { url = EXTRA_URL_1, label = "comaOTnarkoza.lua" },
+                { url = EXTRA_URL_2, label = "ogo.nolya" },
+        }
+
+        for _, item in ipairs(extraList) do
+                local extraBody = safeHttp(item.url)
+                if extraBody then
+                        local result, err = safeLoad(extraBody)
+                        if type(result) == "table" then
+                                mergeCommands(customCommands, result)
+                                table.insert(extraModules, { label = item.label, table = result })
+                                addLine("[OK] " .. item.label .. " loaded from GitHub", Color3.fromRGB(0, 220, 120))
+                        elseif type(result) == "function" then
+                                local ok2, r2 = pcall(result)
+                                if ok2 and type(r2) == "table" then
+                                        mergeCommands(customCommands, r2)
+                                        table.insert(extraModules, { label = item.label, table = r2 })
+                                        addLine("[OK] " .. item.label .. " executed (function)", Color3.fromRGB(0, 220, 120))
+                                else
+                                        addLine("[WARN] " .. item.label .. ": returns function, not table", Color3.fromRGB(255, 160, 50))
+                                end
+                        else
+                                addLine("[WARN] " .. item.label .. ": " .. tostring(err or "no table returned"), Color3.fromRGB(255, 160, 50))
+                        end
+                else
+                        addLine("[ERR] " .. item.label .. ": failed to download", Color3.fromRGB(255, 90, 90))
+                end
+        end
+
+        if hasFS then
+                local localExtras = { "comaOTnarkoza.lua", "ogo.nolya" }
+                for _, name in ipairs(localExtras) do
+                        local ok, localBody = pcall(function() return FS.readfile(ROOT .. name) end)
+                        if ok and localBody and #localBody > 10 then
+                                local result = safeLoad(localBody)
+                                if type(result) == "table" then
+                                        mergeCommands(customCommands, result)
+                                        addLine("[OK] " .. name .. " loaded from local file", Color3.fromRGB(0, 220, 120))
+                                end
+                        end
+                end
+        end
+
+        addLine("Type 'help' for list of commands")
+        addLine("")
+        updatePrompt()
 end)
 
 InputBox.FocusLost:Connect(function(enter)
-	if not enter then return end
-	local text = InputBox.Text
-	if text == "" then return end
+        if not enter then return end
+        local text = InputBox.Text
+        if text == "" then return end
 
-	InputBox.Text = ""
-	table.insert(history, text)
-	historyIndex = #history + 1
+        InputBox.Text = ""
+        table.insert(history, text)
+        historyIndex = #history + 1
 
-	addLine(Prompt.Text .. " " .. text, Color3.fromRGB(0, 200, 120))
+        addLine(Prompt.Text .. " " .. text, Color3.fromRGB(0, 200, 120))
 
-	local parts = {}
-	for word in text:gmatch("%S+") do
-		table.insert(parts, word)
-	end
-	local cmd = parts[1] and parts[1]:lower()
-	table.remove(parts, 1)
-	local args = parts
+        local parts = {}
+        for word in text:gmatch("%S+") do
+                table.insert(parts, word)
+        end
+        local cmd = parts[1] and parts[1]:lower()
+        table.remove(parts, 1)
+        local args = parts
 
-	if cmd == "clear" or cmd == "cls" then
-		processOutput("CLEAR")
-		return
-	end
+        if cmd == "clear" or cmd == "cls" then
+                processOutput("CLEAR")
+                return
+        end
 
-	if customCommands[cmd] then
-		spawn(function()
-			local ok, result = pcall(function()
-				return customCommands[cmd].action(args, {
-					FS = FS,
-					hasFS = hasFS,
-					cwd = cwd,
-					setCwd = function(new) cwd = new end,
-					ROOT = ROOT,
-					addLine = addLine,
-					processOutput = processOutput
-				})
-			end)
-			if ok then
-				processOutput(tostring(result or ""))
-			else
-				processOutput("ERROR|" .. tostring(result))
-			end
-			updatePrompt()
-			wait()
-			ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.CanvasSize.Y.Offset)
-		end)
-	else
-		processOutput("ERROR|" .. tostring(cmd) .. ": command not found")
-	end
+        if customCommands[cmd] then
+                spawn(function()
+                        local ok, result = pcall(function()
+                                return customCommands[cmd].action(args, {
+                                        FS = FS,
+                                        hasFS = hasFS,
+                                        cwd = cwd,
+                                        setCwd = function(new) cwd = new end,
+                                        ROOT = ROOT,
+                                        addLine = addLine,
+                                        processOutput = processOutput,
+                                        extraModules = extraModules
+                                })
+                        end)
+                        if ok then
+                                processOutput(tostring(result or ""))
+                        else
+                                processOutput("ERROR|" .. tostring(result))
+                        end
+                        updatePrompt()
+                        wait()
+                        ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.CanvasSize.Y.Offset)
+                end)
+        else
+                processOutput("ERROR|" .. tostring(cmd) .. ": command not found")
+        end
 end)
 
 UserInputService.InputBegan:Connect(function(input, gp)
-	if gp then return end
-	if input.KeyCode == Enum.KeyCode.Up and InputBox:IsFocused() then
-		if historyIndex > 1 then
-			historyIndex = historyIndex - 1
-			InputBox.Text = history[historyIndex] or ""
-			InputBox.CursorPosition = #InputBox.Text + 1
-		end
-	elseif input.KeyCode == Enum.KeyCode.Down and InputBox:IsFocused() then
-		if historyIndex < #history then
-			historyIndex = historyIndex + 1
-			InputBox.Text = history[historyIndex] or ""
-		else
-			historyIndex = #history + 1
-			InputBox.Text = ""
-		end
-	end
+        if gp then return end
+        if input.KeyCode == Enum.KeyCode.Up and InputBox:IsFocused() then
+                if historyIndex > 1 then
+                        historyIndex = historyIndex - 1
+                        InputBox.Text = history[historyIndex] or ""
+                        InputBox.CursorPosition = #InputBox.Text + 1
+                end
+        elseif input.KeyCode == Enum.KeyCode.Down and InputBox:IsFocused() then
+                if historyIndex < #history then
+                        historyIndex = historyIndex + 1
+                        InputBox.Text = history[historyIndex] or ""
+                else
+                        historyIndex = #history + 1
+                        InputBox.Text = ""
+                end
+        end
 end)
