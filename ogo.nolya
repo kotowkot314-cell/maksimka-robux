@@ -1,564 +1,116 @@
-
-1. Основы / Basics / 基础
-
-help — показывает список всех команд. / shows list of all commands. / 显示所有命令列表.
-Пример: help
-
-clear — очищает экран консоли. / clears the console screen. / 清空控制台屏幕.
-Пример: clear
-
-whoami — показывает твоё имя, ID и DisplayName. / shows your name, ID and DisplayName. / 显示你的名字、ID 和显示名称.
-Пример: whoami
-
-game_info — показывает PlaceId, GameId, JobId и число игроков. / shows PlaceId, GameId, JobId and player count. / 显示 PlaceId、GameId、JobId 和玩家数量.
-Пример: game_info
-
----
-
-2. Файлы / Files / 文件
-
-ls — показывает файлы и папки в текущей папке. / lists files and folders in current directory. / 列出当前目录中的文件和文件夹.
-Пример: ls или ls /scripts
-
-cd — переходит в другую папку. / changes current folder. / 切换到另一个文件夹.
-Пример: cd scripts
-
-pwd — показывает текущий путь. / shows current path. / 显示当前路径.
-Пример: pwd
-
-cat — читает и показывает содержимое файла. / reads and shows file content. / 读取并显示文件内容.
-Пример: cat config.lua
-
-echo — пишет текст в файл через >. / writes text to file using >. / 使用 > 将文本写入文件.
-Пример: echo hello > test.txt
-
-mkdir — создаёт новую папку. / creates a new folder. / 创建新文件夹.
-Пример: mkdir myfolder
-
-rm — удаляет файл или папку. / deletes a file or folder. / 删除文件或文件夹.
-Пример: rm test.txt
-
-touch — создаёт пустой файл. / creates an empty file. / 创建空文件.
-Пример: touch new.lua
-
-exec — запускает Lua-скрипт из файла. / runs Lua script from a file. / 运行文件中的 Lua 脚本.
-Пример: exec script.lua
-
----
-
-3. Игроки / Players / 玩家
-
-players — список всех игроков с их ID. / list of all players with IDs. / 所有玩家及其 ID 的列表.
-Пример: players
-
-names — имена всех игроков, кроме тебя. / names of all players except you. / 除你之外所有玩家的名字.
-Пример: names
-
-plr — статус игроков: жив/мёртв и команда. / players status: alive/dead and team. / 玩家状态：存活/死亡和队伍.
-Пример: plr
-
-playerinfo — подробная информация об игроке. / detailed info about a player. / 玩家的详细信息.
-Пример: playerinfo Steve
-
-infopipl — HP и позиция всех игроков. / HP and position of all players. / 所有玩家的血量和位置.
-Пример: infopipl
-
-team — показывает или меняет команду игрока. / shows or changes player's team. / 显示或更改玩家队伍.
-Пример: team Steve Red
-
----
-
-4. Движение / Movement / 移动
-
-teleport — телепортирует тебя к игроку. / teleports you to a player. / 将你传送到玩家身边.
-Пример: teleport Steve
-
-tp — телепорт к игроку или координатам. / teleport to player or coordinates. / 传送到玩家或坐标.
-Пример: tp Steve или tp 100 50 200
-
-bring — телепортирует игрока к тебе. / teleports player to you. / 将玩家传送到你身边.
-Пример: bring Steve
-
-speed — устанавливает скорость ходьбы. / sets walk speed. / 设置行走速度.
-Пример: speed 100
-
-jump — устанавливает силу прыжка. / sets jump power. / 设置跳跃力.
-Пример: jump 200
-
-fly — включает полёт (Space вверх, Shift вниз). / enables flight (Space up, Shift down). / 启用飞行（空格上升，Shift 下降）.
-Пример: fly → остановить: stp fly
-
-noclip — проходит сквозь стены. / walks through walls. / 穿墙.
-Пример: noclip → остановить: stp noclip
-
-anchor — фиксирует твои части на месте. / freezes your parts in place. / 固定你的部件位置.
-Пример: anchor
-
-unanchor — освобождает твои части. / frees your parts. / 释放你的部件.
-Пример: unanchor
-
-sit — сажает персонажа. / makes character sit. / 让角色坐下.
-Пример: sit
-
-stand — поднимает персонажа. / makes character stand. / 让角色站起.
-Пример: stand
-
-reset — убивает персонажа (респавн). / kills character (respawn). / 杀死角色（重生）.
-Пример: reset
-
----
-
-5. Бой / Combat / 战斗
-
-god — бессмертие (здоровье = ∞). / godmode (health = ∞). / 无敌模式（生命值 = ∞）.
-Пример: god
-
-kill — убивает указанного игрока. / kills the specified player. / 杀死指定玩家.
-Пример: kill Steve
-
-anti — блокирует урон, восстанавливая HP. / blocks damage by restoring HP. / 通过恢复生命值来阻止伤害.
-Пример: anti → остановить: stp anti
-
-freeze — замораживает игрока на месте. / freezes player in place. / 将玩家冻结在原地.
-Пример: freeze Steve
-
-hip — привязывает тебя к игроку (следуешь за ним). / attaches you to player (follows them). / 将你附着到玩家身上（跟随他们）.
-Пример: hip Steve → отцепить: unhip
-
----
-
-6. Мир и блоки / World & Blocks / 世界和方块
-
-brk — удаляет блок, на который смотришь. / deletes block you look at. / 删除你正在看的方块.
-Пример: brk
-
-bld — ставит куб в точку взгляда. / places a cube at look point. / 在视线位置放置一个立方体.
-Пример: bld
-
-blockinfo — информация о блоке под прицелом. / info about block under crosshair. / 准星下方方块的信息.
-Пример: blockinfo
-
-partinfo — информация о блоке по имени. / info about block by name. / 按名称查看方块信息.
-Пример: partinfo Part
-
-parts — статистика всех блоков по классам. / stats of all blocks by class. / 按类别统计所有方块.
-Пример: parts
-
-blocks — то же, что parts, но проще. / same as parts but simpler. / 与 parts 相同但更简单.
-Пример: blocks
-
-find — ищет объекты по имени. / searches objects by name. / 按名称搜索对象.
-Пример: find door
-
-findclass — ищет объекты по классу. / searches objects by class. / 按类别搜索对象.
-Пример: findclass Part
-
-anchored_check — считает anchored и unanchored блоки. / counts anchored and unanchored blocks. / 统计已锚定和未锚定的方块.
-Пример: anchored_check
-
-unanchor_all — снимает анкор со всех блоков. / unanchors all blocks. / 取消所有方块的锚定.
-Пример: unanchor_all
-
-anchor_all — ставит анкор на все блоки. / anchors all blocks. / 锚定所有方块.
-Пример: anchor_all
-
-hidden_parts — список невидимых блоков. / list of invisible blocks. / 隐形方块列表.
-Пример: hidden_parts
-
-very_small_parts — аномально маленькие блоки. / unusually small blocks. / 异常小的方块.
-Пример: very_small_parts
-
-very_big_parts — аномально большие блоки. / unusually big blocks. / 异常大的方块.
-Пример: very_big_parts
-
-region — блоки внутри указанного куба. / blocks inside specified box. / 指定立方体内的方块.
-Пример: region 0 0 0 100 100 100
-
-near — объекты рядом с тобой. / objects near you. / 你附近的物体.
-Пример: near 30
-
-modelinfo — информация о модели (части, масса). / model info (parts, mass). / 模型信息（部件、质量）.
-Пример: modelinfo Car
-
-spawnpoint — показывает точку спавна. / shows spawn point. / 显示出生点.
-Пример: spawnpoint
-
----
-
-7. Скрипты и ремоуты / Scripts & Remotes / 脚本和远程
-
-scripts — список всех скриптов. / list of all scripts. / 所有脚本列表.
-Пример: scripts
-
-scriptinfo — исходник скрипта (если доступен). / script source (if available). / 脚本源码（如果可用）.
-Пример: scriptinfo MainScript
-
-modules — список ModuleScript. / list of ModuleScripts. / ModuleScript 列表.
-Пример: modules
-
-localscripts — список LocalScript. / list of LocalScripts. / LocalScript 列表.
-Пример: localscripts
-
-serverscripts — список серверных Script. / list of server Scripts. / 服务器 Script 列表.
-Пример: serverscripts
-
-remotes — список RemoteEvent и RemoteFunction. / list of RemoteEvent and RemoteFunction. / RemoteEvent 和 RemoteFunction 列表.
-Пример: remotes
-
-fire — вызывает RemoteEvent с аргументами. / fires RemoteEvent with args. / 触发带参数的 RemoteEvent.
-Пример: fire GiveCash 1000
-
-invoke — вызывает RemoteFunction и ждёт ответ. / invokes RemoteFunction and waits. / 调用 RemoteFunction 并等待返回.
-Пример: invoke GetData
-
-firespam — спамит RemoteEvent N раз. / spams RemoteEvent N times. / 重复触发 RemoteEvent N 次.
-Пример: firespam Click 50
-
-remoteinfo — информация о ремоуте. / remote info. / 远程对象信息.
-Пример: remoteinfo GiveCash
-
-remote_count — количество ремоутов. / number of remotes. / 远程对象数量.
-Пример: remote_count
-
-remote_unsafe — ищет подозрительные ремоуты (admin/ban/give). / finds suspicious remotes (admin/ban/give). / 查找可疑远程对象（admin/ban/give）.
-Пример: remote_unsafe
-
----
-
-8. Визуал / Visual / 视觉
-
-esp — подсвечивает игроков (видно только вам). / highlights players (only you can see). / 高亮玩家（仅你可见）.
-Пример: esp → убрать: unesp
-
-unesp — убирает подсветку игроков. / removes player highlights. / 移除玩家高亮.
-Пример: unesp
-
-antf — делает тебя невидимым. / makes you invisible. / 让你隐形.
-Пример: antf
-
-anfl — noclip только рядом с игроками. / noclip only near players. / 仅在玩家附近穿墙.
-Пример: anfl → остановить: stp anfl
-
----
-
-9. Диагностика / Diagnostics / 诊断
-
-srv — общая информация о сервере. / general server info. / 服务器总体信息.
-Пример: srv
-
-ping — пинг до сервера. / server latency. / 服务器延迟.
-Пример: ping
-
-ping2 — пинг через Stats. / ping via Stats. / 通过 Stats 查看延迟.
-Пример: ping2
-
-fps — примерный FPS. / approximate FPS. / 近似 FPS.
-Пример: fps
-
-memory — использование памяти. / memory usage. / 内存使用.
-Пример: memory
-
-network — статистика сети. / network stats. / 网络统计.
-Пример: network
-
-viewstats — CPU/GPU/Memory/Ping. / CPU/GPU/Memory/Ping. / CPU/GPU/内存/延迟.
-Пример: viewstats
-
-accheck — базовая проверка античита. / basic anticheat check. / 基础反作弊检查.
-Пример: accheck
-
-anticheat_scan — ищет объекты античита по именам. / searches anticheat objects by names. / 按名称搜索反作弊对象.
-Пример: anticheat_scan
-
----
-
-10. Карта / Map / 地图
-
-sounds — список звуков и их ID. / list of sounds and IDs. / 声音及其 ID 列表.
-Пример: sounds
-
-soundscan — группирует звуки по SoundId. / groups sounds by SoundId. / 按 SoundId 分组声音.
-Пример: soundscan
-
-gui — список GUI-элементов. / list of GUI elements. / GUI 元素列表.
-Пример: gui
-
-gui_buttons — все кнопки в GUI. / all buttons in GUI. / GUI 中所有按钮.
-Пример: gui_buttons
-
-gui_frames — все фреймы в GUI. / all frames in GUI. / GUI 中所有框架.
-Пример: gui_frames
-
-tools — инструменты игроков в инвентаре. / player tools in inventory. / 玩家背包中的工具.
-Пример: tools
-
-tools_scan — все Tool в мире. / all Tools in world. / 世界中的所有 Tool.
-Пример: tools_scan
-
-npcs — модели с Humanoid (NPC). / models with Humanoid (NPCs). / 带 Humanoid 的模型（NPC）.
-Пример: npcs
-
-humanoids_scan — все Humanoid с HP. / all Humanoids with HP. / 所有带血量的 Humanoid.
-Пример: humanoids_scan
-
-lights — все источники света. / all light sources. / 所有光源.
-Пример: lights
-
-effects — все эффекты (Particle, Fire, Smoke). / all effects (Particle, Fire, Smoke). / 所有特效（粒子、火焰、烟雾）.
-Пример: effects
-
-jointscan — все соединения (Weld, Motor6D). / all joints (Weld, Motor6D). / 所有连接（Weld、Motor6D）.
-Пример: jointscan
-
-welds — только Weld и WeldConstraint. / only Weld and WeldConstraint. / 仅 Weld 和 WeldConstraint.
-Пример: welds
-
-motor_scan — только Motor6D. / only Motor6D. / 仅 Motor6D.
-Пример: motor_scan
-
-terraininfo — информация о Terrain. / Terrain info. / Terrain 信息.
-Пример: terraininfo
-
-textures — все Decal и Texture. / all Decal and Texture. / 所有 Decal 和 Texture.
-Пример: textures
-
-meshscan — все MeshPart и SpecialMesh. / all MeshPart and SpecialMesh. / 所有 MeshPart 和 SpecialMesh.
-Пример: meshscan
-
-seats — все Seat. / all Seats. / 所有 Seat.
-Пример: seats
-
-vehicle_seats — все VehicleSeat. / all VehicleSeats. / 所有 VehicleSeat.
-Пример: vehicle_seats
-
-click_detectors — все ClickDetector. / all ClickDetectors. / 所有 ClickDetector.
-Пример: click_detectors
-
-proximity_prompts — все ProximityPrompt. / all ProximityPrompts. / 所有 ProximityPrompt.
-Пример: proximity_prompts
-
-beams_scan — все Beam и Trail. / all Beams and Trails. / 所有 Beam 和 Trail.
-Пример: beams_scan
-
-particle_scan — все ParticleEmitter. / all ParticleEmitters. / 所有 ParticleEmitter.
-Пример: particle_scan
-
-constraints_scan — все Constraint. / all Constraints. / 所有 Constraint.
-Пример: constraints_scan
-
-attachments_scan — все Attachment. / all Attachments. / 所有 Attachment.
-Пример: attachments_scan
-
-collision_groups — блоки с нестандартной группой коллизий. / blocks with non-default collision group. / 使用非默认碰撞组的方块.
-Пример: collision_groups
-
-network_owner — блоки с сетевым владельцем. / blocks with network owner. / 有网络所有者的方块.
-Пример: network_owner
-
-mass_report — общая масса и топ-20 тяжёлых блоков. / total mass and top-20 heaviest blocks. / 总质量及前 20 个最重方块.
-Пример: mass_report
-
-physics_report — PhysicsFPS, кол-во блоков, гравитация. / PhysicsFPS, block count, gravity. / PhysicsFPS、方块数量、重力.
-Пример: physics_report
-
-camera_info — позиция и настройки камеры. / camera position and settings. / 摄像机位置和设置.
-Пример: camera_info
-
-mouse_info — позиция мыши и цель. / mouse position and target. / 鼠标位置和目标.
-Пример: mouse_info
-
-raycast — луч из камеры, что попал. / ray from camera, what it hits. / 从摄像机发出的射线命中物体.
-Пример: raycast 200
-
-raycast_all — луч + дети объекта. / ray + object children. / 射线 + 对象子级.
-Пример: raycast_all
-
----
-
-11. Редактирование мира / World Editing / 世界编辑
-
-copy_part — клонирует блок под прицелом. / clones block under crosshair. / 克隆准星下的方块.
-Пример: copy_part
-
-color_part — красит блок в RGB. / colors block in RGB. / 用 RGB 给方块上色.
-Пример: color_part 255 0 0
-
-move_part — сдвигает блок на x,y,z. / moves block by x,y,z. / 按 x,y,z 移动方块.
-Пример: move_part 0 5 0
-
-resize_part — меняет размер блока. / resizes block. / 调整方块大小.
-Пример: resize_part 10 10 10
-
-anchor_part — переключает anchored блока. / toggles block anchored. / 切换方块锚定状态.
-Пример: anchor_part
-
-transparency_part — меняет прозрачность (0–1). / changes transparency (0–1). / 更改透明度（0–1）.
-Пример: transparency_part 0.5
-
-material_part — меняет материал блока. / changes block material. / 更改方块材质.
-Пример: material_part Neon
-
-delete_part — удаляет блок под прицелом. / deletes block under crosshair. / 删除准星下的方块.
-Пример: delete_part
-
-clone_model — клонирует модель. / clones a model. / 克隆模型.
-Пример: clone_model Car
-
-delete_model — удаляет модель. / deletes a model. / 删除模型.
-Пример: delete_model Car
-
-teleport_to_part — телепорт к блоку по имени. / teleport to block by name. / 按名称传送到方块.
-Пример: teleport_to_part SpawnPlate
-
-clear_effects — удаляет все эффекты. / removes all effects. / 移除所有特效.
-Пример: clear_effects
-
-clear_decals — удаляет все декали и текстуры. / removes all decals and textures. / 移除所有贴花和纹理.
-Пример: clear_decals
-
-disable_scripts — выключает все скрипты. / disables all scripts. / 禁用所有脚本.
-Пример: disable_scripts
-
-enable_scripts — включает все скрипты. / enables all scripts. / 启用所有脚本.
-Пример: enable_scripts
-
-clear_workspace — удаляет все модели и блоки верхнего уровня. / removes all top-level models and blocks. / 移除所有顶层模型和方块.
-Пример: clear_workspace
-
-remove_all — удаляет всё в Workspace, кроме камеры и Terrain. / removes everything in Workspace except camera and Terrain. / 删除 Workspace 中除摄像机和 Terrain 外的所有内容.
-Пример: remove_all
-
----
-
-12. Сервер / Server / 服务器
-
-rejoin — переподключается к текущему серверу. / reconnects to current server. / 重新连接到当前服务器.
-Пример: rejoin
-
-serverhop — переход на другой сервер. / hops to another server. / 跳转到另一个服务器.
-Пример: serverhop
-
-server_list — список публичных серверов. / list of public servers. / 公共服务器列表.
-Пример: server_list
-
-server_ping — HTTP-пинг Roblox API. / HTTP ping to Roblox API. / 对 Roblox API 的 HTTP 延迟.
-Пример: server_ping
-
----
-
-13. Сохранения / Saves / 存档
-
-save — сохраняет данные в JSON. / saves data to JSON. / 将数据保存为 JSON.
-Пример: save mysettings {speed=100}
-
-load — загружает JSON. / loads JSON. / 加载 JSON.
-Пример: load mysettings
-
-listSaves — список сохранений. / list of saves. / 存档列表.
-Пример: listSaves
-
----
-
-14. Сеть / Network / 网络
-
-http — GET-запрос по URL. / GET request to URL. / 对 URL 发起 GET 请求.
-Пример: http https://api.example.com/data
-
-json — парсит и печатает JSON. / parses and prints JSON. / 解析并打印 JSON.
-Пример: json {"name":"Steve"}
-
----
-
-15. Прочее / Misc / 其他
-
-con — проверяет ответ первого RemoteEvent. / tests first RemoteEvent response. / 测试第一个 RemoteEvent 的响应.
-Пример: con
-
-say — отправляет сообщение через чат-ремоут. / sends message via chat remote. / 通过聊天远程发送消息.
-Пример: say Hello world
-
-crash — спамит все RemoteEvent 8 секунд. / spams all RemoteEvents for 8 seconds. / 对所有 RemoteEvent 连续触发 8 秒.
-Пример: crash → остановить: stp crash
-
-admin — открывает панель с кнопками (Kick All, God, Crash). / opens panel with buttons (Kick All, God, Crash). / 打开带按钮的面板（Kick All、God、Crash）.
-Пример: admin → закрыть: stp admin
-
-stp — останавливает указанную активную функцию. / stops the specified active feature. / 停止指定的已启用功能.
-Пример: stp fly / stp noclip / stp esp
-
-scan — список всех ремоутов кратко. / short list of all remotes. / 所有远程对象的简表.
-Пример: scan
-
-getremotes — список ремоутов с фильтром по имени. / remote list filtered by name. / 按名称过滤的远程对象列表.
-Пример: getremotes give
-
-remotespy — логирует все FireServer/InvokeServer в консоль (F9). / logs all FireServer/InvokeServer to console (F9). / 将所有 FireServer/InvokeServer 记录到控制台（F9）.
-Пример: remotespy → выключить: remotespy
-
-dump — дерево объекта до указанной глубины. / object tree up to specified depth. / 指定深度的对象树.
-Пример: dump Workspace 3
-
-tree — то же, но с фокусом на объект по имени. / same, focused on object by name. / 同上，按名称聚焦对象.
-Пример: tree Car 3
-
-children — прямые дети объекта. / direct children of object. / 对象的直接子级.
-Пример: children Workspace
-
-props — свойства и дети объекта. / properties and children of object. / 对象的属性和子级.
-Пример: props Car
-
-attributes — атрибуты объекта. / object attributes. / 对象属性.
-Пример: attributes Car
-
-tags — все объекты с тегами. / all objects with tags. / 所有带标签的对象.
-Пример: tags
-
-root_scan — дети корня game. / children of game root. / game 根节点的子级.
-Пример: root_scan
-
-services — список ключевых сервисов и их детей. / key services and children count. / 关键服务及其子级数量.
-Пример: services
-
-lighting — настройки освещения. / lighting settings. / 光照设置.
-Пример: lighting
-
-sound_service — настройки SoundService. / SoundService settings. / SoundService 设置.
-Пример: sound_service
-
-chat_scan — объекты чата. / chat objects. / 聊天对象.
-Пример: chat_scan
-
-teams_scan — список команд и их игроков. / list of teams and their players. / 队伍列表及其玩家.
-Пример: teams_scan
-
-player_parts — сколько частей у каждого игрока. / how many parts each player has. / 每个玩家拥有的部件数量.
-Пример: player_parts
-
-charinfo — все части персонажа игрока. / all parts of a player's character. / 玩家角色的所有部件.
-Пример: charinfo Steve
-
-accessories — аксессуары игроков. / player accessories. / 玩家配饰.
-Пример: accessories
-
-clothing — одежда игроков. / player clothing. / 玩家服装.
-Пример: clothing
-
-face — лицо игрока (Decal на Head). / player face (Decal on Head). / 玩家面部（Head 上的 Decal）.
-Пример: face
-
-r6check — определяет R6 или R15. / detects R6 or R15. / 检测 R6 或 R15.
-Пример: r6check
-
-bone_scan — все Bone. / all Bones. / 所有 Bone.
-Пример: bone_scan
-
-body_movers — все BodyMover. / all BodyMovers. / 所有 BodyMover.
-Пример: body_movers
-
-hats — шляпы игроков. / player hats. / 玩家帽子.
-Пример: hats
-
-tool_in_backpack — ищет инструмент в рюкзаках. / searches tool in backpacks. / 在背包中查找工具.
-Пример: tool_in_backpack Sword
-
-20.05.2026
+    help = {
+        action = function(args)
+            local category = args[1] and args[1]:lower()
+            
+            local categories = {
+                basic = [[
+[ БАЗОВЫЕ КОМАНДЫ ]
+help [категория] - показать помощь (например: help files)
+clear            - очистить экран
+whoami           - показать твой ник и ID
+game_info        - показать ID игры и сервера
+]],
+                files = [[
+[ ФАЙЛЫ И ПАПКИ ]
+ls [папка]       - показать файлы
+cd <папка>       - перейти в папку
+pwd              - текущая папка
+cat <файл>       - прочитать файл
+echo текст > файл - записать текст в файл
+mkdir <папка>    - создать папку
+touch <файл>     - создать пустой файл
+rm <файл>        - удалить файл
+exec <файл.lua>  - выполнить скрипт
+]],
+                players = [[
+[ ИГРОКИ ]
+players          - список всех игроков
+names            - имена всех игроков
+playerinfo <ник> - подробная инфа об игроке
+infopipl         - HP и позиция всех игроков
+teleport <ник>   - телепорт к игроку
+tp <ник> или <x y z> - телепорт к игроку/координатам
+bring <ник>      - телепорт игрока к тебе
+kill <ник>       - убить игрока
+]],
+                movement = [[
+[ ДВИЖЕНИЕ ]
+fly              - полет (Space вверх, Shift вниз)
+noclip           - проход сквозь стены
+speed <число>    - скорость ходьбы (по умол. 16)
+jump <число>     - сила прыжка (по умол. 50)
+anchor           - заморозить себя
+unanchor         - разморозить себя
+sit              - сесть
+stand            - встать
+reset            - убить себя (респавн)
+]],
+                world = [[
+[ МИР И БЛОКИ ]
+brk              - удалить блок под прицелом
+bld              - поставить блок под прицелом
+blockinfo        - инфа о блоке под прицелом
+parts            - статистика всех блоков
+find <имя>       - найти объект по имени
+findclass <класс> - найти объект по классу
+modelinfo <имя>  - инфа о модели
+]],
+                scripts = [[
+[ СКРИПТЫ И РЕМОУТЫ ]
+scripts          - список всех скриптов
+remotes          - список всех RemoteEvent/Function
+scan             - краткий список ремоутов
+fire <имя> [аргументы] - вызвать RemoteEvent
+invoke <имя>     - вызвать RemoteFunction
+remoteinfo <имя> - инфа о ремоуте
+accheck          - проверить античит
+]],
+                visual = [[
+[ ВИЗУАЛ ]
+esp              - подсветить игроков
+unesp            - убрать подсветку
+antf             - сделать себя невидимым
+anfl             - noclip только рядом с игроками
+]],
+                edit = [[
+[ РЕДАКТИРОВАНИЕ МИРА ]
+copy_part        - клонировать блок под прицелом
+color_part <r> <g> <b> - покрасить блок
+move_part <x> <y> <z> - сдвинуть блок
+resize_part <x> <y> <z> - изменить размер
+delete_part      - удалить блок под прицелом
+clone_model <имя> - клонировать модель
+delete_model <имя> - удалить модель
+]],
+                misc = [[
+[ ПРОЧЕЕ ]
+admin            - открыть админ-панель (Bypass)
+crash            - спамить ремоуты (осторожно!)
+rejoin           - перезайти на сервер
+serverhop        - перейти на другой сервер
+srv              - инфа о сервере
+ping             - пинг до сервера
+save <имя>       - сохранить данные
+load <имя>       - загрузить данные
+]]
+            }
+
+            if category and categories[category] then
+                return categories[category]
+            end
+
+            return [[Добро пожаловать в xinux!
+Для подробной справки напиши: help <категория>
+Категории:
+ basic    - Базовые команды
+ files    - Файлы и папки
+ players  - Игроки
+ movement - Движение (fly, noclip, speed)
+ world    - Мир и блоки
+ scripts  - Скрипты и ремоуты
+ visual   - Визуал (esp, invisible)
+ edit     - Редактирование мира
+ misc     - Прочее (admin, crash, rejoin)
+]]
+        end
+    },
