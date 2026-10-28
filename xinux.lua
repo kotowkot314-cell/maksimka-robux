@@ -7,7 +7,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
+local COMMANDS "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
 
 local executorName = "Unknown"
 local httpFunc = nil
