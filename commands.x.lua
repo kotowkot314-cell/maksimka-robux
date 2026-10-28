@@ -54,7 +54,7 @@ help]]
         action = function(args, ctx)
             if not ctx.hasFS then return "ERROR|Filesystem not available" end
             local target = args[1]
-            if not target or target == "\~" or target == "/" then
+            if not target or target == "~" or target == "/" then
                 ctx.setCwd(ctx.ROOT)
                 return "SUCCESS|" .. ctx.ROOT
             end
@@ -98,7 +98,7 @@ help]]
     echo = {
         action = function(args, ctx)
             if not ctx.hasFS then return "ERROR|Filesystem not available" end
-            if #args < 2 or args[#args-1] \~= ">" then
+            if #args < 2 or args[#args-1] ~= ">" then
                 return table.concat(args, " ")
             end
             local filename = args[#args]
@@ -262,7 +262,7 @@ help]]
             mouse.Button1Down:Connect(function()
                 if not activeLoops.f3x then return end
                 local target = mouse.Target
-                if target and target \~= selected then
+                if target and target ~= selected then
                     selected = target
                     dragPos = mouse.Hit.Position
                 elseif target == selected then
@@ -313,7 +313,7 @@ help]]
                 if not hrp then return end
                 local nearby = false
                 for _, p in ipairs(game.Players:GetPlayers()) do
-                    if p \~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                         if (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude <= 10 then
                             nearby = true
                             break
