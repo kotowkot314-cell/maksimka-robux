@@ -8,7 +8,8 @@ ls cd pwd cat echo mkdir rm touch exec clear
 players teleport ping fly speed jump god noclip
 brk bld f3x antf anfl infopipl scan crash
 accheck con say admin stp rejoin serverhop
-esp unesp bring kill]]
+esp unesp bring kill remotes fire invoke firespam
+remotespy getremotes remoteinfo]]
         end
     },
 
@@ -417,6 +418,170 @@ esp unesp bring kill]]
             end
             if #found == 0 then return "ERROR|No remotes found" end
             return "Found " .. #found .. " remotes:\n" .. table.concat(found, "\n")
+        end
+    },
+
+    remotes = {
+        action = function()
+            local list = {}
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") then
+                    table.insert(list, "[RemoteEvent] " .. v:GetFullName())
+                elseif v:IsA("RemoteFunction") then
+                    table.insert(list, "[RemoteFunction] " .. v:GetFullName())
+                end
+            end
+            if #list == 0 then return "ERROR|No remotes found" end
+            table.sort(list)
+            return "Found " .. #list .. " remotes:\n" .. table.concat(list, "\n")
+        end
+    },
+
+    fire = {
+        action = function(args)
+            if #args < 1 then return "ERROR|Usage: fire <RemoteName> [args...]" end
+            local name = args[1]
+            table.remove(args, 1)
+            local remote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name == name or v:GetFullName():find(name)) then
+                    remote = v
+                    break
+                end
+            end
+            if not remote then return "ERROR|Remote not found: " .. name end
+            
+            -- Конвертируем строки в числа, если это возможно
+            local convertedArgs = {}
+            for _, arg in ipairs(args) do
+                local num = tonumber(arg)
+                table.insert(convertedArgs, num or arg)
+            end
+            
+            local ok, err = pcall(function()
+                remote:FireServer(unpack(convertedArgs))
+            end)
+            if ok then
+                return "SUCCESS|Fired " .. remote:GetFullName()
+            else
+                return "ERROR|" .. tostring(err)
+            end
+        end
+    },
+
+    invoke = {
+        action = function(args)
+            if #args < 1 then return "ERROR|Usage: invoke <RemoteName> [args...]" end
+            local name = args[1]
+            table.remove(args, 1)
+            local remote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteFunction") and (v.Name == name or v:GetFullName():find(name)) then
+                    remote = v
+                    break
+                end
+            end
+            if not remote then return "ERROR|RemoteFunction not found: " .. name end
+            
+            local convertedArgs = {}
+            for _, arg in ipairs(args) do
+                local num = tonumber(arg)
+                table.insert(convertedArgs, num or arg)
+            end
+            
+            local ok, result = pcall(function()
+                return remote:InvokeServer(unpack(convertedArgs))
+            end)
+            if ok then
+                return "SUCCESS|Result: " .. tostring(result)
+            else
+                return "ERROR|" .. tostring(result)
+            end
+        end
+    },
+
+    firespam = {
+        action = function(args)
+            if #args < 1 then return "ERROR|Usage: firespam <RemoteName> [times] [args...]" end
+            local name = args[1]
+            local times = tonumber(args[2]) or 50
+            table.remove(args, 1)
+            if tonumber(args[1]) then table.remove(args, 1) end
+            local remote = nil
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name == name or v:GetFullName():find(name)) then
+                    remote = v
+                    break
+                end
+            end
+            if not remote then return "ERROR|RemoteEvent not found" end
+            
+            local convertedArgs = {}
+            for _, arg in ipairs(args) do
+                local num = tonumber(arg)
+                table.insert(convertedArgs, num or arg)
+            end
+            
+            task.spawn(function()
+                for i = 1, times do
+                    pcall(function() remote:FireServer(unpack(convertedArgs)) end)
+                    task.wait()
+                end
+            end)
+            return "SUCCESS|Spamming " .. remote.Name .. " " .. times .. " times"
+        end
+    },
+
+    remotespy = {
+        action = function()
+            if activeLoops.remotespy then
+                activeLoops.remotespy = false
+                return "SUCCESS|RemoteSpy disabled"
+            end
+            activeLoops.remotespy = true
+            local mt = getrawmetatable(game)
+            local oldNamecall = mt.__namecall
+            setreadonly(mt, false)
+            mt.__namecall = newcclosure(function(self, ...)
+                local method = getnamecallmethod()
+                if activeLoops.remotespy and (method == "FireServer" or method == "InvokeServer") then
+                    local args = {...}
+                    print("[xinux RemoteSpy]", self:GetFullName(), method, unpack(args))
+                end
+                return oldNamecall(self, ...)
+            end)
+            setreadonly(mt, true)
+            return "SUCCESS|RemoteSpy enabled (check console/F9)"
+        end
+    },
+
+    getremotes = {
+        action = function(args)
+            local filter = args[1] and args[1]:lower() or ""
+            local result = {}
+            for _, v in ipairs(game:GetDescendants()) do
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    local full = v:GetFullName()
+                    if filter == "" or full:lower():find(filter) then
+                        table.insert(result, v.ClassName .. " | " .. full)
+                    end
+                end
+            end
+            if #result == 0 then return "ERROR|Nothing found" end
+            return table.concat(result, "\n")
+        end
+    },
+
+    remoteinfo = {
+        action = function(args)
+            if not args[1] then return "ERROR|Usage: remoteinfo <name>" end
+            local name = args[1]
+            for _, v in ipairs(game:GetDescendants()) do
+                if (v:IsA("RemoteEvent") or v:IsA("RemoteFunction")) and (v.Name == name or v:GetFullName():find(name)) then
+                    return "Name: " .. v.Name .. "\nClass: " .. v.ClassName .. "\nFullName: " .. v:GetFullName() .. "\nParent: " .. tostring(v.Parent)
+                end
+            end
+            return "ERROR|Remote not found"
         end
     },
 
