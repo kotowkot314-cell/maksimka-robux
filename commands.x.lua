@@ -1,6 +1,8 @@
 local activeLoops = {}
 
-return {
+local _cmd_speed, _cmd_jump, _cmd_fire, _cmd_tp, _cmd_remotes
+
+local cmds = {
     help = {
         action = function(args, ctx)
             return [[Commands:
@@ -9,7 +11,9 @@ players teleport ping fly speed jump god noclip
 brk bld f3x antf anfl infopipl scan crash
 accheck con say admin stp rejoin serverhop
 esp unesp bring kill remotes fire invoke firespam
-remotespy getremotes remoteinfo]]
+remotespy getremotes remoteinfo
+anti hip unhip freeze anchor unanchor sit stand
+reset names plr team whoami game_info tp]]
         end
     },
 
@@ -450,14 +454,11 @@ remotespy getremotes remoteinfo]]
                 end
             end
             if not remote then return "ERROR|Remote not found: " .. name end
-            
-            -- Конвертируем строки в числа, если это возможно
             local convertedArgs = {}
             for _, arg in ipairs(args) do
                 local num = tonumber(arg)
                 table.insert(convertedArgs, num or arg)
             end
-            
             local ok, err = pcall(function()
                 remote:FireServer(unpack(convertedArgs))
             end)
@@ -482,13 +483,11 @@ remotespy getremotes remoteinfo]]
                 end
             end
             if not remote then return "ERROR|RemoteFunction not found: " .. name end
-            
             local convertedArgs = {}
             for _, arg in ipairs(args) do
                 local num = tonumber(arg)
                 table.insert(convertedArgs, num or arg)
             end
-            
             local ok, result = pcall(function()
                 return remote:InvokeServer(unpack(convertedArgs))
             end)
@@ -515,13 +514,11 @@ remotespy getremotes remoteinfo]]
                 end
             end
             if not remote then return "ERROR|RemoteEvent not found" end
-            
             local convertedArgs = {}
             for _, arg in ipairs(args) do
                 local num = tonumber(arg)
                 table.insert(convertedArgs, num or arg)
             end
-            
             task.spawn(function()
                 for i = 1, times do
                     pcall(function() remote:FireServer(unpack(convertedArgs)) end)
@@ -880,7 +877,214 @@ remotespy getremotes remoteinfo]]
                 end
                 return "SUCCESS|Noclip stopped"
             end
+            if target == "anti" and activeLoops.anti then
+                activeLoops.anti:Disconnect()
+                activeLoops.anti = nil
+                return "SUCCESS|Anti stopped"
+            end
+            if target == "esp" then
+                return cmds.unesp.action()
+            end
+            if target == "hip" then
+                return cmds.unhip.action()
+            end
             return "ERROR|Not running: " .. target
+        end
+    },
+
+    anti = {
+        action = function()
+            if activeLoops.anti then return "ERROR|Anti already enabled. Use stp anti" end
+            local lp = game.Players.LocalPlayer
+            local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+            if not hum then return "ERROR|Character not found" end
+            activeLoops.anti = hum.HealthChanged:Connect(function()
+                if hum.Health < hum.MaxHealth and hum.Health > 0 then
+                    hum.Health = hum.MaxHealth
+                end
+            end)
+            return "SUCCESS|Anti-damage enabled"
+        end
+    },
+
+    hip = {
+        action = function(args)
+            local lp = game.Players.LocalPlayer
+            if not lp.Character or not lp.Character:FindFirstChild("HumanoidRootPart") then return "ERROR|Character not found" end
+            local target = args[1]
+            if not target then return "ERROR|Usage: hip <name>" end
+            local t = game.Players:FindFirstChild(target)
+            if not t or not t.Character or not t.Character:FindFirstChild("HumanoidRootPart") then return "ERROR|Player not found" end
+            activeLoops.hip = t
+            if activeLoops.hipConn then activeLoops.hipConn:Disconnect() end
+            activeLoops.hipConn = game:GetService("RunService").Stepped:Connect(function()
+                if not activeLoops.hip or not activeLoops.hip.Character then return end
+                local myHrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                local theirHrp = activeLoops.hip.Character:FindFirstChild("HumanoidRootPart")
+                if myHrp and theirHrp then
+                    myHrp.CFrame = theirHrp.CFrame * CFrame.new(0, 0, 2)
+                end
+            end)
+            return "SUCCESS|Hip attached to " .. target
+        end
+    },
+
+    unhip = {
+        action = function()
+            if activeLoops.hipConn then activeLoops.hipConn:Disconnect() end
+            activeLoops.hip = nil
+            activeLoops.hipConn = nil
+            return "SUCCESS|Hip detached"
+        end
+    },
+
+    freeze = {
+        action = function(args)
+            local target = args[1]
+            if not target then return "ERROR|Usage: freeze <name>" end
+            local t = game.Players:FindFirstChild(target)
+            if not t or not t.Character then return "ERROR|Player not found" end
+            local hrp = t.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return "ERROR|No HumanoidRootPart" end
+            hrp.Anchored = not hrp.Anchored
+            return "SUCCESS|Toggled anchor on " .. target
+        end
+    },
+
+    anchor = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            if not lp.Character then return "ERROR|Character not found" end
+            for _, v in ipairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.Anchored = true end
+            end
+            return "SUCCESS|Anchored"
+        end
+    },
+
+    unanchor = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            if not lp.Character then return "ERROR|Character not found" end
+            for _, v in ipairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.Anchored = false end
+            end
+            return "SUCCESS|Unanchored"
+        end
+    },
+
+    sit = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+            if not hum then return "ERROR|Humanoid not found" end
+            hum.Sit = true
+            return "SUCCESS|Sit"
+        end
+    },
+
+    stand = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+            if not hum then return "ERROR|Humanoid not found" end
+            hum.Sit = false
+            return "SUCCESS|Stand"
+        end
+    },
+
+    reset = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+            if not hum then return "ERROR|Humanoid not found" end
+            hum.Health = 0
+            return "SUCCESS|Resetting"
+        end
+    },
+
+    names = {
+        action = function()
+            local list = {}
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                if p ~= game.Players.LocalPlayer then
+                    table.insert(list, p.Name)
+                end
+            end
+            table.sort(list)
+            return #list > 0 and table.concat(list, "\n") or "No other players"
+        end
+    },
+
+    plr = {
+        action = function()
+            local list = {}
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                local char = p.Character
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                local status = (char and hum and hum.Health > 0) and "alive" or "dead"
+                table.insert(list, string.format("%s | %s | %s", p.Name, status, p.Team and p.Team.Name or "-"))
+            end
+            return table.concat(list, "\n")
+        end
+    },
+
+    team = {
+        action = function(args)
+            if not args[1] then return "ERROR|Usage: team <name> [team]" end
+            local t = game.Players:FindFirstChild(args[1])
+            if not t then return "ERROR|Player not found" end
+            local teamName = args[2]
+            if not teamName then
+                return "SUCCESS|" .. t.Name .. " in team: " .. (t.Team and t.Team.Name or "none")
+            end
+            local team = game:GetService("Teams"):FindFirstChild(teamName)
+            if not team then return "ERROR|Team not found" end
+            local ok = pcall(function() t.Team = team end)
+            return ok and ("SUCCESS|Moved " .. t.Name .. " to " .. teamName) or "ERROR|Failed"
+        end
+    },
+
+    tp = {
+        action = function(args)
+            local name = args[1]
+            if not name then return "ERROR|Usage: tp <name|coords>" end
+            local lp = game.Players.LocalPlayer
+            local target = game.Players:FindFirstChild(name)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    lp.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+                    return "SUCCESS|Teleported to " .. name
+                end
+                return "ERROR|No LocalPlayer character"
+            end
+            local x, y, z = tonumber(args[1]), tonumber(args[2]), tonumber(args[3])
+            if x and y and z and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                lp.Character.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
+                return "SUCCESS|Teleported to " .. x .. ", " .. y .. ", " .. z
+            end
+            return "ERROR|Player not found"
+        end
+    },
+
+    whoami = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            return "Name: " .. lp.Name .. "\nUserId: " .. lp.UserId .. "\nDisplayName: " .. lp.DisplayName
+        end
+    },
+
+    game_info = {
+        action = function()
+            return "Place: " .. game.PlaceId .. "\nGameId: " .. game.GameId .. "\nJobId: " .. game.JobId .. "\nPlayers: " .. #game.Players:GetPlayers()
         end
     }
 }
+
+_cmd_speed   = cmds.speed.action
+_cmd_jump    = cmds.jump.action
+_cmd_fire    = cmds.fire.action
+_cmd_tp      = cmds.teleport.action
+_cmd_remotes = cmds.remotes.action
+
+return cmds
