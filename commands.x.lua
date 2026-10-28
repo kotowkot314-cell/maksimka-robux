@@ -4,10 +4,11 @@ return {
     help = {
         action = function(args, ctx)
             return [[Commands:
-ls, cd, pwd, cat, echo, mkdir, rm, touch, clear
-players, teleport, ping, fly, brk, bld, f3x, antf, anfl
-infopipl, scan, crash, stp, accheck, con, say, admin, exec
-help]]
+ls cd pwd cat echo mkdir rm touch exec clear
+players teleport ping fly speed jump god noclip
+brk bld f3x antf anfl infopipl scan crash
+accheck con say admin stp rejoin serverhop
+esp unesp bring kill]]
         end
     },
 
@@ -226,6 +227,67 @@ help]]
                 end
             end)
             return "SUCCESS|Fly enabled (Space = up, Shift = down)"
+        end
+    },
+
+    speed = {
+        action = function(args)
+            local val = tonumber(args[1]) or 50
+            local lp = game.Players.LocalPlayer
+            if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
+                lp.Character.Humanoid.WalkSpeed = val
+                return "SUCCESS|WalkSpeed set to " .. val
+            end
+            return "ERROR|Character not found"
+        end
+    },
+
+    jump = {
+        action = function(args)
+            local val = tonumber(args[1]) or 100
+            local lp = game.Players.LocalPlayer
+            if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
+                lp.Character.Humanoid.JumpPower = val
+                return "SUCCESS|JumpPower set to " .. val
+            end
+            return "ERROR|Character not found"
+        end
+    },
+
+    god = {
+        action = function()
+            local lp = game.Players.LocalPlayer
+            if not lp.Character then return "ERROR|Character not found" end
+            local hum = lp.Character:FindFirstChildOfClass("Humanoid")
+            if not hum then return "ERROR|Humanoid not found" end
+            hum.MaxHealth = math.huge
+            hum.Health = math.huge
+            return "SUCCESS|Godmode enabled"
+        end
+    },
+
+    noclip = {
+        action = function()
+            if activeLoops.noclip then
+                activeLoops.noclip:Disconnect()
+                activeLoops.noclip = nil
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, v in ipairs(char:GetDescendants()) do
+                        if v:IsA("BasePart") then v.CanCollide = true end
+                    end
+                end
+                return "SUCCESS|Noclip disabled"
+            end
+            activeLoops.noclip = game:GetService("RunService").Stepped:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, v in ipairs(char:GetDescendants()) do
+                        if v:IsA("BasePart") then v.CanCollide = false end
+                    end
+                end
+            end)
+            return "SUCCESS|Noclip enabled"
         end
     },
 
@@ -501,6 +563,108 @@ help]]
         end
     },
 
+    rejoin = {
+        action = function()
+            game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+            return "SUCCESS|Rejoining..."
+        end
+    },
+
+    serverhop = {
+        action = function()
+            local Http = game:GetService("HttpService")
+            local TPS = game:GetService("TeleportService")
+            local ok, servers = pcall(function()
+                return Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+            end)
+            if not ok or not servers or not servers.data then return "ERROR|Failed to get servers" end
+            for _, server in ipairs(servers.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    TPS:TeleportToPlaceInstance(game.PlaceId, server.id, game.Players.LocalPlayer)
+                    return "SUCCESS|Server hopping..."
+                end
+            end
+            return "ERROR|No other servers found"
+        end
+    },
+
+    esp = {
+        action = function()
+            if activeLoops.esp then return "ERROR|ESP already enabled. Use unesp" end
+            activeLoops.esp = true
+            local function addEsp(plr)
+                if plr == game.Players.LocalPlayer then return end
+                local char = plr.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "xinuxESP"
+                highlight.FillColor = Color3.fromRGB(0, 255, 100)
+                highlight.OutlineColor = Color3.fromRGB(0, 200, 80)
+                highlight.FillTransparency = 0.5
+                highlight.Parent = char
+            end
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                addEsp(p)
+                p.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    addEsp(p)
+                end)
+            end
+            game.Players.PlayerAdded:Connect(function(p)
+                p.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    addEsp(p)
+                end)
+            end)
+            return "SUCCESS|ESP enabled"
+        end
+    },
+
+    unesp = {
+        action = function()
+            activeLoops.esp = false
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                if p.Character then
+                    local h = p.Character:FindFirstChild("xinuxESP")
+                    if h then h:Destroy() end
+                end
+            end
+            return "SUCCESS|ESP disabled"
+        end
+    },
+
+    bring = {
+        action = function(args)
+            local target = args[1]
+            if not target then return "ERROR|Usage: bring <name>" end
+            local lp = game.Players.LocalPlayer
+            local t = game.Players:FindFirstChild(target)
+            if t and t.Character and lp.Character and lp.Character.PrimaryPart and t.Character.PrimaryPart then
+                t.Character:SetPrimaryPartCFrame(lp.Character.PrimaryPart.CFrame)
+                return "SUCCESS|Brought " .. target
+            end
+            return "ERROR|Player not found"
+        end
+    },
+
+    kill = {
+        action = function(args)
+            local target = args[1]
+            if not target then return "ERROR|Usage: kill <name>" end
+            local t = game.Players:FindFirstChild(target)
+            if t and t.Character then
+                local hum = t.Character:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.Health = 0
+                    return "SUCCESS|Killed " .. target
+                end
+            end
+            return "ERROR|Player not found"
+        end
+    },
+
     stp = {
         action = function(args)
             local target = args[1]
@@ -539,6 +703,17 @@ help]]
                 local gui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("xinux_Admin")
                 if gui then gui:Destroy() end
                 return "SUCCESS|Admin closed"
+            end
+            if target == "noclip" and activeLoops.noclip then
+                activeLoops.noclip:Disconnect()
+                activeLoops.noclip = nil
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, v in ipairs(char:GetDescendants()) do
+                        if v:IsA("BasePart") then v.CanCollide = true end
+                    end
+                end
+                return "SUCCESS|Noclip stopped"
             end
             return "ERROR|Not running: " .. target
         end
