@@ -1,432 +1,366 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local UserInputService = game:GetService("UserInputService")
-
-local COMMANDS_URL = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"
-local EXTRA_URL_1 = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/comaOTnarkoza.lua"
-local EXTRA_URL_2 = "https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/ogo.nolya"
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HIxRINUX_Terminal"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = PlayerGui
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 720, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -360, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 6)
-
-local Stroke = Instance.new("UIStroke")
-Stroke.Color = Color3.fromRGB(50, 50, 70)
-Stroke.Thickness = 1
-Stroke.Parent = MainFrame
-
-local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 28)
-TopBar.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
-TopBar.BorderSizePixel = 0
-TopBar.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -80, 1, 0)
-Title.Position = UDim2.new(0, 12, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "HIxRINUX"
-Title.TextColor3 = Color3.fromRGB(220, 220, 230)
-Title.Font = Enum.Font.Code
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TopBar
-
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 28, 0, 28)
-MinimizeButton.Position = UDim2.new(1, -56, 0, 0)
-MinimizeButton.BackgroundTransparency = 1
-MinimizeButton.Text = "_"
-MinimizeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-MinimizeButton.Font = Enum.Font.Code
-MinimizeButton.TextSize = 18
-MinimizeButton.Parent = TopBar
-
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 28, 0, 28)
-CloseButton.Position = UDim2.new(1, -28, 0, 0)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "×"
-CloseButton.TextColor3 = Color3.fromRGB(255, 90, 90)
-CloseButton.Font = Enum.Font.Code
-CloseButton.TextSize = 18
-CloseButton.Parent = TopBar
-
-local MiniButton = Instance.new("TextButton")
-MiniButton.Size = UDim2.new(0, 50, 0, 50)
-MiniButton.Position = UDim2.new(0, 10, 0, 10)
-MiniButton.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-MiniButton.TextColor3 = Color3.fromRGB(0, 220, 120)
-MiniButton.Font = Enum.Font.Code
-MiniButton.TextSize = 14
-MiniButton.Text = "HIxRINUX"
-MiniButton.Visible = false
-MiniButton.Parent = ScreenGui
-Instance.new("UICorner", MiniButton).CornerRadius = UDim.new(1, 0)
-local MiniStroke = Instance.new("UIStroke")
-MiniStroke.Color = Color3.fromRGB(50, 50, 70)
-MiniStroke.Thickness = 1
-MiniStroke.Parent = MiniButton
-
-MinimizeButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    MiniButton.Visible = true
+local _0xF2CA = game:GetService("Players")
+local _0xA8C6 = _0xF2CA.LocalPlayer
+local _0x2E97 = _0xA8C6:WaitForChild("PlayerGui")
+local _0x0F4E = game:GetService("UserInputService")
+local _0xEFA7 ="https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"local _0xE2EF ="https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/comaOTnarkoza.lua"local _0xBCBA ="https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/ogo.nolya"local _0xFAD9 = Instance.new("ScreenGui")
+_0xFAD9.Name ="HIxRINUX_Terminal"_0xFAD9.ResetOnSpawn = false
+_0xFAD9.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+_0xFAD9.Parent = _0x2E97
+local _0xD38F = Instance.new("Frame")
+_0xD38F.Size = UDim2.new(0, 720, 0, 420)
+_0xD38F.Position = UDim2.new(0.5, -360, 0.5, -210)
+_0xD38F.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+_0xD38F.BorderSizePixel = 0
+_0xD38F.Active = true
+_0xD38F.Draggable = true
+_0xD38F.Parent = _0xFAD9
+Instance.new("UICorner", _0xD38F).CornerRadius = UDim.new(0, 6)
+local _0x3792 = Instance.new("UIStroke")
+_0x3792.Color = Color3.fromRGB(50, 50, 70)
+_0x3792.Thickness = 1
+_0x3792.Parent = _0xD38F
+local _0x9F60 = Instance.new("Frame")
+_0x9F60.Size = UDim2.new(1, 0, 0, 28)
+_0x9F60.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
+_0x9F60.BorderSizePixel = 0
+_0x9F60.Parent = _0xD38F
+local _0x9286 = Instance.new("TextLabel")
+_0x9286.Size = UDim2.new(1, -80, 1, 0)
+_0x9286.Position = UDim2.new(0, 12, 0, 0)
+_0x9286.BackgroundTransparency = 1
+_0x9286.Text ="HIxRINUX"_0x9286.TextColor3 = Color3.fromRGB(220, 220, 230)
+_0x9286.Font = Enum.Font.Code
+_0x9286.TextSize = 14
+_0x9286.TextXAlignment = Enum.TextXAlignment.Left
+_0x9286.Parent = _0x9F60
+local _0xBE78 = Instance.new("TextButton")
+_0xBE78.Size = UDim2.new(0, 28, 0, 28)
+_0xBE78.Position = UDim2.new(1, -56, 0, 0)
+_0xBE78.BackgroundTransparency = 1
+_0xBE78.Text ="_"_0xBE78.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0xBE78.Font = Enum.Font.Code
+_0xBE78.TextSize = 18
+_0xBE78.Parent = _0x9F60
+local _0x7A04 = Instance.new("TextButton")
+_0x7A04.Size = UDim2.new(0, 28, 0, 28)
+_0x7A04.Position = UDim2.new(1, -28, 0, 0)
+_0x7A04.BackgroundTransparency = 1
+_0x7A04.Text ="×"_0x7A04.TextColor3 = Color3.fromRGB(255, 90, 90)
+_0x7A04.Font = Enum.Font.Code
+_0x7A04.TextSize = 18
+_0x7A04.Parent = _0x9F60
+local _0x0B03 = Instance.new("TextButton")
+_0x0B03.Size = UDim2.new(0, 50, 0, 50)
+_0x0B03.Position = UDim2.new(0, 10, 0, 10)
+_0x0B03.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+_0x0B03.TextColor3 = Color3.fromRGB(0, 220, 120)
+_0x0B03.Font = Enum.Font.Code
+_0x0B03.TextSize = 14
+_0x0B03.Text ="HIxRINUX"_0x0B03.Visible = false
+_0x0B03.Parent = _0xFAD9
+Instance.new("UICorner", _0x0B03).CornerRadius = UDim.new(1, 0)
+local _0x4F4B = Instance.new("UIStroke")
+_0x4F4B.Color = Color3.fromRGB(50, 50, 70)
+_0x4F4B.Thickness = 1
+_0x4F4B.Parent = _0x0B03
+_0xBE78.MouseButton1Click:Connect(function()
+_0xD38F.Visible = false
+_0x0B03.Visible = true
 end)
-
-MiniButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    MiniButton.Visible = false
+_0x0B03.MouseButton1Click:Connect(function()
+_0xD38F.Visible = true
+_0x0B03.Visible = false
 end)
-
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+_0x7A04.MouseButton1Click:Connect(function()
+_0xFAD9:Destroy()
 end)
-
-local SidePanel = Instance.new("Frame")
-SidePanel.Size = UDim2.new(0, 110, 1, -28)
-SidePanel.Position = UDim2.new(0, 0, 0, 28)
-SidePanel.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
-SidePanel.BorderSizePixel = 0
-SidePanel.Parent = MainFrame
-
-local Penguin = Instance.new("TextLabel")
-Penguin.Size = UDim2.new(1, -8, 0, 140)
-Penguin.Position = UDim2.new(0, 4, 0, 20)
-Penguin.BackgroundTransparency = 1
-Penguin.Text = [[   .--.
+local _0x3077 = Instance.new("Frame")
+_0x3077.Size = UDim2.new(0, 110, 1, -28)
+_0x3077.Position = UDim2.new(0, 0, 0, 28)
+_0x3077.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
+_0x3077.BorderSizePixel = 0
+_0x3077.Parent = _0xD38F
+local _0xF822 = Instance.new("TextLabel")
+_0xF822.Size = UDim2.new(1, -8, 0, 140)
+_0xF822.Position = UDim2.new(0, 4, 0, 20)
+_0xF822.BackgroundTransparency = 1
+_0xF822.Text =[[   .--.
   |o_o |
   |:_/ |
  //   \ \
 (|     | )
 /'\_   _/`\
-\___)=(___/]]
-Penguin.TextColor3 = Color3.fromRGB(230, 230, 240)
-Penguin.Font = Enum.Font.Code
-Penguin.TextSize = 14
-Penguin.TextXAlignment = Enum.TextXAlignment.Left
-Penguin.TextYAlignment = Enum.TextYAlignment.Top
-Penguin.Parent = SidePanel
-
-local SideInfo = Instance.new("TextLabel")
-SideInfo.Size = UDim2.new(1, -8, 0, 40)
-SideInfo.Position = UDim2.new(0, 4, 0, 170)
-SideInfo.BackgroundTransparency = 1
-SideInfo.Text = "HIxRINUX\nv2"
-SideInfo.TextColor3 = Color3.fromRGB(0, 200, 120)
-SideInfo.Font = Enum.Font.Code
-SideInfo.TextSize = 13
-SideInfo.TextXAlignment = Enum.TextXAlignment.Center
-SideInfo.Parent = SidePanel
-
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Size = UDim2.new(1, -122, 1, -68)
-ScrollingFrame.Position = UDim2.new(0, 116, 0, 34)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ScrollingFrame.ScrollBarThickness = 4
-ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
-ScrollingFrame.Parent = MainFrame
-
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.Padding = UDim.new(0, 1)
-ListLayout.Parent = ScrollingFrame
-
-local InputFrame = Instance.new("Frame")
-InputFrame.Size = UDim2.new(1, -110, 0, 32)
-InputFrame.Position = UDim2.new(0, 110, 1, -32)
-InputFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-InputFrame.BorderSizePixel = 0
-InputFrame.Parent = MainFrame
-
-local Prompt = Instance.new("TextLabel")
-Prompt.Size = UDim2.new(0, 140, 1, 0)
-Prompt.Position = UDim2.new(0, 8, 0, 0)
-Prompt.BackgroundTransparency = 1
-Prompt.Text = "[HIxRINUX]$"
-Prompt.TextColor3 = Color3.fromRGB(0, 220, 120)
-Prompt.Font = Enum.Font.Code
-Prompt.TextSize = 14
-Prompt.TextXAlignment = Enum.TextXAlignment.Left
-Prompt.Parent = InputFrame
-
-local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -155, 1, 0)
-InputBox.Position = UDim2.new(0, 145, 0, 0)
-InputBox.BackgroundTransparency = 1
-InputBox.Text = ""
-InputBox.TextColor3 = Color3.fromRGB(240, 240, 245)
-InputBox.Font = Enum.Font.Code
-InputBox.TextSize = 14
-InputBox.TextXAlignment = Enum.TextXAlignment.Left
-InputBox.ClearTextOnFocus = false
-InputBox.Parent = InputFrame
-
-local function addLine(text, color)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -8, 0, 16)
-    label.BackgroundTransparency = 1
-    label.Text = tostring(text)
-    label.TextColor3 = color or Color3.fromRGB(210, 210, 220)
-    label.Font = Enum.Font.Code
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextWrapped = true
-    label.Parent = ScrollingFrame
+\___)=(___/]]_0xF822.TextColor3 = Color3.fromRGB(230, 230, 240)
+_0xF822.Font = Enum.Font.Code
+_0xF822.TextSize = 14
+_0xF822.TextXAlignment = Enum.TextXAlignment.Left
+_0xF822.TextYAlignment = Enum.TextYAlignment.Top
+_0xF822.Parent = _0x3077
+local _0x8083 = Instance.new("TextLabel")
+_0x8083.Size = UDim2.new(1, -8, 0, 40)
+_0x8083.Position = UDim2.new(0, 4, 0, 170)
+_0x8083.BackgroundTransparency = 1
+_0x8083.Text ="HIxRINUX\nv2"_0x8083.TextColor3 = Color3.fromRGB(0, 200, 120)
+_0x8083.Font = Enum.Font.Code
+_0x8083.TextSize = 13
+_0x8083.TextXAlignment = Enum.TextXAlignment.Center
+_0x8083.Parent = _0x3077
+local _0x79C2 = Instance.new("ScrollingFrame")
+_0x79C2.Size = UDim2.new(1, -122, 1, -68)
+_0x79C2.Position = UDim2.new(0, 116, 0, 34)
+_0x79C2.BackgroundTransparency = 1
+_0x79C2.CanvasSize = UDim2.new(0, 0, 0, 0)
+_0x79C2.AutomaticCanvasSize = Enum.AutomaticSize.Y
+_0x79C2.ScrollBarThickness = 4
+_0x79C2.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
+_0x79C2.Parent = _0xD38F
+local _0x99AD = Instance.new("UIListLayout")
+_0x99AD.Padding = UDim.new(0, 1)
+_0x99AD.Parent = _0x79C2
+local _0x292B = Instance.new("Frame")
+_0x292B.Size = UDim2.new(1, -110, 0, 32)
+_0x292B.Position = UDim2.new(0, 110, 1, -32)
+_0x292B.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+_0x292B.BorderSizePixel = 0
+_0x292B.Parent = _0xD38F
+local _0xB919 = Instance.new("TextLabel")
+_0xB919.Size = UDim2.new(0, 140, 1, 0)
+_0xB919.Position = UDim2.new(0, 8, 0, 0)
+_0xB919.BackgroundTransparency = 1
+_0xB919.Text ="[HIxRINUX]$"_0xB919.TextColor3 = Color3.fromRGB(0, 220, 120)
+_0xB919.Font = Enum.Font.Code
+_0xB919.TextSize = 14
+_0xB919.TextXAlignment = Enum.TextXAlignment.Left
+_0xB919.Parent = _0x292B
+local _0x1D8D = Instance.new("TextBox")
+_0x1D8D.Size = UDim2.new(1, -155, 1, 0)
+_0x1D8D.Position = UDim2.new(0, 145, 0, 0)
+_0x1D8D.BackgroundTransparency = 1
+_0x1D8D.Text =""_0x1D8D.TextColor3 = Color3.fromRGB(240, 240, 245)
+_0x1D8D.Font = Enum.Font.Code
+_0x1D8D.TextSize = 14
+_0x1D8D.TextXAlignment = Enum.TextXAlignment.Left
+_0x1D8D.ClearTextOnFocus = false
+_0x1D8D.Parent = _0x292B
+local function _0xBD10(_0x5EE7, color)
+local _0x37CF = Instance.new("TextLabel")
+_0x37CF.Size = UDim2.new(1, -8, 0, 16)
+_0x37CF.BackgroundTransparency = 1
+_0x37CF.Text = tostring(_0x5EE7)
+_0x37CF.TextColor3 = color or Color3.fromRGB(210, 210, 220)
+_0x37CF.Font = Enum.Font.Code
+_0x37CF.TextSize = 13
+_0x37CF.TextXAlignment = Enum.TextXAlignment.Left
+_0x37CF.TextWrapped = true
+_0x37CF.Parent = _0x79C2
 end
-
-local function processOutput(text)
-    if type(text) ~= "string" then text = tostring(text) end
-    if text:sub(1, 8) == "SUCCESS|" then
-        addLine(text:sub(9), Color3.fromRGB(0, 220, 120))
-    elseif text:sub(1, 6) == "ERROR|" then
-        addLine(text:sub(7), Color3.fromRGB(255, 90, 90))
-    elseif text == "CLEAR" then
-        for _, child in ipairs(ScrollingFrame:GetChildren()) do
-            if child:IsA("TextLabel") then child:Destroy() end
-        end
-    else
-        for line in text:gmatch("[^\r\n]+") do
-            addLine(line)
-        end
-    end
+local function _0xDA82(_0x5EE7)
+if type(_0x5EE7) ~="string"then _0x5EE7 = tostring(_0x5EE7) end
+if _0x5EE7:sub(1, 8) =="SUCCESS|"then
+_0xBD10(_0x5EE7:sub(9), Color3.fromRGB(0, 220, 120))
+elseif _0x5EE7:sub(1, 6) =="ERROR|"then
+_0xBD10(_0x5EE7:sub(7), Color3.fromRGB(255, 90, 90))
+elseif _0x5EE7 =="CLEAR"then
+for _, child in ipairs(_0x79C2:GetChildren()) do
+if child:IsA("TextLabel") then child:Destroy() end
 end
-
-local FS = {}
-FS.writefile  = writefile or (syn and syn.writefile)
-FS.readfile   = readfile or (syn and syn.readfile)
-FS.listfiles  = listfiles or (syn and syn.listfiles)
-FS.isfile     = isfile or (syn and syn.isfile)
-FS.isfolder   = isfolder or (syn and syn.isfolder)
-FS.makefolder = makefolder or (syn and syn.makefolder)
-FS.delfile    = delfile or (syn and syn.delfile)
-FS.delfolder  = delfolder or (syn and syn.delfolder)
-
-local hasFS = FS.writefile and FS.readfile and FS.listfiles and FS.makefolder
-
-local ROOT = "HIxRINUX/"
-local cwd = ROOT
-
-local function ensureRoot()
-    if not hasFS then return end
-    pcall(function()
-        if not FS.isfolder(ROOT) then
-            FS.makefolder(ROOT)
-        end
-    end)
+else
+for line in _0x5EE7:gmatch("[^\r\n]+") do
+_0xBD10(line)
 end
-
-local function updatePrompt()
-    local short = cwd:gsub("^HIxRINUX/", ""):gsub("/$", "")
-    if short == "" then short = "~" end
-    Prompt.Text = "[HIxRINUX:" .. short .. "]$"
 end
-
-local customCommands = {}
-local extraModules = {}
-local history = {}
-local historyIndex = 0
-
-local function mergeCommands(base, extra)
-    if type(extra) ~= "table" then return base end
-    for k, v in pairs(extra) do
-        if type(v) == "table" and type(v.action) == "function" then
-            base[k] = v
-        elseif type(v) == "function" then
-            base[k] = { action = v }
-        end
-    end
-    return base
 end
-
-local function safeHttp(url)
-    local ok, body = pcall(function() return game:HttpGet(url) end)
-    if ok and type(body) == "string" and #body > 10 then return body end
-    return nil
+local _0x2D23 = {}
+_0x2D23.writefile = writefile or (syn and syn.writefile)
+_0x2D23.readfile = readfile or (syn and syn.readfile)
+_0x2D23.listfiles = listfiles or (syn and syn.listfiles)
+_0x2D23.isfile = isfile or (syn and syn.isfile)
+_0x2D23.isfolder = isfolder or (syn and syn.isfolder)
+_0x2D23.makefolder = makefolder or (syn and syn.makefolder)
+_0x2D23.delfile = delfile or (syn and syn.delfile)
+_0x2D23.delfolder = delfolder or (syn and syn.delfolder)
+local _0x8380 = _0x2D23.writefile and _0x2D23.readfile and _0x2D23.listfiles and _0x2D23.makefolder
+local _0xDF0F ="HIxRINUX/"local _0x74F0 = _0xDF0F
+local function _0x7BFE()
+if not _0x8380 then return end
+pcall(function()
+if not _0x2D23.isfolder(_0xDF0F) then
+_0x2D23.makefolder(_0xDF0F)
 end
-
-local function safeLoad(body)
-    if not body then return nil end
-    local fn, err = loadstring(body)
-    if not fn then return nil, err end
-    local ok, result = pcall(fn)
-    if ok then return result end
-    return nil, result
+end)
 end
-
+local function _0x10F1()
+local _0xC372 = _0x74F0:gsub("^HIxRINUX/",""):gsub("/$","")
+if _0xC372 ==""then _0xC372 ="~"end
+_0xB919.Text ="[HIxRINUX:".. _0xC372 .."]$"end
+local _0x87D1 = {}
+local _0x5D70 = {}
+local _0x72C4 = {}
+local _0x2381 = 0
+local function _0x9D71(base, extra)
+if type(extra) ~="table"then return base end
+for k, v in pairs(extra) do
+if type(v) =="table"and type(v.action) =="function"then
+base[k] = v
+elseif type(v) =="function"then
+base[k] = { action = v }
+end
+end
+return base
+end
+local function _0x7619(url)
+local _0x3927, _0xF389 = pcall(function() return game:HttpGet(url) end)
+if _0x3927 and type(_0xF389) =="string"and #_0xF389 > 10 then return _0xF389 end
+return nil
+end
+local function _0xF66A(_0xF389)
+if not _0xF389 then return nil end
+local _0xD48F, _0xA6C2 = loadstring(_0xF389)
+if not _0xD48F then return nil, _0xA6C2 end
+local _0x3927, _0x688B = pcall(_0xD48F)
+if _0x3927 then return _0x688B end
+return nil, _0x688B
+end
 spawn(function()
-    ensureRoot()
-
-    addLine("HIxRINUX v2", Color3.fromRGB(0, 220, 120))
-    if hasFS then
-        addLine("Filesystem: ONLINE", Color3.fromRGB(0, 200, 100))
-    else
-        addLine("Filesystem: OFFLINE", Color3.fromRGB(255, 160, 50))
-    end
-    addLine("")
-
-    local loaded = false
-
-    local body = safeHttp(COMMANDS_URL)
-    if body then
-        local result, err = safeLoad(body)
-        if type(result) == "table" then
-            customCommands = mergeCommands(customCommands, result)
-            loaded = true
-            addLine("[OK] commands.x.lua loaded from GitHub", Color3.fromRGB(0, 220, 120))
-        else
-            addLine("[ERR] commands.x.lua load error: " .. tostring(err), Color3.fromRGB(255, 160, 50))
-        end
-    end
-
-    if not loaded and hasFS then
-        local ok, localBody = pcall(function() return FS.readfile(ROOT .. "commands.x.lua") end)
-        if ok and localBody then
-            local result, err = safeLoad(localBody)
-            if type(result) == "table" then
-                customCommands = mergeCommands(customCommands, result)
-                loaded = true
-                addLine("[OK] commands.x.lua loaded from local file", Color3.fromRGB(0, 220, 120))
-            else
-                addLine("[ERR] local commands.x.lua: " .. tostring(err), Color3.fromRGB(255, 160, 50))
-            end
-        end
-    end
-
-    if not loaded then
-        addLine("[ERR] Failed to load commands.x.lua", Color3.fromRGB(255, 90, 90))
-        addLine("Put commands.x.lua in HIxRINUX/ folder or on GitHub", Color3.fromRGB(255, 160, 50))
-    end
-
-    local extraList = {
-        { url = EXTRA_URL_1, label = "comaOTnarkoza.lua" },
-        { url = EXTRA_URL_2, label = "ogo.nolya" },
-    }
-
-    for _, item in ipairs(extraList) do
-        local extraBody = safeHttp(item.url)
-        if extraBody then
-            local result, err = safeLoad(extraBody)
-            if type(result) == "table" then
-                mergeCommands(customCommands, result)
-                table.insert(extraModules, { label = item.label, table = result })
-                addLine("[OK] " .. item.label .. " loaded from GitHub", Color3.fromRGB(0, 220, 120))
-            elseif type(result) == "function" then
-                local ok2, r2 = pcall(result)
-                if ok2 and type(r2) == "table" then
-                    mergeCommands(customCommands, r2)
-                    table.insert(extraModules, { label = item.label, table = r2 })
-                    addLine("[OK] " .. item.label .. " executed (function)", Color3.fromRGB(0, 220, 120))
-                else
-                    addLine("[WARN] " .. item.label .. ": returns function, not table", Color3.fromRGB(255, 160, 50))
-                end
-            else
-                addLine("[WARN] " .. item.label .. ": " .. tostring(err or "no table returned"), Color3.fromRGB(255, 160, 50))
-            end
-        else
-            addLine("[ERR] " .. item.label .. ": failed to download", Color3.fromRGB(255, 90, 90))
-        end
-    end
-
-    if hasFS then
-        local localExtras = { "comaOTnarkoza.lua", "ogo.nolya" }
-        for _, name in ipairs(localExtras) do
-            local ok, localBody = pcall(function() return FS.readfile(ROOT .. name) end)
-            if ok and localBody and #localBody > 10 then
-                local result = safeLoad(localBody)
-                if type(result) == "table" then
-                    mergeCommands(customCommands, result)
-                    addLine("[OK] " .. name .. " loaded from local file", Color3.fromRGB(0, 220, 120))
-                end
-            end
-        end
-    end
-
-    addLine("Type 'help' for list of commands")
-    addLine("")
-    updatePrompt()
+_0x7BFE()
+_0xBD10("HIxRINUX v2", Color3.fromRGB(0, 220, 120))
+if _0x8380 then
+_0xBD10("Filesystem: ONLINE", Color3.fromRGB(0, 200, 100))
+else
+_0xBD10("Filesystem: OFFLINE", Color3.fromRGB(255, 160, 50))
+end
+_0xBD10("")
+local _0x92EE = false
+local _0xF389 = _0x7619(_0xEFA7)
+if _0xF389 then
+local _0x688B, _0xA6C2 = _0xF66A(_0xF389)
+if type(_0x688B) =="table"then
+_0x87D1 = _0x9D71(_0x87D1, _0x688B)
+_0x92EE = true
+_0xBD10("[OK] commands.x.lua loaded from GitHub", Color3.fromRGB(0, 220, 120))
+else
+_0xBD10("[ERR] commands.x.lua load error: ".. tostring(_0xA6C2), Color3.fromRGB(255, 160, 50))
+end
+end
+if not _0x92EE and _0x8380 then
+local _0x3927, _0x78B0 = pcall(function() return _0x2D23.readfile(_0xDF0F .."commands.x.lua") end)
+if _0x3927 and _0x78B0 then
+local _0x688B, _0xA6C2 = _0xF66A(_0x78B0)
+if type(_0x688B) =="table"then
+_0x87D1 = _0x9D71(_0x87D1, _0x688B)
+_0x92EE = true
+_0xBD10("[OK] commands.x.lua loaded from local file", Color3.fromRGB(0, 220, 120))
+else
+_0xBD10("[ERR] local commands.x.lua: ".. tostring(_0xA6C2), Color3.fromRGB(255, 160, 50))
+end
+end
+end
+if not _0x92EE then
+_0xBD10("[ERR] Failed to load commands.x.lua", Color3.fromRGB(255, 90, 90))
+_0xBD10("Put commands.x.lua in HIxRINUX/ folder or on GitHub", Color3.fromRGB(255, 160, 50))
+end
+local _0xA6DF = {
+{ url = _0xE2EF, _0x37CF ="comaOTnarkoza.lua"},
+{ url = _0xBCBA, _0x37CF ="ogo.nolya"},
+}
+for _, item in ipairs(_0xA6DF) do
+local _0x8D94 = _0x7619(item.url)
+if _0x8D94 then
+local _0x688B, _0xA6C2 = _0xF66A(_0x8D94)
+if type(_0x688B) =="table"then
+_0x9D71(_0x87D1, _0x688B)
+table.insert(_0x5D70, { _0x37CF = item.label, table = _0x688B })
+_0xBD10("[OK] ".. item.label .." loaded from GitHub", Color3.fromRGB(0, 220, 120))
+elseif type(_0x688B) =="function"then
+local _0x8AB7, _0x3548 = pcall(_0x688B)
+if _0x8AB7 and type(_0x3548) =="table"then
+_0x9D71(_0x87D1, _0x3548)
+table.insert(_0x5D70, { _0x37CF = item.label, table = _0x3548 })
+_0xBD10("[OK] ".. item.label .." executed (function)", Color3.fromRGB(0, 220, 120))
+else
+_0xBD10("[WARN] ".. item.label ..": returns function, not table", Color3.fromRGB(255, 160, 50))
+end
+else
+_0xBD10("[WARN] ".. item.label ..": ".. tostring(_0xA6C2 or"no table returned"), Color3.fromRGB(255, 160, 50))
+end
+else
+_0xBD10("[ERR] ".. item.label ..": failed to download", Color3.fromRGB(255, 90, 90))
+end
+end
+if _0x8380 then
+local _0xF6FE = {"comaOTnarkoza.lua","ogo.nolya"}
+for _, name in ipairs(_0xF6FE) do
+local _0x3927, _0x78B0 = pcall(function() return _0x2D23.readfile(_0xDF0F .. name) end)
+if _0x3927 and _0x78B0 and #_0x78B0 > 10 then
+local _0x688B = _0xF66A(_0x78B0)
+if type(_0x688B) =="table"then
+_0x9D71(_0x87D1, _0x688B)
+_0xBD10("[OK] ".. name .." loaded from local file", Color3.fromRGB(0, 220, 120))
+end
+end
+end
+end
+_0xBD10("Type 'help' for list of commands")
+_0xBD10("")
+_0x10F1()
 end)
-
-InputBox.FocusLost:Connect(function(enter)
-    if not enter then return end
-    local text = InputBox.Text
-    if text == "" then return end
-
-    InputBox.Text = ""
-    table.insert(history, text)
-    historyIndex = #history + 1
-
-    addLine(Prompt.Text .. " " .. text, Color3.fromRGB(0, 200, 120))
-
-    local parts = {}
-    for word in text:gmatch("%S+") do
-        table.insert(parts, word)
-    end
-    local cmd = parts[1] and parts[1]:lower()
-    table.remove(parts, 1)
-    local args = parts
-
-    if cmd == "clear" or cmd == "cls" then
-        processOutput("CLEAR")
-        return
-    end
-
-    if customCommands[cmd] then
-        spawn(function()
-            local ok, result = pcall(function()
-                return customCommands[cmd].action(args, {
-                    FS = FS,
-                    hasFS = hasFS,
-                    cwd = cwd,
-                    setCwd = function(new) cwd = new end,
-                    ROOT = ROOT,
-                    addLine = addLine,
-                    processOutput = processOutput,
-                    extraModules = extraModules
-                })
-            end)
-            if ok then
-                processOutput(tostring(result or ""))
-            else
-                processOutput("ERROR|" .. tostring(result))
-            end
-            updatePrompt()
-            wait()
-            ScrollingFrame.CanvasPosition = Vector2.new(0, ScrollingFrame.CanvasSize.Y.Offset)
-        end)
-    else
-        processOutput("ERROR|" .. tostring(cmd) .. ": command not found")
-    end
+_0x1D8D.FocusLost:Connect(function(enter)
+if not enter then return end
+local _0x5EE7 = _0x1D8D.Text
+if _0x5EE7 ==""then return end
+_0x1D8D.Text =""table.insert(_0x72C4, _0x5EE7)
+_0x2381 = #_0x72C4 + 1
+_0xBD10(_0xB919.Text .." ".. _0x5EE7, Color3.fromRGB(0, 200, 120))
+local _0xF763 = {}
+for word in _0x5EE7:gmatch("%S+") do
+table.insert(_0xF763, word)
+end
+local _0x693C = _0xF763[1] and _0xF763[1]:lower()
+table.remove(_0xF763, 1)
+local _0x7DE3 = _0xF763
+if _0x693C =="clear"or _0x693C =="cls"then
+_0xDA82("CLEAR")
+return
+end
+if _0x87D1[_0x693C] then
+spawn(function()
+local _0x3927, _0x688B = pcall(function()
+return _0x87D1[_0x693C].action(_0x7DE3, {
+_0x2D23 = _0x2D23,
+_0x8380 = _0x8380,
+_0x74F0 = _0x74F0,
+setCwd = function(new) _0x74F0 = new end,
+_0xDF0F = _0xDF0F,
+_0xBD10 = _0xBD10,
+_0xDA82 = _0xDA82,
+_0x5D70 = _0x5D70
+})
 end)
-
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.Up and InputBox:IsFocused() then
-        if historyIndex > 1 then
-            historyIndex = historyIndex - 1
-            InputBox.Text = history[historyIndex] or ""
-            InputBox.CursorPosition = #InputBox.Text + 1
-        end
-    elseif input.KeyCode == Enum.KeyCode.Down and InputBox:IsFocused() then
-        if historyIndex < #history then
-            historyIndex = historyIndex + 1
-            InputBox.Text = history[historyIndex] or ""
-        else
-            historyIndex = #history + 1
-            InputBox.Text = ""
-        end
-    end
+if _0x3927 then
+_0xDA82(tostring(_0x688B or""))
+else
+_0xDA82("ERROR|".. tostring(_0x688B))
+end
+_0x10F1()
+wait()
+_0x79C2.CanvasPosition = Vector2.new(0, _0x79C2.CanvasSize.Y.Offset)
+end)
+else
+_0xDA82("ERROR|".. tostring(_0x693C) ..": command not found")
+end
+end)
+_0x0F4E.InputBegan:Connect(function(input, gp)
+if gp then return end
+if input.KeyCode == Enum.KeyCode.Up and _0x1D8D:IsFocused() then
+if _0x2381 > 1 then
+_0x2381 = _0x2381 - 1
+_0x1D8D.Text = _0x72C4[_0x2381] or""_0x1D8D.CursorPosition = #_0x1D8D.Text + 1
+end
+elseif input.KeyCode == Enum.KeyCode.Down and _0x1D8D:IsFocused() then
+if _0x2381 < #_0x72C4 then
+_0x2381 = _0x2381 + 1
+_0x1D8D.Text = _0x72C4[_0x2381] or""else
+_0x2381 = #_0x72C4 + 1
+_0x1D8D.Text =""end
+end
 end)
