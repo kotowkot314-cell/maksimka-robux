@@ -1,366 +1,366 @@
-local _0xF2CA = game:GetService("Players")
-local _0xA8C6 = _0xF2CA.LocalPlayer
-local _0x2E97 = _0xA8C6:WaitForChild("PlayerGui")
-local _0x0F4E = game:GetService("UserInputService")
-local _0xEFA7 ="https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/commands.x.lua"local _0xE2EF ="https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/comaOTnarkoza.lua"local _0xBCBA ="https://raw.githubusercontent.com/kotowkot314-cell/maksimka-robux/main/ogo.nolya"local _0xFAD9 = Instance.new("ScreenGui")
-_0xFAD9.Name ="HIxRINUX_Terminal"_0xFAD9.ResetOnSpawn = false
-_0xFAD9.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-_0xFAD9.Parent = _0x2E97
-local _0xD38F = Instance.new("Frame")
-_0xD38F.Size = UDim2.new(0, 720, 0, 420)
-_0xD38F.Position = UDim2.new(0.5, -360, 0.5, -210)
-_0xD38F.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-_0xD38F.BorderSizePixel = 0
-_0xD38F.Active = true
-_0xD38F.Draggable = true
-_0xD38F.Parent = _0xFAD9
-Instance.new("UICorner", _0xD38F).CornerRadius = UDim.new(0, 6)
-local _0x3792 = Instance.new("UIStroke")
-_0x3792.Color = Color3.fromRGB(50, 50, 70)
-_0x3792.Thickness = 1
-_0x3792.Parent = _0xD38F
-local _0x9F60 = Instance.new("Frame")
-_0x9F60.Size = UDim2.new(1, 0, 0, 28)
-_0x9F60.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
-_0x9F60.BorderSizePixel = 0
-_0x9F60.Parent = _0xD38F
-local _0x9286 = Instance.new("TextLabel")
-_0x9286.Size = UDim2.new(1, -80, 1, 0)
-_0x9286.Position = UDim2.new(0, 12, 0, 0)
-_0x9286.BackgroundTransparency = 1
-_0x9286.Text ="HIxRINUX"_0x9286.TextColor3 = Color3.fromRGB(220, 220, 230)
-_0x9286.Font = Enum.Font.Code
-_0x9286.TextSize = 14
-_0x9286.TextXAlignment = Enum.TextXAlignment.Left
-_0x9286.Parent = _0x9F60
-local _0xBE78 = Instance.new("TextButton")
-_0xBE78.Size = UDim2.new(0, 28, 0, 28)
-_0xBE78.Position = UDim2.new(1, -56, 0, 0)
-_0xBE78.BackgroundTransparency = 1
-_0xBE78.Text ="_"_0xBE78.TextColor3 = Color3.fromRGB(200, 200, 200)
-_0xBE78.Font = Enum.Font.Code
-_0xBE78.TextSize = 18
-_0xBE78.Parent = _0x9F60
-local _0x7A04 = Instance.new("TextButton")
-_0x7A04.Size = UDim2.new(0, 28, 0, 28)
-_0x7A04.Position = UDim2.new(1, -28, 0, 0)
-_0x7A04.BackgroundTransparency = 1
-_0x7A04.Text ="×"_0x7A04.TextColor3 = Color3.fromRGB(255, 90, 90)
-_0x7A04.Font = Enum.Font.Code
-_0x7A04.TextSize = 18
-_0x7A04.Parent = _0x9F60
-local _0x0B03 = Instance.new("TextButton")
-_0x0B03.Size = UDim2.new(0, 50, 0, 50)
-_0x0B03.Position = UDim2.new(0, 10, 0, 10)
-_0x0B03.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-_0x0B03.TextColor3 = Color3.fromRGB(0, 220, 120)
-_0x0B03.Font = Enum.Font.Code
-_0x0B03.TextSize = 14
-_0x0B03.Text ="HIxRINUX"_0x0B03.Visible = false
-_0x0B03.Parent = _0xFAD9
-Instance.new("UICorner", _0x0B03).CornerRadius = UDim.new(1, 0)
-local _0x4F4B = Instance.new("UIStroke")
-_0x4F4B.Color = Color3.fromRGB(50, 50, 70)
-_0x4F4B.Thickness = 1
-_0x4F4B.Parent = _0x0B03
-_0xBE78.MouseButton1Click:Connect(function()
-_0xD38F.Visible = false
-_0x0B03.Visible = true
+local _0xB325 = game:GetService(string.char(80,108,97,121,101,114,115))
+local _0x9D46 = _0xB325.LocalPlayer
+local _0xDB77 = _0x9D46:WaitForChild(string.char(80,108,97,121,101,114,71,117,105))
+local _0x97C9 = game:GetService(string.char(85,115,101,114,73,110,112,117,116,83,101,114,118,105,99,101))
+local _0xA7EE =string.char(104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,107,111,116,111,119,107,111,116,51,49,52,45,99,101,108,108,47,109,97,107,115,105,109,107,97,45,114,111,98,117,120,47,109,97,105,110,47,99,111,109,109,97,110,100,115,46,120,46,108,117,97)local _0x8F7C =string.char(104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,107,111,116,111,119,107,111,116,51,49,52,45,99,101,108,108,47,109,97,107,115,105,109,107,97,45,114,111,98,117,120,47,109,97,105,110,47,99,111,109,97,79,84,110,97,114,107,111,122,97,46,108,117,97)local _0xB1F0 =string.char(104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,107,111,116,111,119,107,111,116,51,49,52,45,99,101,108,108,47,109,97,107,115,105,109,107,97,45,114,111,98,117,120,47,109,97,105,110,47,111,103,111,46,110,111,108,121,97)local _0x488B = Instance.new(string.char(83,99,114,101,101,110,71,117,105))
+_0x488B.Name =string.char(72,73,120,82,73,78,85,88,95,84,101,114,109,105,110,97,108)_0x488B.ResetOnSpawn = false
+_0x488B.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+_0x488B.Parent = _0xDB77
+local _0xBE2B = Instance.new(string.char(70,114,97,109,101))
+_0xBE2B.Size = UDim2.new(0, 720, 0, 420)
+_0xBE2B.Position = UDim2.new(0.5, -360, 0.5, -210)
+_0xBE2B.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+_0xBE2B.BorderSizePixel = 0
+_0xBE2B.Active = true
+_0xBE2B.Draggable = true
+_0xBE2B.Parent = _0x488B
+Instance.new(string.char(85,73,67,111,114,110,101,114), _0xBE2B).CornerRadius = UDim.new(0, 6)
+local _0xAE09 = Instance.new(string.char(85,73,83,116,114,111,107,101))
+_0xAE09.Color = Color3.fromRGB(50, 50, 70)
+_0xAE09.Thickness = 1
+_0xAE09.Parent = _0xBE2B
+local _0xA191 = Instance.new(string.char(70,114,97,109,101))
+_0xA191.Size = UDim2.new(1, 0, 0, 28)
+_0xA191.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
+_0xA191.BorderSizePixel = 0
+_0xA191.Parent = _0xBE2B
+local _0x6688 = Instance.new(string.char(84,101,120,116,76,97,98,101,108))
+_0x6688.Size = UDim2.new(1, -80, 1, 0)
+_0x6688.Position = UDim2.new(0, 12, 0, 0)
+_0x6688.BackgroundTransparency = 1
+_0x6688.Text =string.char(72,73,120,82,73,78,85,88)_0x6688.TextColor3 = Color3.fromRGB(220, 220, 230)
+_0x6688.Font = Enum.Font.Code
+_0x6688.TextSize = 14
+_0x6688.TextXAlignment = Enum.TextXAlignment.Left
+_0x6688.Parent = _0xA191
+local _0x7007 = Instance.new(string.char(84,101,120,116,66,117,116,116,111,110))
+_0x7007.Size = UDim2.new(0, 28, 0, 28)
+_0x7007.Position = UDim2.new(1, -56, 0, 0)
+_0x7007.BackgroundTransparency = 1
+_0x7007.Text =string.char(95)_0x7007.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x7007.Font = Enum.Font.Code
+_0x7007.TextSize = 18
+_0x7007.Parent = _0xA191
+local _0xB6F5 = Instance.new(string.char(84,101,120,116,66,117,116,116,111,110))
+_0xB6F5.Size = UDim2.new(0, 28, 0, 28)
+_0xB6F5.Position = UDim2.new(1, -28, 0, 0)
+_0xB6F5.BackgroundTransparency = 1
+_0xB6F5.Text =string.char(195,151)_0xB6F5.TextColor3 = Color3.fromRGB(255, 90, 90)
+_0xB6F5.Font = Enum.Font.Code
+_0xB6F5.TextSize = 18
+_0xB6F5.Parent = _0xA191
+local _0x38EA = Instance.new(string.char(84,101,120,116,66,117,116,116,111,110))
+_0x38EA.Size = UDim2.new(0, 50, 0, 50)
+_0x38EA.Position = UDim2.new(0, 10, 0, 10)
+_0x38EA.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+_0x38EA.TextColor3 = Color3.fromRGB(0, 220, 120)
+_0x38EA.Font = Enum.Font.Code
+_0x38EA.TextSize = 14
+_0x38EA.Text =string.char(72,73,120,82,73,78,85,88)_0x38EA.Visible = false
+_0x38EA.Parent = _0x488B
+Instance.new(string.char(85,73,67,111,114,110,101,114), _0x38EA).CornerRadius = UDim.new(1, 0)
+local _0x9ABC = Instance.new(string.char(85,73,83,116,114,111,107,101))
+_0x9ABC.Color = Color3.fromRGB(50, 50, 70)
+_0x9ABC.Thickness = 1
+_0x9ABC.Parent = _0x38EA
+_0x7007.MouseButton1Click:Connect(function()
+_0xBE2B.Visible = false
+_0x38EA.Visible = true
 end)
-_0x0B03.MouseButton1Click:Connect(function()
-_0xD38F.Visible = true
-_0x0B03.Visible = false
+_0x38EA.MouseButton1Click:Connect(function()
+_0xBE2B.Visible = true
+_0x38EA.Visible = false
 end)
-_0x7A04.MouseButton1Click:Connect(function()
-_0xFAD9:Destroy()
+_0xB6F5.MouseButton1Click:Connect(function()
+_0x488B:Destroy()
 end)
-local _0x3077 = Instance.new("Frame")
-_0x3077.Size = UDim2.new(0, 110, 1, -28)
-_0x3077.Position = UDim2.new(0, 0, 0, 28)
-_0x3077.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
-_0x3077.BorderSizePixel = 0
-_0x3077.Parent = _0xD38F
-local _0xF822 = Instance.new("TextLabel")
-_0xF822.Size = UDim2.new(1, -8, 0, 140)
-_0xF822.Position = UDim2.new(0, 4, 0, 20)
-_0xF822.BackgroundTransparency = 1
-_0xF822.Text =[[   .--.
+local _0x92B9 = Instance.new(string.char(70,114,97,109,101))
+_0x92B9.Size = UDim2.new(0, 110, 1, -28)
+_0x92B9.Position = UDim2.new(0, 0, 0, 28)
+_0x92B9.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
+_0x92B9.BorderSizePixel = 0
+_0x92B9.Parent = _0xBE2B
+local _0xFF96 = Instance.new(string.char(84,101,120,116,76,97,98,101,108))
+_0xFF96.Size = UDim2.new(1, -8, 0, 140)
+_0xFF96.Position = UDim2.new(0, 4, 0, 20)
+_0xFF96.BackgroundTransparency = 1
+_0xFF96.Text =[[   .--.
   |o_o |
   |:_/ |
  //   \ \
 (|     | )
 /'\_   _/`\
-\___)=(___/]]_0xF822.TextColor3 = Color3.fromRGB(230, 230, 240)
-_0xF822.Font = Enum.Font.Code
-_0xF822.TextSize = 14
-_0xF822.TextXAlignment = Enum.TextXAlignment.Left
-_0xF822.TextYAlignment = Enum.TextYAlignment.Top
-_0xF822.Parent = _0x3077
-local _0x8083 = Instance.new("TextLabel")
-_0x8083.Size = UDim2.new(1, -8, 0, 40)
-_0x8083.Position = UDim2.new(0, 4, 0, 170)
-_0x8083.BackgroundTransparency = 1
-_0x8083.Text ="HIxRINUX\nv2"_0x8083.TextColor3 = Color3.fromRGB(0, 200, 120)
-_0x8083.Font = Enum.Font.Code
-_0x8083.TextSize = 13
-_0x8083.TextXAlignment = Enum.TextXAlignment.Center
-_0x8083.Parent = _0x3077
-local _0x79C2 = Instance.new("ScrollingFrame")
-_0x79C2.Size = UDim2.new(1, -122, 1, -68)
-_0x79C2.Position = UDim2.new(0, 116, 0, 34)
-_0x79C2.BackgroundTransparency = 1
-_0x79C2.CanvasSize = UDim2.new(0, 0, 0, 0)
-_0x79C2.AutomaticCanvasSize = Enum.AutomaticSize.Y
-_0x79C2.ScrollBarThickness = 4
-_0x79C2.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
-_0x79C2.Parent = _0xD38F
-local _0x99AD = Instance.new("UIListLayout")
-_0x99AD.Padding = UDim.new(0, 1)
-_0x99AD.Parent = _0x79C2
-local _0x292B = Instance.new("Frame")
-_0x292B.Size = UDim2.new(1, -110, 0, 32)
-_0x292B.Position = UDim2.new(0, 110, 1, -32)
-_0x292B.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-_0x292B.BorderSizePixel = 0
-_0x292B.Parent = _0xD38F
-local _0xB919 = Instance.new("TextLabel")
-_0xB919.Size = UDim2.new(0, 140, 1, 0)
-_0xB919.Position = UDim2.new(0, 8, 0, 0)
-_0xB919.BackgroundTransparency = 1
-_0xB919.Text ="[HIxRINUX]$"_0xB919.TextColor3 = Color3.fromRGB(0, 220, 120)
-_0xB919.Font = Enum.Font.Code
-_0xB919.TextSize = 14
-_0xB919.TextXAlignment = Enum.TextXAlignment.Left
-_0xB919.Parent = _0x292B
-local _0x1D8D = Instance.new("TextBox")
-_0x1D8D.Size = UDim2.new(1, -155, 1, 0)
-_0x1D8D.Position = UDim2.new(0, 145, 0, 0)
-_0x1D8D.BackgroundTransparency = 1
-_0x1D8D.Text =""_0x1D8D.TextColor3 = Color3.fromRGB(240, 240, 245)
-_0x1D8D.Font = Enum.Font.Code
-_0x1D8D.TextSize = 14
-_0x1D8D.TextXAlignment = Enum.TextXAlignment.Left
-_0x1D8D.ClearTextOnFocus = false
-_0x1D8D.Parent = _0x292B
-local function _0xBD10(_0x5EE7, color)
-local _0x37CF = Instance.new("TextLabel")
-_0x37CF.Size = UDim2.new(1, -8, 0, 16)
-_0x37CF.BackgroundTransparency = 1
-_0x37CF.Text = tostring(_0x5EE7)
-_0x37CF.TextColor3 = color or Color3.fromRGB(210, 210, 220)
-_0x37CF.Font = Enum.Font.Code
-_0x37CF.TextSize = 13
-_0x37CF.TextXAlignment = Enum.TextXAlignment.Left
-_0x37CF.TextWrapped = true
-_0x37CF.Parent = _0x79C2
+\___)=(___/]]_0xFF96.TextColor3 = Color3.fromRGB(230, 230, 240)
+_0xFF96.Font = Enum.Font.Code
+_0xFF96.TextSize = 14
+_0xFF96.TextXAlignment = Enum.TextXAlignment.Left
+_0xFF96.TextYAlignment = Enum.TextYAlignment.Top
+_0xFF96.Parent = _0x92B9
+local _0x6B19 = Instance.new(string.char(84,101,120,116,76,97,98,101,108))
+_0x6B19.Size = UDim2.new(1, -8, 0, 40)
+_0x6B19.Position = UDim2.new(0, 4, 0, 170)
+_0x6B19.BackgroundTransparency = 1
+_0x6B19.Text =string.char(72,73,120,82,73,78,85,88,10,118,50)_0x6B19.TextColor3 = Color3.fromRGB(0, 200, 120)
+_0x6B19.Font = Enum.Font.Code
+_0x6B19.TextSize = 13
+_0x6B19.TextXAlignment = Enum.TextXAlignment.Center
+_0x6B19.Parent = _0x92B9
+local _0x95B5 = Instance.new(string.char(83,99,114,111,108,108,105,110,103,70,114,97,109,101))
+_0x95B5.Size = UDim2.new(1, -122, 1, -68)
+_0x95B5.Position = UDim2.new(0, 116, 0, 34)
+_0x95B5.BackgroundTransparency = 1
+_0x95B5.CanvasSize = UDim2.new(0, 0, 0, 0)
+_0x95B5.AutomaticCanvasSize = Enum.AutomaticSize.Y
+_0x95B5.ScrollBarThickness = 4
+_0x95B5.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
+_0x95B5.Parent = _0xBE2B
+local _0xBA1B = Instance.new(string.char(85,73,76,105,115,116,76,97,121,111,117,116))
+_0xBA1B.Padding = UDim.new(0, 1)
+_0xBA1B.Parent = _0x95B5
+local _0x63D3 = Instance.new(string.char(70,114,97,109,101))
+_0x63D3.Size = UDim2.new(1, -110, 0, 32)
+_0x63D3.Position = UDim2.new(0, 110, 1, -32)
+_0x63D3.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+_0x63D3.BorderSizePixel = 0
+_0x63D3.Parent = _0xBE2B
+local _0x8634 = Instance.new(string.char(84,101,120,116,76,97,98,101,108))
+_0x8634.Size = UDim2.new(0, 140, 1, 0)
+_0x8634.Position = UDim2.new(0, 8, 0, 0)
+_0x8634.BackgroundTransparency = 1
+_0x8634.Text =string.char(91,72,73,120,82,73,78,85,88,93,36)_0x8634.TextColor3 = Color3.fromRGB(0, 220, 120)
+_0x8634.Font = Enum.Font.Code
+_0x8634.TextSize = 14
+_0x8634.TextXAlignment = Enum.TextXAlignment.Left
+_0x8634.Parent = _0x63D3
+local _0x1C54 = Instance.new(string.char(84,101,120,116,66,111,120))
+_0x1C54.Size = UDim2.new(1, -155, 1, 0)
+_0x1C54.Position = UDim2.new(0, 145, 0, 0)
+_0x1C54.BackgroundTransparency = 1
+_0x1C54.Text =""_0x1C54.TextColor3 = Color3.fromRGB(240, 240, 245)
+_0x1C54.Font = Enum.Font.Code
+_0x1C54.TextSize = 14
+_0x1C54.TextXAlignment = Enum.TextXAlignment.Left
+_0x1C54.ClearTextOnFocus = false
+_0x1C54.Parent = _0x63D3
+local function _0x105A(_0xE2C7, color)
+local _0x9892 = Instance.new(string.char(84,101,120,116,76,97,98,101,108))
+_0x9892.Size = UDim2.new(1, -8, 0, 16)
+_0x9892.BackgroundTransparency = 1
+_0x9892.Text = tostring(_0xE2C7)
+_0x9892.TextColor3 = color or Color3.fromRGB(210, 210, 220)
+_0x9892.Font = Enum.Font.Code
+_0x9892.TextSize = 13
+_0x9892.TextXAlignment = Enum.TextXAlignment.Left
+_0x9892.TextWrapped = true
+_0x9892.Parent = _0x95B5
 end
-local function _0xDA82(_0x5EE7)
-if type(_0x5EE7) ~="string"then _0x5EE7 = tostring(_0x5EE7) end
-if _0x5EE7:sub(1, 8) =="SUCCESS|"then
-_0xBD10(_0x5EE7:sub(9), Color3.fromRGB(0, 220, 120))
-elseif _0x5EE7:sub(1, 6) =="ERROR|"then
-_0xBD10(_0x5EE7:sub(7), Color3.fromRGB(255, 90, 90))
-elseif _0x5EE7 =="CLEAR"then
-for _, child in ipairs(_0x79C2:GetChildren()) do
-if child:IsA("TextLabel") then child:Destroy() end
+local function _0x467E(_0xE2C7)
+if type(_0xE2C7) ~=string.char(115,116,114,105,110,103)then _0xE2C7 = tostring(_0xE2C7) end
+if _0xE2C7:sub(1, 8) ==string.char(83,85,67,67,69,83,83,124)then
+_0x105A(_0xE2C7:sub(9), Color3.fromRGB(0, 220, 120))
+elseif _0xE2C7:sub(1, 6) ==string.char(69,82,82,79,82,124)then
+_0x105A(_0xE2C7:sub(7), Color3.fromRGB(255, 90, 90))
+elseif _0xE2C7 ==string.char(67,76,69,65,82)then
+for _, child in ipairs(_0x95B5:GetChildren()) do
+if child:IsA(string.char(84,101,120,116,76,97,98,101,108)) then child:Destroy() end
 end
 else
-for line in _0x5EE7:gmatch("[^\r\n]+") do
-_0xBD10(line)
+for line in _0xE2C7:gmatch(string.char(91,94,13,10,93,43)) do
+_0x105A(line)
 end
 end
 end
-local _0x2D23 = {}
-_0x2D23.writefile = writefile or (syn and syn.writefile)
-_0x2D23.readfile = readfile or (syn and syn.readfile)
-_0x2D23.listfiles = listfiles or (syn and syn.listfiles)
-_0x2D23.isfile = isfile or (syn and syn.isfile)
-_0x2D23.isfolder = isfolder or (syn and syn.isfolder)
-_0x2D23.makefolder = makefolder or (syn and syn.makefolder)
-_0x2D23.delfile = delfile or (syn and syn.delfile)
-_0x2D23.delfolder = delfolder or (syn and syn.delfolder)
-local _0x8380 = _0x2D23.writefile and _0x2D23.readfile and _0x2D23.listfiles and _0x2D23.makefolder
-local _0xDF0F ="HIxRINUX/"local _0x74F0 = _0xDF0F
-local function _0x7BFE()
-if not _0x8380 then return end
+local _0x87C8 = {}
+_0x87C8.writefile = writefile or (syn and syn.writefile)
+_0x87C8.readfile = readfile or (syn and syn.readfile)
+_0x87C8.listfiles = listfiles or (syn and syn.listfiles)
+_0x87C8.isfile = isfile or (syn and syn.isfile)
+_0x87C8.isfolder = isfolder or (syn and syn.isfolder)
+_0x87C8.makefolder = makefolder or (syn and syn.makefolder)
+_0x87C8.delfile = delfile or (syn and syn.delfile)
+_0x87C8.delfolder = delfolder or (syn and syn.delfolder)
+local _0xFDF7 = _0x87C8.writefile and _0x87C8.readfile and _0x87C8.listfiles and _0x87C8.makefolder
+local _0x238C =string.char(72,73,120,82,73,78,85,88,47)local _0x8FAD = _0x238C
+local function _0xD3FB()
+if not _0xFDF7 then return end
 pcall(function()
-if not _0x2D23.isfolder(_0xDF0F) then
-_0x2D23.makefolder(_0xDF0F)
+if not _0x87C8.isfolder(_0x238C) then
+_0x87C8.makefolder(_0x238C)
 end
 end)
 end
-local function _0x10F1()
-local _0xC372 = _0x74F0:gsub("^HIxRINUX/",""):gsub("/$","")
-if _0xC372 ==""then _0xC372 ="~"end
-_0xB919.Text ="[HIxRINUX:".. _0xC372 .."]$"end
-local _0x87D1 = {}
-local _0x5D70 = {}
-local _0x72C4 = {}
-local _0x2381 = 0
-local function _0x9D71(base, extra)
-if type(extra) ~="table"then return base end
+local function _0x6A71()
+local _0x9EE6 = _0x8FAD:gsub(string.char(94,72,73,120,82,73,78,85,88,47),""):gsub(string.char(47,36),"")
+if _0x9EE6 ==""then _0x9EE6 =string.char(126)end
+_0x8634.Text =string.char(91,72,73,120,82,73,78,85,88,58).. _0x9EE6 ..string.char(93,36)end
+local _0x5C2F = {}
+local _0xB30B = {}
+local _0xD7A2 = {}
+local _0xAF61 = 0
+local function _0x18FA(base, extra)
+if type(extra) ~=string.char(116,97,98,108,101)then return base end
 for k, v in pairs(extra) do
-if type(v) =="table"and type(v.action) =="function"then
+if type(v) ==string.char(116,97,98,108,101)and type(v.action) ==string.char(102,117,110,99,116,105,111,110)then
 base[k] = v
-elseif type(v) =="function"then
+elseif type(v) ==string.char(102,117,110,99,116,105,111,110)then
 base[k] = { action = v }
 end
 end
 return base
 end
-local function _0x7619(url)
-local _0x3927, _0xF389 = pcall(function() return game:HttpGet(url) end)
-if _0x3927 and type(_0xF389) =="string"and #_0xF389 > 10 then return _0xF389 end
+local function _0xB5F9(url)
+local _0x3B7F, _0x655C = pcall(function() return game:HttpGet(url) end)
+if _0x3B7F and type(_0x655C) ==string.char(115,116,114,105,110,103)and #_0x655C > 10 then return _0x655C end
 return nil
 end
-local function _0xF66A(_0xF389)
-if not _0xF389 then return nil end
-local _0xD48F, _0xA6C2 = loadstring(_0xF389)
-if not _0xD48F then return nil, _0xA6C2 end
-local _0x3927, _0x688B = pcall(_0xD48F)
-if _0x3927 then return _0x688B end
-return nil, _0x688B
+local function _0x5E85(_0x655C)
+if not _0x655C then return nil end
+local _0x68DB, _0xF439 = loadstring(_0x655C)
+if not _0x68DB then return nil, _0xF439 end
+local _0x3B7F, _0x2C3D = pcall(_0x68DB)
+if _0x3B7F then return _0x2C3D end
+return nil, _0x2C3D
 end
 spawn(function()
-_0x7BFE()
-_0xBD10("HIxRINUX v2", Color3.fromRGB(0, 220, 120))
-if _0x8380 then
-_0xBD10("Filesystem: ONLINE", Color3.fromRGB(0, 200, 100))
+_0xD3FB()
+_0x105A(string.char(72,73,120,82,73,78,85,88,32,118,50), Color3.fromRGB(0, 220, 120))
+if _0xFDF7 then
+_0x105A(string.char(70,105,108,101,115,121,115,116,101,109,58,32,79,78,76,73,78,69), Color3.fromRGB(0, 200, 100))
 else
-_0xBD10("Filesystem: OFFLINE", Color3.fromRGB(255, 160, 50))
+_0x105A(string.char(70,105,108,101,115,121,115,116,101,109,58,32,79,70,70,76,73,78,69), Color3.fromRGB(255, 160, 50))
 end
-_0xBD10("")
-local _0x92EE = false
-local _0xF389 = _0x7619(_0xEFA7)
-if _0xF389 then
-local _0x688B, _0xA6C2 = _0xF66A(_0xF389)
-if type(_0x688B) =="table"then
-_0x87D1 = _0x9D71(_0x87D1, _0x688B)
-_0x92EE = true
-_0xBD10("[OK] commands.x.lua loaded from GitHub", Color3.fromRGB(0, 220, 120))
+_0x105A("")
+local _0x97A4 = false
+local _0x655C = _0xB5F9(_0xA7EE)
+if _0x655C then
+local _0x2C3D, _0xF439 = _0x5E85(_0x655C)
+if type(_0x2C3D) ==string.char(116,97,98,108,101)then
+_0x5C2F = _0x18FA(_0x5C2F, _0x2C3D)
+_0x97A4 = true
+_0x105A(string.char(91,79,75,93,32,99,111,109,109,97,110,100,115,46,120,46,108,117,97,32,108,111,97,100,101,100,32,102,114,111,109,32,71,105,116,72,117,98), Color3.fromRGB(0, 220, 120))
 else
-_0xBD10("[ERR] commands.x.lua load error: ".. tostring(_0xA6C2), Color3.fromRGB(255, 160, 50))
+_0x105A(string.char(91,69,82,82,93,32,99,111,109,109,97,110,100,115,46,120,46,108,117,97,32,108,111,97,100,32,101,114,114,111,114,58,32).. tostring(_0xF439), Color3.fromRGB(255, 160, 50))
 end
 end
-if not _0x92EE and _0x8380 then
-local _0x3927, _0x78B0 = pcall(function() return _0x2D23.readfile(_0xDF0F .."commands.x.lua") end)
-if _0x3927 and _0x78B0 then
-local _0x688B, _0xA6C2 = _0xF66A(_0x78B0)
-if type(_0x688B) =="table"then
-_0x87D1 = _0x9D71(_0x87D1, _0x688B)
-_0x92EE = true
-_0xBD10("[OK] commands.x.lua loaded from local file", Color3.fromRGB(0, 220, 120))
+if not _0x97A4 and _0xFDF7 then
+local _0x3B7F, _0xB802 = pcall(function() return _0x87C8.readfile(_0x238C ..string.char(99,111,109,109,97,110,100,115,46,120,46,108,117,97)) end)
+if _0x3B7F and _0xB802 then
+local _0x2C3D, _0xF439 = _0x5E85(_0xB802)
+if type(_0x2C3D) ==string.char(116,97,98,108,101)then
+_0x5C2F = _0x18FA(_0x5C2F, _0x2C3D)
+_0x97A4 = true
+_0x105A(string.char(91,79,75,93,32,99,111,109,109,97,110,100,115,46,120,46,108,117,97,32,108,111,97,100,101,100,32,102,114,111,109,32,108,111,99,97,108,32,102,105,108,101), Color3.fromRGB(0, 220, 120))
 else
-_0xBD10("[ERR] local commands.x.lua: ".. tostring(_0xA6C2), Color3.fromRGB(255, 160, 50))
+_0x105A(string.char(91,69,82,82,93,32,108,111,99,97,108,32,99,111,109,109,97,110,100,115,46,120,46,108,117,97,58,32).. tostring(_0xF439), Color3.fromRGB(255, 160, 50))
 end
 end
 end
-if not _0x92EE then
-_0xBD10("[ERR] Failed to load commands.x.lua", Color3.fromRGB(255, 90, 90))
-_0xBD10("Put commands.x.lua in HIxRINUX/ folder or on GitHub", Color3.fromRGB(255, 160, 50))
+if not _0x97A4 then
+_0x105A(string.char(91,69,82,82,93,32,70,97,105,108,101,100,32,116,111,32,108,111,97,100,32,99,111,109,109,97,110,100,115,46,120,46,108,117,97), Color3.fromRGB(255, 90, 90))
+_0x105A(string.char(80,117,116,32,99,111,109,109,97,110,100,115,46,120,46,108,117,97,32,105,110,32,72,73,120,82,73,78,85,88,47,32,102,111,108,100,101,114,32,111,114,32,111,110,32,71,105,116,72,117,98), Color3.fromRGB(255, 160, 50))
 end
-local _0xA6DF = {
-{ url = _0xE2EF, _0x37CF ="comaOTnarkoza.lua"},
-{ url = _0xBCBA, _0x37CF ="ogo.nolya"},
+local _0x7EB2 = {
+{ url = _0x8F7C, _0x9892 =string.char(99,111,109,97,79,84,110,97,114,107,111,122,97,46,108,117,97)},
+{ url = _0xB1F0, _0x9892 =string.char(111,103,111,46,110,111,108,121,97)},
 }
-for _, item in ipairs(_0xA6DF) do
-local _0x8D94 = _0x7619(item.url)
-if _0x8D94 then
-local _0x688B, _0xA6C2 = _0xF66A(_0x8D94)
-if type(_0x688B) =="table"then
-_0x9D71(_0x87D1, _0x688B)
-table.insert(_0x5D70, { _0x37CF = item.label, table = _0x688B })
-_0xBD10("[OK] ".. item.label .." loaded from GitHub", Color3.fromRGB(0, 220, 120))
-elseif type(_0x688B) =="function"then
-local _0x8AB7, _0x3548 = pcall(_0x688B)
-if _0x8AB7 and type(_0x3548) =="table"then
-_0x9D71(_0x87D1, _0x3548)
-table.insert(_0x5D70, { _0x37CF = item.label, table = _0x3548 })
-_0xBD10("[OK] ".. item.label .." executed (function)", Color3.fromRGB(0, 220, 120))
+for _, item in ipairs(_0x7EB2) do
+local _0x2EB6 = _0xB5F9(item.url)
+if _0x2EB6 then
+local _0x2C3D, _0xF439 = _0x5E85(_0x2EB6)
+if type(_0x2C3D) ==string.char(116,97,98,108,101)then
+_0x18FA(_0x5C2F, _0x2C3D)
+table.insert(_0xB30B, { _0x9892 = item.label, table = _0x2C3D })
+_0x105A(string.char(91,79,75,93,32).. item.label ..string.char(32,108,111,97,100,101,100,32,102,114,111,109,32,71,105,116,72,117,98), Color3.fromRGB(0, 220, 120))
+elseif type(_0x2C3D) ==string.char(102,117,110,99,116,105,111,110)then
+local _0xF080, _0x5F97 = pcall(_0x2C3D)
+if _0xF080 and type(_0x5F97) ==string.char(116,97,98,108,101)then
+_0x18FA(_0x5C2F, _0x5F97)
+table.insert(_0xB30B, { _0x9892 = item.label, table = _0x5F97 })
+_0x105A(string.char(91,79,75,93,32).. item.label ..string.char(32,101,120,101,99,117,116,101,100,32,40,102,117,110,99,116,105,111,110,41), Color3.fromRGB(0, 220, 120))
 else
-_0xBD10("[WARN] ".. item.label ..": returns function, not table", Color3.fromRGB(255, 160, 50))
-end
-else
-_0xBD10("[WARN] ".. item.label ..": ".. tostring(_0xA6C2 or"no table returned"), Color3.fromRGB(255, 160, 50))
+_0x105A(string.char(91,87,65,82,78,93,32).. item.label ..string.char(58,32,114,101,116,117,114,110,115,32,102,117,110,99,116,105,111,110,44,32,110,111,116,32,116,97,98,108,101), Color3.fromRGB(255, 160, 50))
 end
 else
-_0xBD10("[ERR] ".. item.label ..": failed to download", Color3.fromRGB(255, 90, 90))
+_0x105A(string.char(91,87,65,82,78,93,32).. item.label ..string.char(58,32).. tostring(_0xF439 orstring.char(110,111,32,116,97,98,108,101,32,114,101,116,117,114,110,101,100)), Color3.fromRGB(255, 160, 50))
+end
+else
+_0x105A(string.char(91,69,82,82,93,32).. item.label ..string.char(58,32,102,97,105,108,101,100,32,116,111,32,100,111,119,110,108,111,97,100), Color3.fromRGB(255, 90, 90))
 end
 end
-if _0x8380 then
-local _0xF6FE = {"comaOTnarkoza.lua","ogo.nolya"}
-for _, name in ipairs(_0xF6FE) do
-local _0x3927, _0x78B0 = pcall(function() return _0x2D23.readfile(_0xDF0F .. name) end)
-if _0x3927 and _0x78B0 and #_0x78B0 > 10 then
-local _0x688B = _0xF66A(_0x78B0)
-if type(_0x688B) =="table"then
-_0x9D71(_0x87D1, _0x688B)
-_0xBD10("[OK] ".. name .." loaded from local file", Color3.fromRGB(0, 220, 120))
+if _0xFDF7 then
+local _0xEBCF = {string.char(99,111,109,97,79,84,110,97,114,107,111,122,97,46,108,117,97),string.char(111,103,111,46,110,111,108,121,97)}
+for _, name in ipairs(_0xEBCF) do
+local _0x3B7F, _0xB802 = pcall(function() return _0x87C8.readfile(_0x238C .. name) end)
+if _0x3B7F and _0xB802 and #_0xB802 > 10 then
+local _0x2C3D = _0x5E85(_0xB802)
+if type(_0x2C3D) ==string.char(116,97,98,108,101)then
+_0x18FA(_0x5C2F, _0x2C3D)
+_0x105A(string.char(91,79,75,93,32).. name ..string.char(32,108,111,97,100,101,100,32,102,114,111,109,32,108,111,99,97,108,32,102,105,108,101), Color3.fromRGB(0, 220, 120))
 end
 end
 end
 end
-_0xBD10("Type 'help' for list of commands")
-_0xBD10("")
-_0x10F1()
+_0x105A(string.char(84,121,112,101,32,39,104,101,108,112,39,32,102,111,114,32,108,105,115,116,32,111,102,32,99,111,109,109,97,110,100,115))
+_0x105A("")
+_0x6A71()
 end)
-_0x1D8D.FocusLost:Connect(function(enter)
+_0x1C54.FocusLost:Connect(function(enter)
 if not enter then return end
-local _0x5EE7 = _0x1D8D.Text
-if _0x5EE7 ==""then return end
-_0x1D8D.Text =""table.insert(_0x72C4, _0x5EE7)
-_0x2381 = #_0x72C4 + 1
-_0xBD10(_0xB919.Text .." ".. _0x5EE7, Color3.fromRGB(0, 200, 120))
-local _0xF763 = {}
-for word in _0x5EE7:gmatch("%S+") do
-table.insert(_0xF763, word)
+local _0xE2C7 = _0x1C54.Text
+if _0xE2C7 ==""then return end
+_0x1C54.Text =""table.insert(_0xD7A2, _0xE2C7)
+_0xAF61 = #_0xD7A2 + 1
+_0x105A(_0x8634.Text ..string.char(32).. _0xE2C7, Color3.fromRGB(0, 200, 120))
+local _0x7DEB = {}
+for word in _0xE2C7:gmatch(string.char(37,83,43)) do
+table.insert(_0x7DEB, word)
 end
-local _0x693C = _0xF763[1] and _0xF763[1]:lower()
-table.remove(_0xF763, 1)
-local _0x7DE3 = _0xF763
-if _0x693C =="clear"or _0x693C =="cls"then
-_0xDA82("CLEAR")
+local _0x783D = _0x7DEB[1] and _0x7DEB[1]:lower()
+table.remove(_0x7DEB, 1)
+local _0xB9D0 = _0x7DEB
+if _0x783D ==string.char(99,108,101,97,114)or _0x783D ==string.char(99,108,115)then
+_0x467E(string.char(67,76,69,65,82))
 return
 end
-if _0x87D1[_0x693C] then
+if _0x5C2F[_0x783D] then
 spawn(function()
-local _0x3927, _0x688B = pcall(function()
-return _0x87D1[_0x693C].action(_0x7DE3, {
-_0x2D23 = _0x2D23,
-_0x8380 = _0x8380,
-_0x74F0 = _0x74F0,
-setCwd = function(new) _0x74F0 = new end,
-_0xDF0F = _0xDF0F,
-_0xBD10 = _0xBD10,
-_0xDA82 = _0xDA82,
-_0x5D70 = _0x5D70
+local _0x3B7F, _0x2C3D = pcall(function()
+return _0x5C2F[_0x783D].action(_0xB9D0, {
+_0x87C8 = _0x87C8,
+_0xFDF7 = _0xFDF7,
+_0x8FAD = _0x8FAD,
+setCwd = function(new) _0x8FAD = new end,
+_0x238C = _0x238C,
+_0x105A = _0x105A,
+_0x467E = _0x467E,
+_0xB30B = _0xB30B
 })
 end)
-if _0x3927 then
-_0xDA82(tostring(_0x688B or""))
+if _0x3B7F then
+_0x467E(tostring(_0x2C3D or""))
 else
-_0xDA82("ERROR|".. tostring(_0x688B))
+_0x467E(string.char(69,82,82,79,82,124).. tostring(_0x2C3D))
 end
-_0x10F1()
+_0x6A71()
 wait()
-_0x79C2.CanvasPosition = Vector2.new(0, _0x79C2.CanvasSize.Y.Offset)
+_0x95B5.CanvasPosition = Vector2.new(0, _0x95B5.CanvasSize.Y.Offset)
 end)
 else
-_0xDA82("ERROR|".. tostring(_0x693C) ..": command not found")
+_0x467E(string.char(69,82,82,79,82,124).. tostring(_0x783D) ..string.char(58,32,99,111,109,109,97,110,100,32,110,111,116,32,102,111,117,110,100))
 end
 end)
-_0x0F4E.InputBegan:Connect(function(input, gp)
+_0x97C9.InputBegan:Connect(function(input, gp)
 if gp then return end
-if input.KeyCode == Enum.KeyCode.Up and _0x1D8D:IsFocused() then
-if _0x2381 > 1 then
-_0x2381 = _0x2381 - 1
-_0x1D8D.Text = _0x72C4[_0x2381] or""_0x1D8D.CursorPosition = #_0x1D8D.Text + 1
+if input.KeyCode == Enum.KeyCode.Up and _0x1C54:IsFocused() then
+if _0xAF61 > 1 then
+_0xAF61 = _0xAF61 - 1
+_0x1C54.Text = _0xD7A2[_0xAF61] or""_0x1C54.CursorPosition = #_0x1C54.Text + 1
 end
-elseif input.KeyCode == Enum.KeyCode.Down and _0x1D8D:IsFocused() then
-if _0x2381 < #_0x72C4 then
-_0x2381 = _0x2381 + 1
-_0x1D8D.Text = _0x72C4[_0x2381] or""else
-_0x2381 = #_0x72C4 + 1
-_0x1D8D.Text =""end
+elseif input.KeyCode == Enum.KeyCode.Down and _0x1C54:IsFocused() then
+if _0xAF61 < #_0xD7A2 then
+_0xAF61 = _0xAF61 + 1
+_0x1C54.Text = _0xD7A2[_0xAF61] or""else
+_0xAF61 = #_0xD7A2 + 1
+_0x1C54.Text =""end
 end
 end)
