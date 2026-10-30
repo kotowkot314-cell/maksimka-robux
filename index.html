@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MyOS Web Build System</title>
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/editor/editor.main.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background: #1e1e1e; color: #d4d4d4; font-family: sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* --- СТИЛИ ДЛЯ РЕДАКТОРА (IDE) --- */
+        #ideView { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        
+        .toolbar { background: #252526; padding: 10px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #333; flex-wrap: wrap; }
+        .file-tabs { display: flex; gap: 5px; overflow-x: auto; }
+        .file-tab { background: #333; color: #ccc; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px 4px 0 0; display: flex; align-items: center; gap: 10px; font-family: monospace; }
+        .file-tab.active { background: #007acc; color: white; }
+        .file-tab .close-btn { color: #aaa; font-weight: bold; cursor: pointer; padding: 0 5px; }
+        .file-tab .close-btn:hover { color: #fff; }
+        
+        .add-file { background: #444; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
+        select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; font-family: monospace; }
+        
+        .btn-start { background: #28a745; color: white; border: none; padding: 8px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-left: auto; }
+        .btn-start:hover { background: #218838; }
+        .btn-start:disabled { background: #555; cursor: not-allowed; }
+        
+        .workspace { display: flex; flex: 1; overflow: hidden; }
+        .editor-container { width: 100%; height: 100%; }
+
+        /* --- СТИЛИ ДЛЯ ЭКРАНА СИСТЕМЫ (ТЕРМИНАЛ) --- */
+        #systemView { display: none; flex-direction: column; height: 100%; width: 100%; background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; box-sizing: border-box; padding: 20px; }
+        
+        .sys-header { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .sys-title { color: #fff; font-size: 20px; font-weight: bold; }
+        
+        .sys-console { flex: 1; overflow-y: auto; white-space: pre-wrap; font-size: 16px; line-height: 1.5; }
+        .err { color: #ff5555; }
+        .warn { color: #ffff55; }
+        .info { color: #55ffff; }
+        .success { color: #55ff55; }
+        
+        .sys-controls { display: flex; gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #333; }
+        .sys-btn { background: #222; color: #0f0; border: 1px solid #0f0; padding: 10px 20px; cursor: pointer; font-family: monospace; font-size: 16px; font-weight: bold; transition: 0.2s; }
+        .sys-btn:hover { background: #0f0; color: #000; }
+        .sys-btn.danger { color: #f00; border-color: #f00; }
+        .sys-btn.danger:hover { background: #f00; color: #000; }
+        
+        /* Оверлей загрузки */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 9999; }
+        .spinner { border: 4px solid #333; border-top: 4px solid #28a745; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loader-text { color: white; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН 1: РЕДАКТОР КОДА -->
+    <div id="ideView">
+        <div class="toolbar">
+            <div class="file-tabs" id="fileTabs"></div>
+            <div style="display:flex; gap:10px; align-items:center; margin-left: auto;">
+                <select id="langSelect">
+                    <option value="c">C (.c)</option>
+                    <option value="cpp">C++ (.cpp)</option>
+                    <option value="rust">Rust (.rs)</option>
+                    <option value="nasm">NASM (.asm)</option>
+                </select>
+                <button class="add-file" onclick="addFile()">+ Добавить файл</button>
+                <button id="btnStart" class="btn-start" onclick="buildAndRun()">▶ СТАРТ</button>
+            </div>
+        </div>
+        <div class="workspace">
+            <div class="editor-container" id="editor"></div>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 2: СИСТЕМА (РЕЗУЛЬТАТ) -->
+    <div id="systemView">
+        <div class="sys-header">
+            <div class="sys-title">MyOS Virtual Terminal</div>
+            <div id="sysStatus" style="color:#888;">Статус: Ожидание</div>
+        </div>
+        <div class="sys-console" id="sysConsole"></div>
+        
+        <!-- Кнопки управления системой -->
+        <div class="sys-controls">
+            <button class="sys-btn" onclick="rebootSystem()">🔄 Перезагрузить</button>
+            <button class="sys-btn danger" onclick="powerOffSystem()">⏻ Выключить</button>
+            <button class="sys-btn" onclick="returnToEditor()">← Вернуться в редактор</button>
+        </div>
+    </div>
+
+    <!-- Оверлей загрузки -->
+    <div id="loaderOverlay" class="loader-overlay">
+        <div class="spinner"></div>
+        <div class="loader-text">Сборка проекта на сервере...<br><span style="font-size:14px; color:#aaa;">Линковка файлов...</span></div>
+    </div>
+
+    <script>
+        // --- ЛОГИКА РЕДАКТОРА ---
+        let editor;
+        let files = {
+            'main.c': { lang: 'c', content: '#include <stdio.h>\n\nint main() {\n    printf("Hello from MyOS!\\n");\n    printf("System initialized.\\n");\n    return 0;\n}' },
+            'kernel.asm': { lang: 'nasm', content: 'section .data\n    msg db "Hello from NASM!", 10\n    len equ $ - msg\n\nsection .text\n    global _start\n_start:\n    ; Syscall write\n    mov eax, 4\n    mov ebx, 1\n    mov ecx, msg\n    mov edx, len\n    int 0x80\n    ; Syscall exit\n    mov eax, 1\n    xor ebx, ebx\n    int 0x80' }
+        };
+        let activeFile = 'main.c';
+
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: files[activeFile].content,
+                language: getMonacoLang(files[activeFile].lang),
+                theme: 'vs-dark',
+                fontSize: 16,
+                minimap: { enabled: false },
+                automaticLayout: true
+            });
+
+            editor.onDidChangeModelContent(() => {
+                files[activeFile].content = editor.getValue();
+            });
+
+            renderTabs();
+        });
+
+        function getMonacoLang(lang) {
+            if (lang === 'c') return 'c';
+            if (lang === 'cpp') return 'cpp';
+            if (lang === 'rust') return 'rust';
+            if (lang === 'nasm') return 'asm';
+            return 'plaintext';
+        }
+
+        function renderTabs() {
+            const tabsDiv = document.getElementById('fileTabs');
+            tabsDiv.innerHTML = '';
+            
+            for (const [filename, fileData] of Object.entries(files)) {
+                const btn = document.createElement('button');
+                btn.className = `file-tab ${filename === activeFile ? 'active' : ''}`;
+                btn.innerHTML = `<span>${filename}</span>`;
+                
+                if (Object.keys(files).length > 1) {
+                    const closeBtn = document.createElement('span');
+                    closeBtn.className = 'close-btn';
+                    closeBtn.innerText = '×';
+                    closeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        delete files[filename];
+                        if (activeFile === filename) {
+                            activeFile = Object.keys(files)[0];
+                        }
+                        renderTabs();
+                        editor.setValue(files[activeFile].content);
+                        monaco.editor.setModelLanguage(editor.getModel(), getMonacoLang(files[activeFile].lang));
+                    };
+                    btn.appendChild(closeBtn);
+                }
+
+                btn.onclick = () => {
+                    if (activeFile !== filename) {
+                        activeFile = filename;
+                        editor.setValue(files[filename].content);
+                        monaco.editor.setModelLanguage(editor.getModel(), getMonacoLang(files[filename].lang));
+                        renderTabs();
+                    }
+                };
+                tabsDiv.appendChild(btn);
+            }
+        }
+
+        function addFile() {
+            const lang = document.getElementById('langSelect').value;
+            let ext = '.c';
+            if (lang === 'cpp') ext = '.cpp';
+            if (lang === 'rust') ext = '.rs';
+            if (lang === 'nasm') ext = '.asm';
+            
+            let filename = prompt("Введите имя файла:", `file${Object.keys(files).length + 1}${ext}`);
+            if (!filename) return;
+            if (files[filename]) {
+                alert("Файл уже существует!");
+                return;
+            }
+
+            let template = '';
+            if (lang === 'c') template = '// Новый файл C\n#include <stdio.h>\n\nvoid my_func() {\n    printf("C func called!\\n");\n}';
+            if (lang === 'cpp') template = '// Новый файл C++\n#include <iostream>\n\nextern "C" void my_func() {\n    std::cout << "C++ func called!\\n";\n}';
+            if (lang === 'rust') template = '// Новый файл Rust\n#[no_mangle]\npub extern "C" fn rust_func() {\n    println!("Rust func called!");\n}';
+            if (lang === 'nasm') template = 'section .text\n    global asm_func\n\nasm_func:\n    ret';
+
+            files[filename] = { lang: lang, content: template };
+            activeFile = filename;
+            renderTabs();
+            editor.setValue(template);
+            monaco.editor.setModelLanguage(editor.getModel(), getMonacoLang(lang));
+        }
+
+        // --- ЛОГИКА СБОРКИ И ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ ---
+        async function buildAndRun() {
+            document.getElementById('loaderOverlay').style.display = 'flex';
+            
+            const codes = [];
+            for (const [filename, data] of Object.entries(files)) {
+                codes.push({ file: filename, code: data.content });
+            }
+
+            try {
+                // Отправка на компилятор (Wandbox)
+                const response = await fetch('https://wandbox.org/api/compile.json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        compiler: 'gcc-head', // Используем GCC
+                        code: codes[0].code,
+                        codes: codes,
+                        options: '-w'
+                    })
+                });
+
+                const result = await response.json();
+                
+                // Переключаем экраны: скрываем IDE, показываем Терминал
+                document.getElementById('ideView').style.display = 'none';
+                document.getElementById('systemView').style.display = 'flex';
+                document.getElementById('sysStatus').innerText = "Статус: Система запущена";
+                document.getElementById('sysStatus').style.color = "#0f0";
+                
+                displayResult(result);
+                
+            } catch (error) {
+                alert("Ошибка сети: " + error.message);
+            } finally {
+                document.getElementById('loaderOverlay').style.display = 'none';
+            }
+        }
+
+        function displayResult(result) {
+            const consoleDiv = document.getElementById('sysConsole');
+            let outputHTML = "> Инициализация ядра...\n> Загрузка драйверов...\n\n";
+
+            if (result.compiler_error) {
+                outputHTML += `<span class="err">=== ОШИБКИ КОМПИЛЯЦИИ / ЛИНКОВКИ ===\n${result.compiler_error}</span>\n\n`;
+            }
+
+            if (result.program_output) {
+                outputHTML += `<span class="success">=== ВЫВОД ПРОГРАММЫ ===\n${result.program_output}</span>\n\n`;
+            }
+
+            if (result.program_error) {
+                outputHTML += `<span class="err">=== ОШИБКА ВЫПОЛНЕНИЯ (KERNEL PANIC) ===\n${result.program_error}</span>\n\n`;
+            }
+
+            if (!result.compiler_error && !result.program_output && !result.program_error) {
+                outputHTML += `<span class="info">Сборка прошла успешно, но программа ничего не вывела.</span>\n\n`;
+            }
+
+            outputHTML += `<span style="color:#555">[Процесс завершен. Код выхода: ${result.status || 0}]</span>`;
+            consoleDiv.innerHTML = outputHTML;
+        }
+
+        // --- КНОПКИ УПРАВЛЕНИЯ СИСТЕМОЙ ---
+        function rebootSystem() {
+            document.getElementById('sysConsole').innerHTML = "<span class='warn'>Перезагрузка системы...</span>";
+            document.getElementById('sysStatus').innerText = "Статус: Перезагрузка...";
+            document.getElementById('sysStatus').style.color = "#ff0";
+            
+            // Имитация перезагрузки (повторный запуск того же кода)
+            setTimeout(() => {
+                buildAndRun();
+            }, 1000);
+        }
+
+        function powerOffSystem() {
+            document.getElementById('sysConsole').innerHTML = "<span class='err'>Система остановлена. Питание отключено.</span>";
+            document.getElementById('sysStatus').innerText = "Статус: Выключено";
+            document.getElementById('sysStatus').style.color = "#f00";
+            
+            // Блокируем кнопки
+            document.querySelectorAll('.sys-btn').forEach(btn => {
+                if(btn.innerText.includes('Перезагрузить') || btn.innerText.includes('Выключить')) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
+        }
+
+        function returnToEditor() {
+            // Возвращаемся в редактор и сбрасываем кнопки
+            document.getElementById('systemView').style.display = 'none';
+            document.getElementById('ideView').style.display = 'flex';
+            
+            document.querySelectorAll('.sys-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            });
+            document.getElementById('sysConsole').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
