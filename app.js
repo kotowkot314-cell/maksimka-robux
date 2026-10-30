@@ -35,7 +35,10 @@ function buildConfig(imageSource) {
 function startEmulator(imageSource) {
   if (emulator) return;
   clearPlaceholder();
-  log(`Запуск эмулятора с образом: ${typeof imageSource === 'string' ? imageSource : imageSource.name}`);
+  
+  // Исправляем undefined в логе
+  let name = typeof imageSource === 'string' ? imageSource : (imageSource.name || 'локальный образ');
+  log(`Запуск эмулятора с образом: ${name}`);
 
   emulator = new V86(buildConfig(imageSource));
 
@@ -50,7 +53,7 @@ function startEmulator(imageSource) {
 
 function stopEmulator() {
   if (!emulator) return;
-  try { emulator.stop(); } catch (e) { /* ignore */ }
+  try { emulator.stop(); } catch (e) {}
   emulator.destroy();
   emulator = null;
   log('Эмулятор уничтожен.');
@@ -60,20 +63,33 @@ function stopEmulator() {
 }
 
 btnStart.addEventListener('click', () => {
-  const src = customIso || { url: 'images/hixrinux.iso' };
-  startEmulator(src);
+  if (customIso) {
+    startEmulator(customIso);
+  } else {
+    log('⚠️ Файл не выбран. Пожалуйста, нажмите "Загрузить ISO" или убедитесь, что images/hixrinux.iso существует.');
+  }
 });
 
 btnStop.addEventListener('click', stopEmulator);
 
 btnReset.addEventListener('click', () => {
   stopEmulator();
-  setTimeout(() => startEmulator(customIso || { url: 'images/hixrinux.iso' }), 300);
+  setTimeout(() => {
+    if (customIso) startEmulator(customIso);
+  }, 300);
 });
 
 isoInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  customIso = { buffer: await file.arrayBuffer() };
+  
+  // Сохраняем и буфер, и имя для логов
+  customIso = { buffer: await file.arrayBuffer(), name: file.name };
   log(`Загружен локальный образ: ${file.name} (${(file.size/1024/1024).toFixed(2)} МБ)`);
+  
+  // Автоматический запуск после выбора файла (если эмулятор уже работает - перезапускаем)
+  if (emulator) {
+    stopEmulator();
+    setTimeout(() => startEmulator(customIso), 300);
+  }
 });
