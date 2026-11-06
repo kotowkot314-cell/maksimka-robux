@@ -5,7 +5,7 @@ package.domain = org.rocketway
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,wav
 version = 0.1
-requirements = python3,kivy,ffpyplayer,pillow,cryptography
+requirements = python3,kivy,ffpyplayer,pillow,pycryptodomex
 orientation = portrait
 fullscreen = 0
 
