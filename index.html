@@ -1,38 +1,255 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROCKET — разбор переписки</title>
-<link rel="stylesheet" href="style.css">
-<script src="chat-analyzer-clean.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIxRINUX - Поиск</title>
+    <style>
+        body {
+            background-color: #001f3f;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-top: 50px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        p.subtitle {
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .search-block {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-block h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        input[type="file"] {
+            color: white;
+            padding: 10px;
+            border: 1px dashed white;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        input[type="file"]::file-selector-button {
+            background-color: white;
+            color: #001f3f;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 15px;
+            transition: 0.3s;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid white;
+            border-radius: 8px;
+            color: white;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #00a8ff;
+            box-shadow: 0 0 10px rgba(0, 168, 255, 0.5);
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            background-color: #ffffff;
+            color: #001f3f;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background-color: #00a8ff;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 168, 255, 0.4);
+        }
+
+        #result-container {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 800px;
+            padding: 20px;
+            border: 2px solid white;
+            border-radius: 12px;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .loading-text {
+            color: #00a8ff;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-<main class="wrap">
-  <h1>ROCKET</h1>
-  <p class="sub">Вставь сообщение — разберём и предложим ответ</p>
 
-  <div class="personas">
-    <button class="persona active" data-persona="female">Девушка</button>
-    <button class="persona" data-persona="male">Парень</button>
-    <button class="persona" data-persona="femboy">Фембой</button>
-  </div>
+    <h1>HIxRINUX</h1>
+    <p class="subtitle">Поисковик по изображениям и исходному коду</p>
 
-  <textarea id="input" placeholder="Сообщение собеседника..."></textarea>
+    <div class="container">
+        
+        <div class="search-block">
+            <h2>📸 Поиск по фото</h2>
+            <input type="file" id="imageInput" accept="image/*">
+            <button onclick="searchByPhoto()">Найти совпадения</button>
+        </div>
 
-  <div class="row">
-    <button id="analyze" class="primary">Разобрать</button>
-    <button id="clear" class="ghost">Очистить</button>
-  </div>
+        <div class="search-block">
+            <h2>💻 Поиск по коду (1 - 10000 строк)</h2>
+            <textarea id="codeInput" placeholder="Вставьте ваш код здесь (HTML, CSS, JS, Python и т.д.)..."></textarea>
+            <button onclick="searchByCode()">Анализировать код</button>
+        </div>
 
-  <section id="result" class="result hidden">
-    <div class="card">
-      <div class="line"><span class="label">Смысл</span><span id="meaning"></span></div>
-      <div class="line"><span class="label">Тон</span><span id="tone"></span></div>
-      <div class="line"><span class="label">Намерение</span><span id="intent"></span></div>
     </div>
-    <div id="replies" class="replies"></div>
-  </section>
-</main>
+
+    <div id="result-container"></div>
+
+    <script>
+        function searchByPhoto() {
+            const fileInput = document.getElementById('imageInput');
+            const resultContainer = document.getElementById('result-container');
+            
+            if (fileInput.files.length === 0) {
+                alert("Пожалуйста, выберите фото!");
+                return;
+            }
+
+            const fileName = fileInput.files[0].name;
+            const fileSize = (fileInput.files[0].size / 1024).toFixed(2);
+
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<span class="loading-text">[HIxRINUX] Сканирование нейросетью изображения "${fileName}" (${fileSize} КБ)...</span>`;
+
+            setTimeout(() => {
+                resultContainer.innerHTML = `
+[HIxRINUX] Анализ завершен.
+--------------------------------------------------
+Файл: ${fileName}
+Размер: ${fileSize} КБ
+Статус: Идет поиск в глобальной базе... (Требуется подключение бэкенда)
+--------------------------------------------------
+Найдено потенциальных совпадений: 3
+1. https://example.com/source-image-1.jpg (Схожесть: 87%)
+2. https://example.com/repost-image-2.png (Схожесть: 74%)
+3. https://example.com/original-photo-3.webp (Схожесть: 65%)
+
+* Для реального поиска по фото необходим API (например, Google Vision или Yandex Images).
+                `;
+            }, 1500);
+        }
+
+        function searchByCode() {
+            const codeInput = document.getElementById('codeInput').value;
+            const resultContainer = document.getElementById('result-container');
+
+            if (codeInput.trim() === "") {
+                alert("Вставьте код для поиска!");
+                return;
+            }
+
+            const linesCount = codeInput.split('\n').length;
+
+            if (linesCount > 10000) {
+                alert("Превышен лимит! Максимум 10000 строк.");
+                return;
+            }
+
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<span class="loading-text">[HIxRINUX] Хеширование и поиск ${linesCount} строк кода в базе GitHub/GitLab...</span>`;
+
+            setTimeout(() => {
+                let detectedLang = "Неизвестный";
+                if (codeInput.includes("<!DOCTYPE html>") || codeInput.includes("<div")) detectedLang = "HTML/CSS";
+                else if (codeInput.includes("function") || codeInput.includes("const") || codeInput.includes("let")) detectedLang = "JavaScript";
+                else if (codeInput.includes("def ") || codeInput.includes("import ")) detectedLang = "Python";
+
+                resultContainer.innerHTML = `
+[HIxRINUX] Анализ завершен.
+--------------------------------------------------
+Строк обработано: ${linesCount} (Лимит: 10000 - ОК)
+Определенный язык: ${detectedLang}
+--------------------------------------------------
+Результаты поиска по сигнатурам:
+1. Найдено совпадение в репозитории: "user/project-alpha" (Совпадение 92%)
+2. Найдено совпадение в репозитории: "dev-tools/code-snippets" (Совпадение 78%)
+
+[Внимание] Если код содержит уязвимости, они будут подсвечены здесь в реальной версии.
+                `;
+            }, 1500);
+        }
+    </script>
+
 </body>
 </html>
