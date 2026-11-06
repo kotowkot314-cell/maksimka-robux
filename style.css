@@ -8,28 +8,13 @@ body {
   padding: 40px 16px;
 }
 
-.wrap {
-  max-width: 620px;
-  margin: 0 auto;
-}
+.wrap { max-width: 620px; margin: 0 auto; }
 
-h1 {
-  font-size: 26px;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
+h1 { font-size: 26px; letter-spacing: 0.5px; margin-bottom: 4px; }
 
-.sub {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 24px;
-}
+.sub { color: #666; font-size: 14px; margin-bottom: 24px; }
 
-.personas {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
+.personas { display: flex; gap: 8px; margin-bottom: 14px; }
 
 .persona {
   flex: 1;
@@ -67,11 +52,7 @@ textarea {
 
 textarea:focus { border-color: #1a1a1a; }
 
-.row {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
+.row { display: flex; gap: 8px; margin-top: 12px; }
 
 button.primary {
   flex: 1;
@@ -99,12 +80,7 @@ button.ghost {
 
 button.ghost:hover { border-color: #999; }
 
-.result {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.result { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
 
 .hidden { display: none; }
 
@@ -118,24 +94,13 @@ button.ghost:hover { border-color: #999; }
   gap: 10px;
 }
 
-.line {
-  display: flex;
-  gap: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-}
+.line { display: flex; gap: 10px; font-size: 14px; line-height: 1.5; }
 
-.label {
-  min-width: 90px;
-  color: #888;
-  font-size: 13px;
-}
+.label { min-width: 90px; color: #888; font-size: 13px; }
 
-.replies {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+#meaning { white-space: pre-line; }
+
+.replies { display: flex; flex-direction: column; gap: 8px; }
 
 .reply {
   background: #fff;
