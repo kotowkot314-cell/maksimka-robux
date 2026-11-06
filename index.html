@@ -1,41 +1,38 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HIxRINUX — Web Test Stand</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROCKET — разбор переписки</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>HIxRINUX <span>Web Test Stand</span></h1>
-    <div class="controls">
-      <button id="btnStart">▶ Запустить</button>
-      <button id="btnStop" disabled>■ Остановить</button>
-      <button id="btnReset" disabled>⟳ Перезагрузка</button>
-      <label class="file">
-        Загрузить ISO
-        <input type="file" id="isoInput" accept=".iso,.img,.bin">
-      </label>
+<main class="wrap">
+  <h1>ROCKET</h1>
+  <p class="sub">Вставь сообщение — разберём и предложим ответ</p>
+
+  <div class="personas">
+    <button class="persona active" data-persona="female">Девушка</button>
+    <button class="persona" data-persona="male">Парень</button>
+    <button class="persona" data-persona="femboy">Фембой</button>
+  </div>
+
+  <textarea id="input" placeholder="Сообщение собеседника..."></textarea>
+
+  <div class="row">
+    <button id="analyze" class="primary">Разобрать</button>
+    <button id="clear" class="ghost">Очистить</button>
+  </div>
+
+  <section id="result" class="result hidden">
+    <div class="card">
+      <div class="line"><span class="label">Смысл</span><span id="meaning"></span></div>
+      <div class="line"><span class="label">Тон</span><span id="tone"></span></div>
+      <div class="line"><span class="label">Намерение</span><span id="intent"></span></div>
     </div>
-  </header>
-
-  <main>
-    <div id="screen" class="screen">
-      <div class="placeholder">
-        <p>Эмулятор не запущен.</p>
-        <p>Нажмите «Запустить», чтобы загрузить образ <code>images/hixrinux.iso</code>,</p>
-        <p>или выберите свой ISO через «Загрузить ISO».</p>
-      </div>
-    </div>
-
-    <aside class="sidebar">
-      <h2>Лог</h2>
-      <pre id="log"></pre>
-    </aside>
-  </main>
-
-  <script src="https://copy.sh/v86/build/libv86.js"></script>
-  <script src="app.js"></script>
+    <div id="replies" class="replies"></div>
+  </section>
+</main>
+<script src="app.js"></script>
 </body>
 </html>
