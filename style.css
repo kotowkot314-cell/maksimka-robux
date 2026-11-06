@@ -1,79 +1,173 @@
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  margin: 0;
-  background: #0b0f14;
-  color: #d7e2ea;
-  font-family: ui-monospace, Consolas, monospace;
-  height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f5f6f8;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding: 40px 16px;
+}
+
+.wrap {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 26px;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.sub {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.personas {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.persona {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d0d3d8;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: 0.15s;
+}
+
+.persona:hover { border-color: #999; }
+
+.persona.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+textarea {
+  width: 100%;
+  height: 110px;
+  padding: 12px;
+  border: 1px solid #d0d3d8;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  background: #fff;
+  outline: none;
+  transition: 0.15s;
+}
+
+textarea:focus { border-color: #1a1a1a; }
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button.primary {
+  flex: 1;
+  padding: 10px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.primary:hover { background: #333; }
+button.primary:disabled { background: #999; cursor: default; }
+
+button.ghost {
+  padding: 10px 16px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #d0d3d8;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.ghost:hover { border-color: #999; }
+
+.result {
+  margin-top: 24px;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
-.topbar {
+.hidden { display: none; }
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e4e8;
+  border-radius: 10px;
+  padding: 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: #111a22;
-  border-bottom: 1px solid #22303c;
+  flex-direction: column;
+  gap: 10px;
 }
-.topbar h1 { margin: 0; font-size: 18px; }
-.topbar h1 span { color: #5f7d94; font-weight: 400; font-size: 13px; }
 
-.controls { display: flex; gap: 8px; align-items: center; }
-.controls button, .file {
-  background: #1b2733;
-  color: #d7e2ea;
-  border: 1px solid #2a3947;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font: inherit;
+.line {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.label {
+  min-width: 90px;
+  color: #888;
   font-size: 13px;
 }
-.controls button:hover:not(:disabled) { background: #24333f; }
-.controls button:disabled { opacity: 0.4; cursor: default; }
-.file input { display: none; }
 
-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  min-height: 0;
-}
-
-.screen {
-  background: #000;
-  overflow: auto;
-  position: relative;
-}
-.screen .placeholder {
-  position: absolute;
-  inset: 0;
+.replies {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.reply {
+  background: #fff;
+  border: 1px solid #e2e4e8;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  color: #4d6478;
-  font-size: 14px;
-  text-align: center;
+  gap: 12px;
 }
-.screen .placeholder code { color: #86a2b8; }
 
-.sidebar {
-  background: #0e151c;
-  border-left: 1px solid #22303c;
-  padding: 10px;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
+.reply-text { font-size: 14px; line-height: 1.5; flex: 1; }
+
+.reply-style {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+  margin-bottom: 4px;
+  display: block;
 }
-.sidebar h2 { font-size: 13px; color: #5f7d94; margin: 0 0 8px; }
-#log {
-  flex: 1;
-  margin: 0;
+
+.copy {
+  background: #f0f1f3;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 12px;
-  color: #8fb0c6;
-  white-space: pre-wrap;
-  word-break: break-all;
+  cursor: pointer;
+  color: #333;
+  white-space: nowrap;
 }
+
+.copy:hover { background: #e2e4e8; }
