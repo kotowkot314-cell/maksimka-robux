@@ -1,4 +1,4 @@
-const API = "https://ВАШ_ЛОГИН.pythonanywhere.com/api/osint";
+const API = "https://Maxxi1mka.pythonanywhere.com/api/osint";
 
 const form = document.getElementById("form");
 const queryI = document.getElementById("query");
@@ -125,9 +125,10 @@ form.addEventListener("submit", async (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
-        query, 
+        query: query, 
         type: mode, 
-        use_google: gChk.checked 
+        use_google: gChk.checked,
+        sources: Array.from(activeSources)
       })
     });
 
