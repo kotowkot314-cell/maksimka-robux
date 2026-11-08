@@ -4,7 +4,7 @@ from phonenumbers import geocoder,carrier
 from urllib.parse import quote
 from bs4 import BeautifulSoup
 G='\033[92m';B='\033[94m';R='\033[91m';Y='\033[93m';W='\033[0m'
-VERSION="1.3.1"
+VERSION="1.3.2"
 CONFIG_PATH=os.path.expanduser("~/.hi_osint_cfg.json")
 DB_PATH="data.txt"
 def clear():os.system('cls' if os.name=='nt' else 'clear')
@@ -38,8 +38,7 @@ def search_db(phone):
   with open(DB_PATH,'r',encoding='utf-8') as f:
    content=f.read()
   clean_phone=re.sub(r'\D','',phone)
-  lines=content.split('\n')
-  for line in lines:
+  for line in content.split('\n'):
    if clean_phone in re.sub(r'\D','',line):
     return line.strip()
   return "Not in DB."
