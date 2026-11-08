@@ -1,10 +1,10 @@
-name: auto_decrypt
+name: auto
 on:
   push:
     paths:
       - 'hI-OSINT/hi.db'
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -13,8 +13,8 @@ jobs:
         python-version: '3.10'
     - run: cd hI-OSINT && python decoder.py
     - run: |
-        git config user.name "GitHub Action"
-        git config user.email "action@github.com"
-        git add hI-OSINT/decrypted.txt
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add hI-OSINT/data.txt
         git commit -m "auto dec" || exit 0
         git push
