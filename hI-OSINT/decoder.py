@@ -1,36 +1,28 @@
-import re
+import requests,re,urllib.parse
 def dc():
  try:
   f=open('hi.db','r',encoding='utf-8')
-  x=f.read()
+  u=f.read().strip()
   f.close()
-  m=re.search(r'data=([012]+)',x)
-  if not m:
-   print("no code")
-   return
-  c=m.group(1)
-  A="абвгдежзийклмнопрстуфхцчшщъыьэюя"
-  S="0123456789.,!?-—;:()\"' "
+  print(f"[*] dl {u}")
+  r=requests.get(u,timeout=10)
+  r.raise_for_status()
+  h=r.text
+  m=re.search(r'<p>(.*?)</p>',h,re.DOTALL)
+  if m: e=m.group(1)
+  else: e=h
+  e=urllib.parse.unquote(e)
+  A="абвгдеёжзийклмнопрстуфхцчшщъыьэюя "
+  B="abcdefghijklmnopqrstuvwxyz1234567 "
   t=""
-  i=0
-  while i<len(c):
-   if c[i:i+5]=="00000" and i+13<=len(c):
-    sc=c[i+5:i+13].replace('2','1')
-    idx=int(sc,2)
-    if idx<len(S):t+=S[idx]
-    i+=13
-   else:
-    ch=c[i:i+5]
-    if len(ch)<5:break
-    ch=ch.replace('2','0')
-    n=int(ch,2)
-    if 1<=n<=len(A):t+=A[n-1]
-    i+=5
-  out=open('data.txt','w',encoding='utf-8')
-  out.write(t)
-  out.close()
-  print("ok")
- except Exception as e:
-  print(f"err {e}")
+  for c in e:
+   if c in B: t+=A[B.index(c)]
+   else: t+=c
+  o=open('data.txt','w',encoding='utf-8')
+  o.write(t)
+  o.close()
+  print("[+] ok")
+ except Exception as ex:
+  print(f"[-] err {ex}")
 if __name__=="__main__":
  dc()
