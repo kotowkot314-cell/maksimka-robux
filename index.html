@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta Bypass</title>
+<style>
+body{background:#0b0f17;color:#eaeef7;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+.box{width:100%;max-width:560px;background:#121a26;border:1px solid #223044;border-radius:14px;padding:20px;margin-top:40px}
+h1{font-size:20px;margin:0 0 8px}
+p{font-size:13px;color:#8fa0b8;margin:0 0 16px;line-height:1.5}
+input{width:100%;padding:14px;border-radius:10px;border:1px solid #2a3a52;background:#0b1220;color:#eaeef7;font-size:14px;outline:none;box-sizing:border-box}
+input:focus{border-color:#00d9a3}
+button{width:100%;padding:14px;margin-top:12px;border:none;border-radius:10px;background:#00d9a3;color:#04110c;font-weight:bold;font-size:15px;cursor:pointer}
+button:disabled{background:#3a4a5f;color:#8fa0b8;cursor:not-allowed}
+.result{margin-top:16px;padding:14px;border-radius:10px;background:#0b1220;border:1px solid #223044;font-size:14px;line-height:1.6;display:none;word-break:break-all}
+.result.error{border-color:#7a2e2e;background:#1a0f12;color:#ffb4b4}
+.label{font-size:12px;color:#8fa0b8;margin-bottom:6px}
+.key{font-size:16px;font-weight:bold;color:#00d9a3;user-select:all}
+.meta{font-size:12px;color:#8fa0b8;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>Delta Bypass</h1>
+<p>Вставьте ссылку получения ключа из Delta (начинается с https://auth.platorelay.com/a?d=... или https://gateway.platoboost.com/...).</p>
+<input id="link" type="text" placeholder="https://auth.platorelay.com/a?d=...">
+<button id="btn" onclick="run()">Получить ключ</button>
+<div id="result" class="result"></div>
+</div>
+<script>
+function run(){
+var input=document.getElementById('link');
+var btn=document.getElementById('btn');
+var result=document.getElementById('result');
+var url=input.value.trim();
+if(!url){
+result.style.display='block';
+result.className='result error';
+result.innerHTML='Ссылка не может быть пустой';
+return;
+}
+btn.disabled=true;
+btn.innerText='Обработка...';
+result.style.display='none';
+fetch('/api/bypass-delta?url='+encodeURIComponent(url))
+.then(function(res){return res.json();})
+.then(function(data){
+result.style.display='block';
+if(data.status==='success'){
+result.className='result';
+result.innerHTML='<div class="label">Ключ</div><div class="key">'+data.key+'</div><div class="meta">Действителен примерно 24 часа. Скопируйте и вставьте в Delta.</div>';
+}else{
+result.className='result error';
+result.innerHTML='Ошибка: '+(data.message||'неизвестная ошибка');
+}
+})
+.catch(function(err){
+result.style.display='block';
+result.className='result error';
+result.innerHTML='Ошибка запроса: '+err.message;
+})
+.finally(function(){
+btn.disabled=false;
+btn.innerText='Получить ключ';
+});
+}
+</script>
+</body>
+</html>
