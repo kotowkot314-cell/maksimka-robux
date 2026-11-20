@@ -1,0 +1,20 @@
+{
+  "name": "xliilx",
+  "version": "1.0.0",
+  "description": "Xliilx — web shooter with registration",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "better-sqlite3": "^9.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
