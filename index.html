@@ -1,70 +1,114 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Delta Bypass</title>
-<style>
-body{background:#0b0f17;color:#eaeef7;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
-.box{width:100%;max-width:560px;background:#121a26;border:1px solid #223044;border-radius:14px;padding:20px;margin-top:40px}
-h1{font-size:20px;margin:0 0 8px}
-p{font-size:13px;color:#8fa0b8;margin:0 0 16px;line-height:1.5}
-input{width:100%;padding:14px;border-radius:10px;border:1px solid #2a3a52;background:#0b1220;color:#eaeef7;font-size:14px;outline:none;box-sizing:border-box}
-input:focus{border-color:#00d9a3}
-button{width:100%;padding:14px;margin-top:12px;border:none;border-radius:10px;background:#00d9a3;color:#04110c;font-weight:bold;font-size:15px;cursor:pointer}
-button:disabled{background:#3a4a5f;color:#8fa0b8;cursor:not-allowed}
-.result{margin-top:16px;padding:14px;border-radius:10px;background:#0b1220;border:1px solid #223044;font-size:14px;line-height:1.6;display:none;word-break:break-all}
-.result.error{border-color:#7a2e2e;background:#1a0f12;color:#ffb4b4}
-.label{font-size:12px;color:#8fa0b8;margin-bottom:6px}
-.key{font-size:16px;font-weight:bold;color:#00d9a3;user-select:all}
-.meta{font-size:12px;color:#8fa0b8;margin-top:8px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xliilx — Вход</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #2a1a1a, #0a0a0a 70%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .box {
+      background: #1a1a1a;
+      padding: 40px;
+      border-radius: 16px;
+      width: 340px;
+      box-shadow: 0 0 40px rgba(230, 57, 70, 0.2);
+      border: 1px solid #2a2a2a;
+    }
+    h1 {
+      text-align: center;
+      color: #e63946;
+      font-size: 32px;
+      letter-spacing: 4px;
+      margin: 0 0 24px;
+      text-shadow: 0 0 20px rgba(230, 57, 70, 0.5);
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #e63946;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #e63946;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 1px;
+      transition: 0.2s;
+    }
+    button:hover { background: #f04f5c; }
+    .btn-alt {
+      background: #333;
+      margin-top: 8px;
+    }
+    .btn-alt:hover { background: #444; }
+    .err {
+      color: #e63946;
+      font-size: 13px;
+      min-height: 20px;
+      text-align: center;
+      margin: 8px 0;
+    }
+    .footer {
+      text-align: center;
+      color: #555;
+      font-size: 11px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-<div class="box">
-<h1>Delta Bypass</h1>
-<p>Вставьте ссылку получения ключа из Delta (начинается с https://auth.platorelay.com/a?d=... или https://gateway.platoboost.com/...).</p>
-<input id="link" type="text" placeholder="https://auth.platorelay.com/a?d=...">
-<button id="btn" onclick="run()">Получить ключ</button>
-<div id="result" class="result"></div>
-</div>
-<script>
-function run(){
-var input=document.getElementById('link');
-var btn=document.getElementById('btn');
-var result=document.getElementById('result');
-var url=input.value.trim();
-if(!url){
-result.style.display='block';
-result.className='result error';
-result.innerHTML='Ссылка не может быть пустой';
-return;
-}
-btn.disabled=true;
-btn.innerText='Обработка...';
-result.style.display='none';
-fetch('/api/bypass-delta?url='+encodeURIComponent(url))
-.then(function(res){return res.json();})
-.then(function(data){
-result.style.display='block';
-if(data.status==='success'){
-result.className='result';
-result.innerHTML='<div class="label">Ключ</div><div class="key">'+data.key+'</div><div class="meta">Действителен примерно 24 часа. Скопируйте и вставьте в Delta.</div>';
-}else{
-result.className='result error';
-result.innerHTML='Ошибка: '+(data.message||'неизвестная ошибка');
-}
-})
-.catch(function(err){
-result.style.display='block';
-result.className='result error';
-result.innerHTML='Ошибка запроса: '+err.message;
-})
-.finally(function(){
-btn.disabled=false;
-btn.innerText='Получить ключ';
-});
-}
-</script>
+  <div class="box">
+    <h1>XLIILX</h1>
+    <input id="user" placeholder="Никнейм" autocomplete="username">
+    <input id="pass" type="password" placeholder="Пароль" autocomplete="current-password">
+    <div class="err" id="err"></div>
+    <button onclick="register()">Регистрация</button>
+    <button class="btn-alt" onclick="login()">Войти</button>
+    <div class="footer">Xliilx v1.0 © 2026</div>
+  </div>
+
+  <script>
+    async function send(path) {
+      const username = document.getElementById('user').value.trim();
+      const password = document.getElementById('pass').value;
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.error) return showErr(data.error);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.username);
+      location.href = '/game.html';
+    }
+    function register() { send('/api/register'); }
+    function login() { send('/api/login'); }
+    function showErr(msg) { document.getElementById('err').textContent = msg; }
+  </script>
 </body>
 </html>
